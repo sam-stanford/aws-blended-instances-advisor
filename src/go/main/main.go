@@ -25,7 +25,7 @@ func main() {
 	clf := parseCommandLineFlags(logger)
 	config := parseConfig(clf, logger)
 
-	aws.FetchInstanceInfo(config, logger)
+	aws.FetchInstancesInfo(config, logger)
 }
 
 func createLogger() (*zap.Logger, func() error) {
