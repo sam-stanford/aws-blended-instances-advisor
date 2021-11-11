@@ -1,6 +1,7 @@
 package config
 
 import (
+	. "ec2-test/aws/types"
 	"ec2-test/utils"
 	"encoding/json"
 )
@@ -49,4 +50,16 @@ func GetConfig(filepath string) (*Config, error) {
 
 func GetEmptyConfig() *Config {
 	return &Config{}
+}
+
+func (config *Config) GetRegions() []Region {
+	regions := make([]Region, len(config.Constraints.Regions))
+	for _, regionStr := range config.Constraints.Regions {
+		region, err := NewRegionFromString(regionStr)
+		if err == nil {
+			// TODO: Do something with this error?
+			regions = append(regions, region)
+		}
+	}
+	return regions
 }

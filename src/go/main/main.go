@@ -1,7 +1,7 @@
 package main
 
 import (
-	"ec2-test/aws"
+	awsApi "ec2-test/aws/api"
 	"ec2-test/config"
 	"ec2-test/utils"
 	"flag"
@@ -25,7 +25,7 @@ func main() {
 	clf := parseCommandLineFlags(logger)
 	config := parseConfig(clf, logger)
 
-	aws.FetchInstancesInfo(config, logger)
+	fmt.Println(awsApi.GetInstances(config, logger))
 }
 
 func createLogger() (*zap.Logger, func() error) {

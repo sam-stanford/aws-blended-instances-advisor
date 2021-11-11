@@ -1,9 +1,15 @@
-package aws
+package api
 
+// TODO: Rename these
 import (
+	. "ec2-test/aws/types"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
+
+	ec2Types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/aws/aws-sdk-go-v2/service/pricing"
 )
 
 type onDemandInstanceInfo struct {
@@ -79,6 +85,86 @@ type price struct {
 	USD string `json:"USD"`
 }
 
+type spotInstancesInfo struct {
+	SpecsMap     map[string]spotInstanceSpecs                `json:"instance_types"`
+	RegionPrices map[string]regionSpotInstanceRevocationInfo `json:"spot_advisor"`
+}
+
+type spotInstanceSpecs struct {
+	MemoryGb float32 `json:"ram_gb"`
+	Vcpus    int     `json:"cores"`
+	Emr      bool    `json:"emr"`
+}
+
+type regionSpotInstanceRevocationInfo struct {
+	LinuxInstances   map[string]spotInstanceRevocationInfo `json:"Linux"`
+	WindowsInstances map[string]spotInstanceRevocationInfo `json:"Windows"`
+}
+
+type spotInstanceRevocationInfo struct {
+	// TODO: Move comments to doc
+	RevocationProbabilityTier int `json:"r"` // 0 => <5%, 1 => 5-10%, 2 => 10-15%, 3 => 15-20%, 4 => >20%
+	PercentageSavings         int `json:"s"` // Over on-demand
+}
+
+func (info *onDemandInstanceInfo) toInstance() (*Instance, error) {
+	vcpus, err := parseOnDemandVcpus(info)
+	if err != nil {
+		return nil, err
+	}
+	mem, err := parseOnDemandMemory(info)
+	if err != nil {
+		return nil, err
+	}
+	region, err := NewRegionFromString(info.Specs.Attributes.Location)
+	if err != nil {
+		return nil, err
+	}
+	os, err := NewOperatingSystemFromString(info.Specs.Attributes.OperatingSystem)
+	if err != nil {
+		return nil, err
+	}
+	price, err := parseOnDemandPrice(info)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Instance{
+		Name:                  info.Specs.Attributes.InstanceType,
+		MemoryGb:              mem,
+		Vcpus:                 vcpus,
+		Region:                region,
+		AvailabilityZone:      info.Specs.Attributes.AvailabilityZone,
+		OperatingSystem:       os,
+		PricePerHour:          price,
+		RevocationProbability: 0, // On-demand instances will not be revoked
+	}, nil
+}
+
+func parseOnDemandApiResponseToInstances(resp *pricing.GetProductsOutput) ([]Instance, error) {
+
+	instances := make([]Instance, 0)
+
+	for _, instanceInfoJson := range resp.PriceList {
+		var info onDemandInstanceInfo
+		err := json.Unmarshal([]byte(instanceInfoJson), &info)
+		if err != nil {
+			return nil, err
+		}
+
+		if info.Specs.Attributes.MarketOption == "OnDemand" {
+			instance, err := info.toInstance()
+			if err != nil {
+				return nil, err // TODO: Handle this more gracefully
+			}
+
+			instances = append(instances, *instance)
+		}
+	}
+
+	return instances, nil
+}
+
 func parseOnDemandVcpus(info *onDemandInstanceInfo) (int, error) {
 	return strconv.Atoi(info.Specs.Attributes.Vcpu)
 }
@@ -111,40 +197,35 @@ func parseOnDemandPrice(info *onDemandInstanceInfo) (float64, error) {
 		if len(price.Options) > 1 {
 			return -1, errors.New(errStr)
 		}
-
 		for _, option := range price.Options {
 			return strconv.ParseFloat(option.PricePerUnit.USD, 64)
 		}
 	}
-
 	return -1, nil
 }
 
-func validateOperatingSystemString(s string) error {
-	if s == "Linux" || s == "Windows" {
-		return nil
+func parseSpotPrice(info *ec2Types.SpotPrice) (float64, error) {
+	return strconv.ParseFloat(*info.SpotPrice, 64)
+}
+
+func (info *spotInstanceRevocationInfo) getRevocationProbability() (float32, error) {
+	// Return the upper bound of the tier
+	switch info.RevocationProbabilityTier {
+	case 0:
+		return 0.05, nil
+	case 1:
+		return 0.1, nil
+	case 2:
+		return 0.15, nil
+	case 3:
+		return 0.2, nil
+	case 4:
+		return 0.3, nil // TODO: >20% => ?
+	default:
+		return -1, errors.New(
+			fmt.Sprintf(
+				"provided revocation probability tier does not exist: %d",
+				info.RevocationProbabilityTier,
+			))
 	}
-	return errors.New(fmt.Sprintf("invalid operating system %s", s))
-}
-
-type spotInstancesInfo struct {
-	Types        map[string]spotInstanceSpecs          `json:"instance_types"`
-	RegionPrices map[string]spotInstancesRegionPricing `json:"spot_advisor"`
-}
-
-type spotInstanceSpecs struct {
-	MemoryGb float32 `json:"ram_gb"`
-	Vcpus    int     `json:"cores"`
-	Emr      bool    `json:"emr"`
-}
-
-type spotInstancesRegionPricing struct {
-	LinuxInstances   map[string]spotInstancePriceInfo `json:"Linux"`
-	WindowsInstances map[string]spotInstancePriceInfo `json:"Windows"`
-}
-
-type spotInstancePriceInfo struct {
-	// TODO: Move comments to doc
-	RevocationProbabilityTier int `json:"r"` // 0 => <5%, 1 => 5-10%, 2 => 10-15%, 3 => 15-20%, 4 => >20%
-	PercentageSavings         int `json:"s"` // Over on-demand
 }
