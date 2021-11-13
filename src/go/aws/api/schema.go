@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"strconv"
 
-	ec2Types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go-v2/service/pricing"
+	"go.uber.org/zap"
 )
 
 type onDemandInstanceInfo struct {
@@ -134,14 +134,14 @@ func (info *onDemandInstanceInfo) toInstance() (*Instance, error) {
 		MemoryGb:              mem,
 		Vcpus:                 vcpus,
 		Region:                region,
-		AvailabilityZone:      info.Specs.Attributes.AvailabilityZone,
+		AvailabilityZone:      info.Specs.Attributes.AvailabilityZone, // TODO: "NA" for most fetched values
 		OperatingSystem:       os,
 		PricePerHour:          price,
 		RevocationProbability: 0, // On-demand instances will not be revoked
 	}, nil
 }
 
-func parseOnDemandApiResponseToInstances(resp *pricing.GetProductsOutput) ([]Instance, error) {
+func parseOnDemandApiResponseToInstances(resp *pricing.GetProductsOutput, logger *zap.Logger) []Instance {
 
 	instances := make([]Instance, 0)
 
@@ -149,20 +149,22 @@ func parseOnDemandApiResponseToInstances(resp *pricing.GetProductsOutput) ([]Ins
 		var info onDemandInstanceInfo
 		err := json.Unmarshal([]byte(instanceInfoJson), &info)
 		if err != nil {
-			return nil, err
+			logger.Error("failed to parse on-demand instance", zap.Error(err), zap.String("instance", instanceInfoJson))
+			continue
 		}
 
 		if info.Specs.Attributes.MarketOption == "OnDemand" {
 			instance, err := info.toInstance()
 			if err != nil {
-				return nil, err // TODO: Handle this more gracefully
+				logger.Error("failed to parse on-demand instance", zap.Error(err), zap.String("instance", instanceInfoJson))
+				continue
 			}
 
 			instances = append(instances, *instance)
 		}
 	}
 
-	return instances, nil
+	return instances
 }
 
 func parseOnDemandVcpus(info *onDemandInstanceInfo) (int, error) {
@@ -179,7 +181,11 @@ func parseOnDemandMemory(info *onDemandInstanceInfo) (float32, error) {
 	}
 
 	mem, err := strconv.ParseFloat(memStr[:index], 32)
-	return float32(mem), err
+	if err != nil {
+		return -1, fmt.Errorf("cannot parse a memory value of %s to float32: %s", info.Specs.Attributes.Memory, err.Error())
+	}
+
+	return float32(mem), nil
 }
 
 func isNumber(b byte) bool {
@@ -202,10 +208,6 @@ func parseOnDemandPrice(info *onDemandInstanceInfo) (float64, error) {
 		}
 	}
 	return -1, nil
-}
-
-func parseSpotPrice(info *ec2Types.SpotPrice) (float64, error) {
-	return strconv.ParseFloat(*info.SpotPrice, 64)
 }
 
 func (info *spotInstanceRevocationInfo) getRevocationProbability() (float32, error) {

@@ -15,14 +15,29 @@ const (
 	TERM_MATCH_FILTER_TYPE = "TERM_MATCH"
 )
 
-func GetOnDemandInstances(config *config.Config, creds credentials.StaticCredentialsProvider, logger *zap.Logger) (map[Region][]Instance, error) {
+func GetOnDemandInstances(
+	config *config.Config,
+	creds credentials.StaticCredentialsProvider,
+	logger *zap.Logger,
+) (
+	map[Region][]Instance,
+	error,
+) {
 	pricingClient := createAwsPricingClient(creds)
 	regions := config.GetRegions()
-	return getRegionToOnDemandInstancesMap(pricingClient, regions, logger)
+	return getRegionToOnDemandInstancesMap(pricingClient, regions, config.Constraints.MaxInstanceCount, logger)
 }
 
-func getRegionToOnDemandInstancesMap(pricingClient *pricing.Client, regions []Region, logger *zap.Logger) (map[Region][]Instance, error) {
-	// TODO: Cache results
+func getRegionToOnDemandInstancesMap(
+	pricingClient *pricing.Client,
+	regions []Region,
+	maxInstanceCount int,
+	logger *zap.Logger,
+) (
+	map[Region][]Instance,
+	error,
+) {
+	// TODO: Cache results - maybe cache entire list of instances instead
 
 	regionToInstancesMap := make(map[Region][]Instance)
 
@@ -31,21 +46,25 @@ func getRegionToOnDemandInstancesMap(pricingClient *pricing.Client, regions []Re
 
 		nextToken := ""
 		firstIter := true
-		totalFetched := 0
-		for nextToken != "" || firstIter {
+		total := 0
+		for (total <= maxInstanceCount || maxInstanceCount <= 0) && (nextToken != "" || firstIter) {
 
 			resp, err := getOnDemandInstancesFromApi(pricingClient, region, nextToken)
 			if err != nil {
+				logger.Error("error fetching on-demand instances from API", zap.Error(err))
 				return nil, err
 			}
+			logger.Info("fetched on-demand instances", zap.Int("instanceCount", len(resp.PriceList)))
 
-			parsedInstances, err := parseOnDemandApiResponseToInstances(resp)
-			if err != nil {
-				return nil, err
-			}
+			parsedInstances := parseOnDemandApiResponseToInstances(resp, logger)
 
-			logger.Info("fetched instances", zap.Int("instanceCount", len(resp.PriceList)))
-			totalFetched += len(resp.PriceList)
+			logger.Info(
+				"parsed on-demand instances",
+				zap.Int("parsedCount", len(parsedInstances)),
+				zap.Int("skippedCount", len(resp.PriceList)-len(parsedInstances)),
+			)
+
+			total += len(parsedInstances)
 
 			regionInstances = append(regionInstances, parsedInstances...)
 
@@ -58,7 +77,12 @@ func getRegionToOnDemandInstancesMap(pricingClient *pricing.Client, regions []Re
 		}
 
 		regionToInstancesMap[region] = regionInstances
-		logger.Info("Fetched on-demand instances for region", zap.String("region", region.ToCodeString()), zap.Int("count", totalFetched))
+		logger.Info(
+			"fetched on-demand instances for region",
+			zap.String("region", region.ToCodeString()),
+			zap.Int("totalInstanceCount", total),
+			zap.Int("maxInstanceCount", total),
+		)
 	}
 
 	return regionToInstancesMap, nil

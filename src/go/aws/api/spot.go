@@ -24,28 +24,41 @@ func GetSpotInstances(
 
 	regionRevocationInfoMap, instanceSpecMap, err := fetchSpotInstanceRevocationInfoAndSpecsMap(config, logger)
 	if err != nil {
+		logger.Error("error fetching spot instance revocation info and specifications from API", zap.Error(err))
 		return nil, err
 	}
 
 	for _, region := range config.GetRegions() {
+		logger.Info("creating spot instances for region", zap.String("region", region.ToCodeString()))
 
-		regionRevocationInfo := regionRevocationInfoMap[region.ToCodeString()]
-		if err != nil {
+		regionRevocationInfo, ok := regionRevocationInfoMap[region.ToCodeString()]
+		if !ok {
 			// TODO: Handle more gracefully
-			return nil, err
+			logger.Error("could not find region revocation info", zap.String("region", region.ToCodeString()))
+			continue
 		}
+		logger.Debug("fetched revocation info")
+
 		regionSpotPrices, err := getSpotInstancePricesForRegion(region, config, creds, logger)
 		if err != nil {
 			// TODO: Handle more gracefully
+			logger.Error(
+				"could not fetch region spot prices",
+				zap.String("region", region.ToCodeString()),
+				zap.Error(err),
+			)
 			return nil, err
 		}
+		logger.Debug("fetched price info")
 		regionPriceMap := createInstancePriceMap(regionSpotPrices)
+		logger.Debug("created price map info")
 
 		instances, err := createRegionSpotInstances(region, &regionRevocationInfo, regionPriceMap, instanceSpecMap, logger)
 		if err != nil {
 			return nil, err
 		}
 		regionToInstanceMap[region] = instances
+		logger.Debug("Finished creating instances")
 		logger.Info("TOOD") // TODO: Log & count
 	}
 
@@ -71,21 +84,26 @@ func getSpotInstancePricesForRegion(
 		return nil, err
 	}
 	ec2Client := createEc2Client(awsConfig)
-	return fetchSpotInstanceAvailabilityInfo(ec2Client, logger)
+	logger.Info("created EC2 client")
+	return fetchSpotInstanceAvailabilityInfo(ec2Client, config.Constraints.MaxInstanceCount, logger)
 }
 
-func fetchSpotInstanceAvailabilityInfo(ec2Client *ec2.Client, logger *zap.Logger) ([]ec2Types.SpotPrice, error) {
+func fetchSpotInstanceAvailabilityInfo(ec2Client *ec2.Client, maxInstanceCount int, logger *zap.Logger) ([]ec2Types.SpotPrice, error) {
 	spotPrices := make([]ec2Types.SpotPrice, 0)
 
 	nextToken := ""
 	firstIter := true
-	for nextToken != "" || firstIter {
+	total := 0
+	for (total <= maxInstanceCount || maxInstanceCount <= 0) && (nextToken != "" || firstIter) {
 		resp, err := ec2Client.DescribeSpotPriceHistory(context.TODO(), &ec2.DescribeSpotPriceHistoryInput{})
 		if err != nil {
+			logger.Error("error calling DescribeSpotInstancePriceHistory to EC2 client", zap.Error(err))
 			return nil, err
 		}
+		logger.Info("fetched spot instance prices", zap.Int("count", len(resp.SpotPriceHistory)))
 
 		spotPrices = append(spotPrices, resp.SpotPriceHistory...)
+		total += len(spotPrices)
 
 		firstIter = false
 		if resp.NextToken != nil {
@@ -95,7 +113,11 @@ func fetchSpotInstanceAvailabilityInfo(ec2Client *ec2.Client, logger *zap.Logger
 		}
 	}
 
-	logger.Info("finished fetching spot instances pricing info", zap.Int("totalInstanceCount", len(spotPrices)))
+	logger.Info(
+		"finished fetching spot instances pricing info",
+		zap.Int("totalInstanceCount", len(spotPrices)),
+		zap.Int("maxInstanceCount", maxInstanceCount),
+	)
 	return spotPrices, nil
 }
 
@@ -109,26 +131,30 @@ func fetchSpotInstanceRevocationInfoAndSpecsMap(
 ) {
 	cwd, err := utils.GetCallerPath()
 	if err != nil {
+		logger.Error("failed to fetch current working directory", zap.Error(err))
 		return nil, nil, err
 	}
 
 	filepath, err := utils.CreateFilepath(cwd, config.DownloadsDir, "spot-instance-info.json")
 	if err != nil {
+		logger.Error("failed to create filepath", zap.Error(err))
 		return nil, nil, err
 	}
 
-	err = utils.DownloadFile(config.Endpoints.AwsSpotInstanceInfoUrl, filepath)
+	err = utils.DownloadFile(config.Endpoints.AwsSpotInstanceInfoUrl, filepath) // TODO: Return boolean on whether cache was used
 	if err != nil {
+		logger.Error("failed to download file", zap.String("getUrl", config.Endpoints.AwsSpotInstanceInfoUrl), zap.Error(err))
 		return nil, nil, err
 	}
 	logger.Info("downloaded spot instance revocation data",
 		zap.String("getUrl", config.Endpoints.AwsSpotInstanceInfoUrl),
-		zap.String("downloadFilepath", filepath), // TODO: Pass logger to download instead (as need to log cache check)
+		zap.String("downloadFilepath", filepath),
 	)
 
 	// TODO - Separate this out so we can test this with test file
 	infoFile, err := utils.FileToBytes(filepath)
 	if err != nil {
+		logger.Error("failed to parse file to bytes", zap.String("file", filepath), zap.Error(err))
 		return nil, nil, err
 	}
 
@@ -150,32 +176,51 @@ func createRegionSpotInstances(
 	instances := make([]Instance, 0)
 
 	// TODO: Wrap this in method to avoid repeated code for Windows
+
 	for instanceType, revocationInfo := range regionRevocationInfo.LinuxInstances {
-		spec, okSpec := instanceSpecMap[instanceType]
-		price, okPrice := regionInstancePriceMap[instanceType]
-		if okSpec && okPrice {
-			instance, err := createInstanceFromSpotInstanceInfo(&price, &revocationInfo, &spec, region, Linux)
-			if err != nil {
-				// TODO: Do something
-			}
-			instances = append(instances, *instance)
-		} else {
-			logger.Info("cannot create spot instance") // TODO: increase verbosity
+		spec, ok := instanceSpecMap[instanceType]
+		if !ok {
+			logger.Error(
+				"failed to create spot instance because no instance specification exists",
+				zap.String("instance", instanceType),
+			)
+			continue
 		}
+
+		price, ok := regionInstancePriceMap[instanceType]
+		if !ok {
+			logger.Error("failed to create spot instance")
+			continue
+		}
+
+		instance, err := createInstanceFromSpotInstanceInfo(&price, &revocationInfo, &spec, region, Linux)
+		if err != nil {
+			logger.Error("failed to create instance from given spot instance info", zap.Error(err))
+		}
+		instances = append(instances, *instance)
 	}
 
 	for instanceType, revocationInfo := range regionRevocationInfo.WindowsInstances {
-		spec, okSpec := instanceSpecMap[instanceType]
-		price, okPrice := regionInstancePriceMap[instanceType]
-		if okSpec && okPrice {
-			instance, err := createInstanceFromSpotInstanceInfo(&price, &revocationInfo, &spec, region, Windows)
-			if err != nil {
-				// TODO: Do something
-			}
-			instances = append(instances, *instance)
-		} else {
-			logger.Info("cannot create spot instance") // TODO: increase verbosity
+		spec, ok := instanceSpecMap[instanceType]
+		if !ok {
+			logger.Error(
+				"failed to create spot instance because no instance specification exists",
+				zap.String("instance", instanceType),
+			)
+			continue
 		}
+
+		price, ok := regionInstancePriceMap[instanceType]
+		if !ok {
+			logger.Error("failed to create spot instance")
+			continue
+		}
+
+		instance, err := createInstanceFromSpotInstanceInfo(&price, &revocationInfo, &spec, region, Windows)
+		if err != nil {
+			logger.Error("failed to create instance from given spot instance info", zap.Error(err))
+		}
+		instances = append(instances, *instance)
 	}
 
 	return instances, nil

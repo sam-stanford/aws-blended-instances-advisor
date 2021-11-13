@@ -25,11 +25,16 @@ func main() {
 	clf := parseCommandLineFlags(logger)
 	config := parseConfig(clf, logger)
 
-	fmt.Println(awsApi.GetInstances(config, logger))
+	regionInstancesMap, err := awsApi.GetInstances(config, logger)
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println(regionInstancesMap)
+	}
 }
 
 func createLogger() (*zap.Logger, func() error) {
-	logger, err := zap.NewProduction()
+	logger, err := zap.NewDevelopment() // TODO: NewProduction for prod & add cli flag & add more debug logs & change some info to debug level
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: Failed to start logger, %v\n", err)
 		os.Exit(1)

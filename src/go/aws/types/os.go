@@ -1,7 +1,6 @@
 package types
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -25,12 +24,11 @@ func (os OperatingSystem) ToString() string {
 
 func NewOperatingSystemFromString(value string) (OperatingSystem, error) {
 	switch value {
-	case "Linux":
+	case "Linux", "RHEL", "Red Hat Enterprise Linux with HA", "SUSE":
 		return Linux, nil
 	case "Windows":
 		return Windows, nil
 	}
 
-	return -1, errors.New(
-		fmt.Sprintf("provided value of %s does not match any operating system", value))
+	return -1, fmt.Errorf("provided value of %s does not match any operating system", value)
 }

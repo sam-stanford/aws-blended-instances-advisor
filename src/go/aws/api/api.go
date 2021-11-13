@@ -23,6 +23,8 @@ func GetInstances(config *config.Config, logger *zap.Logger) (map[Region][]Insta
 
 	creds := createAwsCredentials(config.Credentials.AwsKeyId, config.Credentials.AwsSecretKey)
 
+	// TODO: Use goroutines
+
 	onDemandInstances, err := GetOnDemandInstances(config, creds, logger)
 	if err != nil {
 		return nil, err

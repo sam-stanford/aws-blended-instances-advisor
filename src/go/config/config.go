@@ -19,8 +19,9 @@ type Service struct {
 }
 
 type Constraints struct {
-	Regions  []string  `json:"regions"`
-	Services []Service `json:"services"`
+	Regions          []string  `json:"regions"`
+	Services         []Service `json:"services"`
+	MaxInstanceCount int       `json:"maxInstanceCount"`
 }
 
 type Endpoints struct {
