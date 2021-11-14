@@ -1,7 +1,7 @@
 package config
 
 import (
-	. "ec2-test/aws/types"
+	awsTypes "ec2-test/aws/types"
 	"ec2-test/utils"
 	"encoding/json"
 )
@@ -35,6 +35,23 @@ type Config struct {
 	DownloadsDir string      `json:"downloadsDir"`
 }
 
+type publicConfig struct {
+	Constraints  Constraints `json:"constraints"`
+	Endpoints    Endpoints   `json:"endpoints"`
+	DownloadsDir string      `json:"downloadsDir"`
+}
+
+// TODO: Doc OR improve
+func (c *Config) ToPublicJson() string {
+	publicConfig := publicConfig{
+		Constraints:  c.Constraints,
+		Endpoints:    c.Endpoints,
+		DownloadsDir: c.DownloadsDir,
+	}
+	jsonBytes, _ := json.Marshal(publicConfig)
+	return string(jsonBytes)
+}
+
 func GetConfig(filepath string) (*Config, error) {
 	configBytes, err := utils.FileToBytes(filepath)
 	if err != nil {
@@ -53,10 +70,10 @@ func GetEmptyConfig() *Config {
 	return &Config{}
 }
 
-func (config *Config) GetRegions() []Region {
-	regions := make([]Region, len(config.Constraints.Regions))
+func (config *Config) GetRegions() []awsTypes.Region {
+	regions := make([]awsTypes.Region, len(config.Constraints.Regions))
 	for _, regionStr := range config.Constraints.Regions {
-		region, err := NewRegionFromString(regionStr)
+		region, err := awsTypes.NewRegionFromString(regionStr)
 		if err == nil {
 			// TODO: Do something with this error?
 			regions = append(regions, region)

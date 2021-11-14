@@ -60,7 +60,7 @@ func parseConfig(commandLineFlags commandLineFlags, logger *zap.Logger) *config.
 		logger.Fatal("failed to parse config", zap.String("configFilepath", configFilepath), zap.Error(err))
 	}
 
-	logger.Info("config parsed", zap.String("configFilepath", configFilepath), zap.Any("config", config))
+	logger.Info("config parsed", zap.String("configFilepath", configFilepath), zap.String("config", config.ToPublicJson()))
 
 	return config
 }
