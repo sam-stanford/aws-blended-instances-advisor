@@ -4,7 +4,6 @@ import (
 	awsApi "ec2-test/aws/api"
 	"ec2-test/config"
 	"ec2-test/utils"
-	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,18 +11,14 @@ import (
 	"go.uber.org/zap"
 )
 
-const DEFAULT_CONFIG_FILEPATH = "../../config.json"
-
-type commandLineFlags struct {
-	configFilepath string
-}
-
 func main() {
-	logger, deferCallback := createLogger()
+	clf := parseCommandLineFlags()
+
+	logger, deferCallback := createLogger(clf.debugMode)
 	defer deferCallback()
 
-	clf := parseCommandLineFlags(logger)
-	config := parseConfig(clf, logger)
+	logClf(clf, logger)
+	config := parseAndLogConfig(clf.configFilepath, logger)
 
 	regionInstancesMap, err := awsApi.GetInstances(config, logger)
 	if err != nil {
@@ -33,47 +28,59 @@ func main() {
 	}
 }
 
-func createLogger() (*zap.Logger, func() error) {
-	logger, err := zap.NewDevelopment() // TODO: NewProduction for prod & add cli flag & add more debug logs & change some info to debug level
+func createLogger(debugMode bool) (logger *zap.Logger, deferCallback func() error) {
+	logger, err := instantiateLogger(debugMode)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: Failed to start logger, %v\n", err)
-		os.Exit(1)
+		err = utils.PrependToError(err, "failed to start logger")
+		utils.StopProgramExecution(err, 1)
 	}
 	logger.Info("logger started")
 	return logger, logger.Sync
 }
 
-func parseConfig(commandLineFlags commandLineFlags, logger *zap.Logger) *config.Config {
-
-	cwd, err := utils.GetCallerPath()
-	if err != nil {
-		logger.Fatal("failed to fetch current working directory", zap.Error(err))
+func instantiateLogger(debugMode bool) (*zap.Logger, error) {
+	if debugMode {
+		return zap.NewDevelopment()
 	}
+	return zap.NewProduction()
+}
 
-	configFilepath, err := filepath.Abs(cwd + string(os.PathSeparator) + commandLineFlags.configFilepath)
+func parseAndLogConfig(configFilepath string, logger *zap.Logger) *config.Config {
+	config, absFilepath, err := parseConfig(configFilepath)
 	if err != nil {
-		logger.Fatal("failed to generate config filepath", zap.Error(err))
+		err = utils.PrependToError(err, "failed to parse config")
+		utils.StopProgramExecution(err, 1)
 	}
-
-	config, err := config.GetConfig(configFilepath)
-	if err != nil {
-		logger.Fatal("failed to parse config", zap.String("configFilepath", configFilepath), zap.Error(err))
-	}
-
-	logger.Info("config parsed", zap.String("configFilepath", configFilepath), zap.String("config", config.ToPublicJson()))
-
+	logConfig(config, absFilepath, logger)
 	return config
 }
 
-func parseCommandLineFlags(logger *zap.Logger) commandLineFlags {
-	configFilepath := flag.String("c", DEFAULT_CONFIG_FILEPATH, "the relative path to the config file")
-	flag.Parse()
-
-	clf := commandLineFlags{
-		configFilepath: *configFilepath,
+func parseConfig(configFilepath string) (cfg *config.Config, absFilepath string, err error) {
+	cwd, err := utils.GetCallerPath()
+	if err != nil {
+		err = utils.PrependToError(err, "failed to fetch current working directory")
+		return
 	}
 
-	logger.Info("command line flags parsed", zap.Any("flags", clf))
+	absFilepath, err = filepath.Abs(cwd + string(os.PathSeparator) + configFilepath)
+	if err != nil {
+		err = utils.PrependToError(err, "failed to generate config filepath")
+		return
+	}
 
-	return clf
+	cfg, err = config.GetConfig(absFilepath)
+	if err != nil {
+		err = utils.PrependToError(err, "failed to parse config")
+		return
+	}
+
+	return
+}
+
+func logConfig(config *config.Config, configFilepath string, logger *zap.Logger) {
+	logger.Info(
+		"config parsed",
+		zap.String("configFilepath", configFilepath),
+		zap.String("config", config.ToPublicJson()),
+	)
 }

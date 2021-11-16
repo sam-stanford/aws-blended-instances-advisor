@@ -1,0 +1,20 @@
+{
+  "credentials":{
+    "awsKeyId": "KEY_ID",
+    "awsSecretKey": "SECRET_KEY"
+  },
+  "constraints": {
+    "maxInstanceCount": 1000,
+    "regions": ["us-west-1"],
+    "services": [{
+      "name": "Test Service 1",
+      "minMemory": 1,
+      "minVcpu": 1,
+      "revocationSensitivity": 0.4
+    }]
+  },
+  "endpoints": {
+    "awsSpotInstanceInfoUrl": "https://spot-bid-advisor.s3.amazonaws.com/spot-advisor-data.json"
+  },
+  "downloadsDir": "../../assets/downloads"
+}

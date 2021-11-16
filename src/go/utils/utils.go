@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -69,4 +70,13 @@ func GetHttpHeader(url string) (http.Header, error) {
 		return nil, err
 	}
 	return head.Header, nil
+}
+
+func StopProgramExecution(err error, exitCode int) {
+	fmt.Fprintf(os.Stderr, "Stopping program execution: %s\n", err.Error())
+	os.Exit(exitCode)
+}
+
+func PrependToError(err error, message string) error {
+	return fmt.Errorf("%s: %s", message, err.Error())
 }

@@ -1,0 +1,22 @@
+{
+  "credentials":{
+    "awsKeyId": "KEY_ID",
+    "awsSecretKey": "SECRET_KEY"
+  },
+  "constraints": {
+    "maxInstanceCount": 1000,
+    "regions": ["region1", "region2"],
+    "services": [
+      {
+      "name": "TS1",
+      "minMemory": 2.0,
+      "minVcpu": 1,
+      "revocationSensitivity": 0.1
+      }
+    ]
+  },
+  "endpoints": {
+    "awsSpotInstanceInfoUrl": "TEST_URL"
+  },
+  "downloadsDir": "TEST_DIR"
+}

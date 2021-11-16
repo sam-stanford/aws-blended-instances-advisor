@@ -26,4 +26,8 @@ Time preference
 	- BUT we can achieve same performance for cheaper
 		- This is the key challenge
 
+Monetary preference
+- Naive: Take the cheapest instances regardless of other characteristics
+	- BUT revocations could actually increase the amount of time if the app is particularly sensitive to the info
+
 */

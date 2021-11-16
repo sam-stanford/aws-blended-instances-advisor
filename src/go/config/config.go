@@ -6,6 +6,13 @@ import (
 	"encoding/json"
 )
 
+type Config struct {
+	Credentials  Credentials `json:"credentials"`
+	Constraints  Constraints `json:"constraints"`
+	Endpoints    Endpoints   `json:"endpoints"`
+	DownloadsDir string      `json:"downloadsDir"`
+}
+
 type Credentials struct {
 	AwsKeyId     string `json:"awsKeyId"`
 	AwsSecretKey string `json:"awsSecretKey"`
@@ -28,13 +35,6 @@ type Endpoints struct {
 	AwsSpotInstanceInfoUrl string `json:"awsSpotInstanceInfoUrl"`
 }
 
-type Config struct {
-	Credentials  Credentials `json:"credentials"`
-	Constraints  Constraints `json:"constraints"`
-	Endpoints    Endpoints   `json:"endpoints"`
-	DownloadsDir string      `json:"downloadsDir"`
-}
-
 type publicConfig struct {
 	Constraints  Constraints `json:"constraints"`
 	Endpoints    Endpoints   `json:"endpoints"`
@@ -55,19 +55,15 @@ func (c *Config) ToPublicJson() string {
 func GetConfig(filepath string) (*Config, error) {
 	configBytes, err := utils.FileToBytes(filepath)
 	if err != nil {
-		return GetEmptyConfig(), err
+		return nil, err
 	}
 
 	var c Config
 	err = json.Unmarshal(configBytes, &c)
 	if err != nil {
-		return GetEmptyConfig(), err
+		return nil, err
 	}
 	return &c, nil
-}
-
-func GetEmptyConfig() *Config {
-	return &Config{}
 }
 
 func (config *Config) GetRegions() []awsTypes.Region {
@@ -81,3 +77,7 @@ func (config *Config) GetRegions() []awsTypes.Region {
 	}
 	return regions
 }
+
+// TODO: Constraints on values
+// - Revoc sensititvity in range
+// - Unique service names
