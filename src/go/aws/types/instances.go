@@ -1,5 +1,7 @@
 package types
 
+import "sort"
+
 type Instance struct {
 	Name                  string
 	MemoryGb              float32
@@ -9,6 +11,30 @@ type Instance struct {
 	OperatingSystem       OperatingSystem
 	PricePerHour          float64
 	RevocationProbability float32
+}
+
+// Sorts a given slice of Instances in place from startIndex to endIndex (exclusive)
+// in increasing order of price
+func SortInstancesByPrice(instances []Instance, startIndex int, endIndex int) {
+	sort.Slice(instances[startIndex:endIndex], func(i, j int) bool {
+		return instances[i].PricePerHour < instances[j].PricePerHour
+	})
+}
+
+// Sorts a given slice of Instances in place from startIndex to endIndex (exclusive)
+// in increasing order of memory
+func SortInstancesByMemory(instances []Instance, startIndex int, endIndex int) {
+	sort.Slice(instances[startIndex:endIndex], func(i, j int) bool {
+		return instances[i].MemoryGb < instances[j].MemoryGb
+	})
+}
+
+// Sorts a given slice of Instances in place from startIndex to endIndex (exclusive)
+// in increasing order of the number of VCPUs
+func SortInstancesByVcpus(instances []Instance, startIndex int, endIndex int) {
+	sort.Slice(instances[startIndex:endIndex], func(i, j int) bool {
+		return instances[i].Vcpus < instances[j].Vcpus
+	})
 }
 
 /* TODO: Notes

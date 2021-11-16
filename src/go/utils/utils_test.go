@@ -65,8 +65,8 @@ func TestGetHttpHeader(t *testing.T) {
 }
 
 func TestPrependToError(t *testing.T) {
-	str1 := "new err"
-	str2 := "prev err"
+	str1 := "prev err"
+	str2 := "new err"
 	joined := "new err: prev err"
 
 	err1 := errors.New(str1)
