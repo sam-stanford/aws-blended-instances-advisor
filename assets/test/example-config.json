@@ -1,0 +1,34 @@
+{
+  "credentials":{
+    "production": {
+      "awsKeyId": "PROD_KEY_ID",
+      "awsSecretKey": "PROD_SECRET_KEY"
+    },
+    "development": {
+      "awsKeyId": "DEV_KEY_ID",
+      "awsSecretKey": "DEV_SECRET_KEY"
+    },
+    "test": {
+      "awsKeyId": "TEST_KEY_ID",
+      "awsSecretKey": "TEST_SECRET_KEY"
+    }
+  },
+  "constraints": {
+    "regions": ["us-west-1", "us-west-2"],
+    "services": [
+      {
+      "name": "TS1",
+      "minMemory": 2.0,
+      "minVcpu": 1,
+      "revocationSensitivity": 0.1
+      }
+    ]
+  },
+  "api": {
+    "endpoints": {
+      "awsSpotInstanceInfoUrl": "TEST_URL"
+    },
+    "maxInstancesToFetch": 1000,
+    "downloadsDir": "TEST_DIR"
+  }
+}

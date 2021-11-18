@@ -17,10 +17,20 @@ func main() {
 	logger, deferCallback := createLogger(clf.debugMode)
 	defer deferCallback()
 
-	logClf(clf, logger)
-	config := parseAndLogConfig(clf.configFilepath, logger)
+	logCommandLineFlags(&clf, logger)
 
-	regionInstancesMap, err := awsApi.GetInstances(config, logger)
+	config := parseAndLogConfig(clf.configFilepath, logger)
+	creds := getCredentialsForMode(clf.productionMode, config)
+
+	// TODO
+	os.Exit(0)
+
+	regionInstancesMap, err := awsApi.GetInstances(
+		&config.ApiConfig,
+		&creds,
+		config.GetRegions(),
+		logger,
+	)
 	if err != nil {
 		fmt.Println(err)
 	} else {
@@ -48,7 +58,10 @@ func instantiateLogger(debugMode bool) (*zap.Logger, error) {
 func parseAndLogConfig(configFilepath string, logger *zap.Logger) *config.Config {
 	config, absFilepath, err := parseConfig(configFilepath)
 	if err != nil {
-		err = utils.PrependToError(err, "failed to parse config")
+		err = utils.PrependToError(
+			err,
+			fmt.Sprintf("failed to parse config from %s", absFilepath),
+		)
 		utils.StopProgramExecution(err, 1)
 	}
 	logConfig(config, absFilepath, logger)
@@ -68,7 +81,7 @@ func parseConfig(configFilepath string) (cfg *config.Config, absFilepath string,
 		return
 	}
 
-	cfg, err = config.GetConfig(absFilepath)
+	cfg, err = config.ParseConfig(absFilepath)
 	if err != nil {
 		err = utils.PrependToError(err, "failed to parse config")
 		return
@@ -81,6 +94,20 @@ func logConfig(config *config.Config, configFilepath string, logger *zap.Logger)
 	logger.Info(
 		"config parsed",
 		zap.String("configFilepath", configFilepath),
-		zap.String("config", config.ToPublicJson()),
+		zap.String("config", config.ToString()),
 	)
+	// TODO: Stop escaping quotes
+}
+
+func getCredentialsForMode(isProductionMode bool, c *config.Config) config.Credentials {
+	if isProductionMode {
+		return c.Credentials.Production
+	}
+	return c.Credentials.Development
+}
+
+func logCommandLineFlags(clf *commandLineFlags, logger *zap.Logger) {
+	fmt.Printf("FLAGS: %+v\n", clf)
+	// TODO: Not printing parsed flags
+	logger.Info("command line flags parsed", zap.Any("flags", clf))
 }

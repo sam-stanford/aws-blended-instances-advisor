@@ -116,7 +116,7 @@ func (info *onDemandInstanceInfo) toInstance() (*Instance, error) {
 	if err != nil {
 		return nil, err
 	}
-	region, err := NewRegionFromString(info.Specs.Attributes.Location)
+	region, err := NewRegion(info.Specs.Attributes.Location)
 	if err != nil {
 		return nil, err
 	}

@@ -126,7 +126,7 @@ func (region Region) ToNameString() string {
 	}
 }
 
-func NewRegionFromString(value string) (Region, error) {
+func NewRegion(value string) (Region, error) {
 	switch value {
 	case "us-east-1", "US East (N. Virginia)":
 		return UsEast1, nil

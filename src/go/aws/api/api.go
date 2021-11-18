@@ -18,28 +18,34 @@ const (
 	AWS_PRICING_API_REGION = "us-east-1" // Only us-east-1 works currently (2021-11-11)
 )
 
-// TODO: Doc comment
-func GetInstances(config *config.Config, logger *zap.Logger) (map[Region][]Instance, error) {
+// TODO: Doc comment & use go routines to parallelise fetches
+func GetInstances(
+	apiConfig *config.ApiConfig,
+	creds *config.Credentials,
+	regions []Region,
+	logger *zap.Logger,
+) (
+	map[Region][]Instance,
+	error,
+) {
 
-	creds := createAwsCredentials(config.Credentials.AwsKeyId, config.Credentials.AwsSecretKey)
+	awsCreds := createAwsCredentials(creds)
 
-	// TODO: Use goroutines
-
-	onDemandInstances, err := GetOnDemandInstances(config, creds, logger)
+	onDemandInstances, err := GetOnDemandInstances(apiConfig, regions, awsCreds, logger)
 	if err != nil {
 		return nil, err
 	}
-	spotInstances, err := GetSpotInstances(config, creds, logger)
+	spotInstances, err := GetSpotInstances(apiConfig, regions, awsCreds, logger)
 	if err != nil {
 		return nil, err
 	}
 
-	instances := joinSpotAndOnDemandInstances(onDemandInstances, spotInstances, config.GetRegions())
+	instances := joinSpotAndOnDemandInstances(onDemandInstances, spotInstances, regions)
 	return instances, nil
 }
 
-func createAwsCredentials(keyId string, secretKey string) credentials.StaticCredentialsProvider {
-	return credentials.NewStaticCredentialsProvider(keyId, secretKey, "")
+func createAwsCredentials(creds *config.Credentials) credentials.StaticCredentialsProvider {
+	return credentials.NewStaticCredentialsProvider(creds.AwsKeyId, creds.AwsSecretKey, "")
 }
 
 func createAwsConfig(awsRegion string, creds credentials.StaticCredentialsProvider) (aws.Config, error) {
@@ -56,7 +62,7 @@ func createEc2Client(awsConfig aws.Config) *ec2.Client {
 
 func createAwsPricingClient(awsCredentials credentials.StaticCredentialsProvider) *pricing.Client {
 	return pricing.New(pricing.Options{
-		Region:      AWS_PRICING_API_REGION, // TODO: Is this the fixed one? If so, comment required
+		Region:      AWS_PRICING_API_REGION,
 		Credentials: awsCredentials,
 	})
 }

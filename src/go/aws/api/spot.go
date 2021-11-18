@@ -14,8 +14,10 @@ import (
 	"go.uber.org/zap"
 )
 
+// TODO: Remove dep on Config
 func GetSpotInstances(
-	config *config.Config,
+	config *config.ApiConfig,
+	regions []Region,
 	creds credentials.StaticCredentialsProvider,
 	logger *zap.Logger,
 ) (map[Region][]Instance, error) {
@@ -28,7 +30,7 @@ func GetSpotInstances(
 		return nil, err
 	}
 
-	for _, region := range config.GetRegions() {
+	for _, region := range regions {
 		logger.Info("creating spot instances for region", zap.String("region", region.ToCodeString()))
 
 		regionRevocationInfo, ok := regionRevocationInfoMap[region.ToCodeString()]
@@ -39,7 +41,7 @@ func GetSpotInstances(
 		}
 		logger.Debug("fetched revocation info")
 
-		regionSpotPrices, err := getSpotInstancePricesForRegion(region, config, creds, logger)
+		regionSpotPrices, err := getSpotInstancePricesForRegion(config, region, creds, logger)
 		if err != nil {
 			// TODO: Handle more gracefully
 			logger.Error(
@@ -74,8 +76,8 @@ func createInstancePriceMap(spotPrices []ec2Types.SpotPrice) map[string]ec2Types
 }
 
 func getSpotInstancePricesForRegion(
+	config *config.ApiConfig,
 	region Region,
-	config *config.Config,
 	creds credentials.StaticCredentialsProvider,
 	logger *zap.Logger,
 ) ([]ec2Types.SpotPrice, error) {
@@ -85,10 +87,18 @@ func getSpotInstancePricesForRegion(
 	}
 	ec2Client := createEc2Client(awsConfig)
 	logger.Info("created EC2 client")
-	return fetchSpotInstanceAvailabilityInfo(ec2Client, config.Constraints.MaxInstanceCount, logger)
+	return fetchSpotInstanceAvailabilityInfo(ec2Client, config.MaxInstancesToFetch, logger)
 }
 
-func fetchSpotInstanceAvailabilityInfo(ec2Client *ec2.Client, maxInstanceCount int, logger *zap.Logger) ([]ec2Types.SpotPrice, error) {
+func fetchSpotInstanceAvailabilityInfo(
+	ec2Client *ec2.Client,
+	maxInstanceCount int,
+	logger *zap.Logger,
+) (
+	[]ec2Types.SpotPrice,
+	error,
+) {
+
 	spotPrices := make([]ec2Types.SpotPrice, 0)
 
 	nextToken := ""
@@ -118,11 +128,20 @@ func fetchSpotInstanceAvailabilityInfo(ec2Client *ec2.Client, maxInstanceCount i
 		zap.Int("totalInstanceCount", len(spotPrices)),
 		zap.Int("maxInstanceCount", maxInstanceCount),
 	)
+
+	if len(spotPrices) > maxInstanceCount {
+		logger.Info(
+			"removed excess instances to keep to max instance count",
+			zap.Int("removed", len(spotPrices)-maxInstanceCount),
+		)
+		spotPrices = spotPrices[:maxInstanceCount]
+	}
+
 	return spotPrices, nil
 }
 
 func fetchSpotInstanceRevocationInfoAndSpecsMap(
-	config *config.Config,
+	config *config.ApiConfig,
 	logger *zap.Logger,
 ) (
 	map[string]regionSpotInstanceRevocationInfo,

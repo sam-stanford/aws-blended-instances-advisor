@@ -16,7 +16,8 @@ const (
 )
 
 func GetOnDemandInstances(
-	config *config.Config,
+	config *config.ApiConfig,
+	regions []Region,
 	creds credentials.StaticCredentialsProvider,
 	logger *zap.Logger,
 ) (
@@ -24,8 +25,12 @@ func GetOnDemandInstances(
 	error,
 ) {
 	pricingClient := createAwsPricingClient(creds)
-	regions := config.GetRegions()
-	return getRegionToOnDemandInstancesMap(pricingClient, regions, config.Constraints.MaxInstanceCount, logger)
+	return getRegionToOnDemandInstancesMap(
+		pricingClient,
+		regions,
+		config.MaxInstancesToFetch,
+		logger,
+	)
 }
 
 func getRegionToOnDemandInstancesMap(
@@ -37,7 +42,6 @@ func getRegionToOnDemandInstancesMap(
 	map[Region][]Instance,
 	error,
 ) {
-	// TODO: Cache results - maybe cache entire list of instances instead
 
 	regionToInstancesMap := make(map[Region][]Instance)
 
@@ -76,13 +80,23 @@ func getRegionToOnDemandInstancesMap(
 			}
 		}
 
-		regionToInstancesMap[region] = regionInstances
 		logger.Info(
 			"fetched on-demand instances for region",
 			zap.String("region", region.ToCodeString()),
 			zap.Int("totalInstanceCount", total),
 			zap.Int("maxInstanceCount", total),
 		)
+
+		if len(regionInstances) > maxInstanceCount {
+			logger.Info(
+				"removed excess instances to keep to max instance count",
+				zap.String("region", region.ToCodeString()),
+				zap.Int("removed", len(regionInstances)-maxInstanceCount),
+			)
+			regionInstances = regionInstances[:maxInstanceCount]
+		}
+
+		regionToInstancesMap[region] = regionInstances
 	}
 
 	return regionToInstancesMap, nil

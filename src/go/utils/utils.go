@@ -7,7 +7,10 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 // TODO: Doc comments
@@ -79,4 +82,54 @@ func StopProgramExecution(err error, exitCode int) {
 
 func PrependToError(err error, message string) error {
 	return fmt.Errorf("%s: %s", message, err.Error())
+}
+
+func CreateMockLogger() (*zap.Logger, error) {
+	cfg := zap.NewProductionConfig()
+	cfg.OutputPaths = []string{}
+	return cfg.Build()
+}
+
+// TODO: Doc
+func AnyFieldsAreEmpty(i interface{}) (bool, string) {
+	elem := reflect.ValueOf(i).Elem()
+	return anyFieldsAreEmptyHelper(elem)
+}
+
+func anyFieldsAreEmptyHelper(elem reflect.Value) (bool, string) {
+	for fieldIndex := 0; fieldIndex < elem.NumField(); fieldIndex += 1 {
+
+		field := elem.Field(fieldIndex)
+
+		if field.Kind() == reflect.Struct {
+			empty, field := anyFieldsAreEmptyHelper(field)
+			if empty {
+				return true, field
+			}
+		} else if !isNumericOrBoolType(field.Kind()) && field.IsZero() {
+			return true, elem.Type().Field(fieldIndex).Name
+		}
+	}
+
+	return false, ""
+}
+
+func isNumericOrBoolType(k reflect.Kind) bool {
+	types := []reflect.Kind{
+		reflect.Float32,
+		reflect.Float64,
+		reflect.Int8,
+		reflect.Int16,
+		reflect.Int32,
+		reflect.Int64,
+		reflect.Bool,
+	}
+
+	for _, t := range types {
+		if k == t {
+			return true
+		}
+	}
+
+	return false
 }

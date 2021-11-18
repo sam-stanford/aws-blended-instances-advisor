@@ -10,10 +10,6 @@ const (
 	TEST_TXT_FILE_CONTENT = "TEST TEXT"
 )
 
-type testStruct struct {
-	value int
-}
-
 func TestFileToBytes(t *testing.T) {
 	bytes, err := FileToBytes(TEST_TXT_FILEPATH)
 	if err != nil {
@@ -75,3 +71,13 @@ func TestPrependToError(t *testing.T) {
 		t.Fatalf("String not prepended correctly. Wanted: %s, got: %s", joined, err2.Error())
 	}
 }
+
+func TestCreateMockLogger(t *testing.T) {
+	logger, err := CreateMockLogger()
+	if err != nil {
+		t.Fatalf("Error returned when creating logger: %s", err.Error())
+	}
+	logger.Info("") // Should not throw error
+}
+
+// TODO: Test empty field checker

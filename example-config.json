@@ -1,7 +1,17 @@
 {
   "credentials":{
-    "awsKeyId": "KEY_ID",
-    "awsSecretKey": "SECRET_KEY"
+    "production": {
+      "awsKeyId": "YOUR KEY ID HERE",
+      "awsSecretKey": "YOUR SECRET KEY HERE"
+    },
+    "development": {
+      "awsKeyId": "YOUR KEY ID HERE",
+      "awsSecretKey": "YOUR SECRET KEY HERE"
+    },
+    "test": {
+      "awsKeyId": "YOUR KEY ID HERE",
+      "awsSecretKey": "YOUR SECRET KEY HERE"
+    }
   },
   "constraints": {
     "maxInstanceCount": 1000,
