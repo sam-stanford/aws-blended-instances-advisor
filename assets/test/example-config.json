@@ -30,5 +30,9 @@
     },
     "maxInstancesToFetch": 1000,
     "downloadsDir": "TEST_DIR"
+  },
+  "cache": {
+    "filepath": "TEST_CACHE_FILE",
+    "defaultLifetime": 200
   }
 }

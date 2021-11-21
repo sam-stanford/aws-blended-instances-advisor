@@ -12,13 +12,15 @@ const (
 	DEFAULT_API_SPOT_INSTANCE_INFO_URL = "https://spot-bid-advisor.s3.amazonaws.com/spot-advisor-data.json"
 	DEFAULT_API_MAX_INSTANCES_TO_FETCH = 0
 	DEFAULT_API_DOWNLOADS_DIR          = "../../assets/downloads"
-	DEFAULT_API_CACHE_DIR              = "../../assets/cache"
+	DEFAULT_CACHE_FILEPATH             = "../../assets/cache/cache.json"
+	DEFAULT_CACHE_DEFAULT_LIFETIME     = 96
 )
 
 type Config struct {
 	Credentials CredentialsList `json:"credentials"`
 	Constraints Constraints     `json:"constraints"`
 	ApiConfig   ApiConfig       `json:"api"`
+	CacheConfig CacheConfig     `json:"cache"`
 }
 
 type CredentialsList struct {
@@ -54,6 +56,11 @@ type Endpoints struct {
 	AwsSpotInstanceInfoUrl string `json:"awsSpotInstanceInfoUrl"`
 }
 
+type CacheConfig struct {
+	Filepath        string `json:"filepath"`
+	DefaultLifetime int    `json:"defaultLifetime"`
+}
+
 // TODO: Doc comments
 
 func ParseConfig(filepath string) (*Config, error) {
@@ -69,6 +76,10 @@ func ParseConfig(filepath string) (*Config, error) {
 			},
 			DownloadsDir:        DEFAULT_API_DOWNLOADS_DIR,
 			MaxInstancesToFetch: DEFAULT_API_MAX_INSTANCES_TO_FETCH,
+		},
+		CacheConfig: CacheConfig{
+			Filepath:        DEFAULT_CACHE_FILEPATH,
+			DefaultLifetime: DEFAULT_CACHE_DEFAULT_LIFETIME,
 		},
 	}
 

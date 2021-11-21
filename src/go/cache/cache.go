@@ -9,6 +9,7 @@ import (
 )
 
 // TODO: Doc comments
+// TODO: Use
 
 type Cache struct {
 	Filepath string                `json:"-"`

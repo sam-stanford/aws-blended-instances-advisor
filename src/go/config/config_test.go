@@ -79,6 +79,13 @@ func TestParseConfig(t *testing.T) {
 	if cfg.ApiConfig.Endpoints.AwsSpotInstanceInfoUrl != "TEST_URL" {
 		t.Fatalf("Incorrect spot instances URL parsed. Wanted: %s, got: %s", "TEST_URL", cfg.ApiConfig.Endpoints.AwsSpotInstanceInfoUrl)
 	}
+
+	if cfg.CacheConfig.Filepath != "TEST_CACHE_FILE" {
+		t.Fatalf("Incorrect cache filepath parsed. Wanted: %s, got: %s", "TEST_CACHE_URL", cfg.CacheConfig.Filepath)
+	}
+	if cfg.CacheConfig.DefaultLifetime != 200 {
+		t.Fatalf("Incorrect cache default lifetime parsed. Wanted: %d, got: %d", 200, cfg.CacheConfig.DefaultLifetime)
+	}
 }
 
 func TestToStringDoesNotContainCredentials(t *testing.T) {
