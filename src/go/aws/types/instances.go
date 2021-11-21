@@ -2,19 +2,20 @@ package types
 
 import "sort"
 
+// TODO: Doc
 type Instance struct {
-	Name                  string
-	MemoryGb              float32
-	Vcpus                 int
-	Region                Region
-	AvailabilityZone      string
-	OperatingSystem       OperatingSystem
-	PricePerHour          float64
-	RevocationProbability float32
+	Name                  string          `json:"name"`
+	MemoryGb              float32         `json:"memory"`
+	Vcpus                 int             `json:"vcpu"`
+	Region                Region          `json:"region"`
+	AvailabilityZone      string          `json:"az"`
+	OperatingSystem       OperatingSystem `json:"os"`
+	PricePerHour          float64         `json:"price"`
+	RevocationProbability float32         `json:"revocProb"`
 }
 
 // Sorts a given slice of Instances in place from startIndex to endIndex (exclusive)
-// in increasing order of price
+// in increasing order of price.
 func SortInstancesByPrice(instances []Instance, startIndex int, endIndex int) {
 	sort.Slice(instances[startIndex:endIndex], func(i, j int) bool {
 		return instances[i].PricePerHour < instances[j].PricePerHour
@@ -22,7 +23,7 @@ func SortInstancesByPrice(instances []Instance, startIndex int, endIndex int) {
 }
 
 // Sorts a given slice of Instances in place from startIndex to endIndex (exclusive)
-// in increasing order of memory
+// in increasing order of memory.
 func SortInstancesByMemory(instances []Instance, startIndex int, endIndex int) {
 	sort.Slice(instances[startIndex:endIndex], func(i, j int) bool {
 		return instances[i].MemoryGb < instances[j].MemoryGb
@@ -30,7 +31,7 @@ func SortInstancesByMemory(instances []Instance, startIndex int, endIndex int) {
 }
 
 // Sorts a given slice of Instances in place from startIndex to endIndex (exclusive)
-// in increasing order of the number of VCPUs
+// in increasing order of the number of VCPUs.
 func SortInstancesByVcpus(instances []Instance, startIndex int, endIndex int) {
 	sort.Slice(instances[startIndex:endIndex], func(i, j int) bool {
 		return instances[i].Vcpus < instances[j].Vcpus
