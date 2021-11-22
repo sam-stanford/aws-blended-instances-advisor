@@ -8,33 +8,33 @@ import (
 )
 
 const (
-	TEST_CACHE_FILEPATH = "../../../assets/test/test-cache.json"
+	TEST_CACHE_DIRPATH = "../../../assets/test/test-cache/"
 
-	TEST_FILE_FILEPATH       = "../../../assets/test/test-cache-file.txt"
+	TEST_FILE_FILENAME       = "test-cache-file.txt"
 	TEST_FILE_CONTENT        = "TEST CONTENT"
 	TEST_FILE_ENTRY_SET_DATE = "2000-01-01T13:00:00Z"
 	TEST_FILE_ENTRY_DURATION = "1h"
 )
 
 func setup() (
-	absTestFileFilepath string,
+	testCacheDirpath string,
 	testSetDate time.Time,
 	testDuration time.Duration,
 	err error,
 ) {
-	exists, err := utils.FileExists(TEST_CACHE_FILEPATH)
+	cacheFileFilepath, err := utils.CreateFilepath(TEST_CACHE_DIRPATH, CACHE_FILENAME)
+	if err != nil {
+		err = utils.PrependToError(err, "could not create cache file's path")
+		return
+	}
+
+	exists, err := utils.FileExists(cacheFileFilepath)
 	if err != nil {
 		err = utils.PrependToError(err, "failed to check if test cache file exists")
 		return
 	}
 	if exists {
 		err = errors.New("test cache file already exists")
-		return
-	}
-
-	absTestFileFilepath, err = utils.AbsoluteFilepath(TEST_FILE_FILEPATH)
-	if err != nil {
-		err = utils.PrependToError(err, "failed to get absolute path for test entry")
 		return
 	}
 
@@ -54,12 +54,17 @@ func setup() (
 }
 
 func cleanup() error {
-	exists, err := utils.FileExists(TEST_CACHE_FILEPATH)
+	cacheFileFilepath, err := utils.CreateFilepath(TEST_CACHE_DIRPATH, CACHE_FILENAME)
+	if err != nil {
+		return utils.PrependToError(err, "could not create cache file's path")
+	}
+
+	exists, err := utils.FileExists(cacheFileFilepath)
 	if err != nil {
 		return utils.PrependToError(err, "error when checking if cache file exists")
 	}
 	if exists {
-		err = utils.DeleteFile(TEST_CACHE_FILEPATH)
+		err = utils.DeleteFile(cacheFileFilepath)
 		if err != nil {
 			return utils.PrependToError(err, "failed to delete cache file")
 		}
@@ -73,12 +78,12 @@ func TestNew(t *testing.T) {
 		t.Fatalf("Setup failed: %s", err.Error())
 	}
 
-	cache, err := New(TEST_CACHE_FILEPATH)
+	cache, err := New(TEST_CACHE_DIRPATH)
 	if err != nil || cache == nil {
 		t.Fatalf("Error occurred when creating cache with no previous file: %s", err.Error())
 	}
 
-	cache, err = New(TEST_CACHE_FILEPATH)
+	cache, err = New(TEST_CACHE_DIRPATH)
 	if err != nil || cache == nil {
 		t.Fatalf("Error occurred when creating cache with previously existing file: %s", err.Error())
 	}
@@ -90,30 +95,25 @@ func TestNew(t *testing.T) {
 }
 
 func TestGetEntry(t *testing.T) {
-	absTestFileFilepath, testSetDate, testDuration, err := setup()
+	_, testSetDate, testDuration, err := setup()
 	if err != nil {
 		t.Fatalf("Setup failed: %s", err.Error())
 	}
 	testInvalidationDate := testSetDate.Add(testDuration)
 
-	cache, err := New(TEST_CACHE_FILEPATH)
+	cache, err := New(TEST_CACHE_DIRPATH)
 	if err != nil {
 		t.Fatalf("Error when creating cache: %s", err.Error())
 	}
 
-	absTestCacheFilepath, err := utils.AbsoluteFilepath(TEST_CACHE_FILEPATH)
-	if err != nil {
-		t.Fatalf("Error when creating absolute filepath: %s", err.Error())
-	}
-
 	setEntry := CacheEntry{
-		Filepath:         absTestFileFilepath,
+		Filename:         TEST_FILE_FILENAME,
 		SetDate:          testSetDate,
 		InvalidationDate: testInvalidationDate,
 	}
-	cache.Entries[absTestCacheFilepath] = setEntry
+	cache.Entries[TEST_FILE_FILENAME] = setEntry
 
-	gotEntry, err := cache.GetEntry(TEST_CACHE_FILEPATH)
+	gotEntry, err := cache.GetEntry(TEST_FILE_FILENAME)
 	if err != nil {
 		t.Fatalf("Error when getting entry from cache: %s", err.Error())
 	}
@@ -132,11 +132,11 @@ func TestGetEntry(t *testing.T) {
 			gotEntry.InvalidationDate,
 		)
 	}
-	if gotEntry.Filepath != absTestFileFilepath {
+	if gotEntry.Filename != TEST_FILE_FILENAME {
 		t.Fatalf(
-			"Filepath returend from from GetEntry does not match set filepath. Wanted: %s, got: %s",
-			absTestFileFilepath,
-			gotEntry.Filepath,
+			"Filename returend from from GetEntry does not match set Filename. Wanted: %s, got: %s",
+			TEST_FILE_FILENAME,
+			gotEntry.Filename,
 		)
 	}
 
@@ -147,12 +147,12 @@ func TestGetEntry(t *testing.T) {
 }
 
 func TestSet(t *testing.T) {
-	testFileAbsPath, _, testDuration, err := setup()
+	_, _, testDuration, err := setup()
 	if err != nil {
 		t.Fatalf("Setup failed: %s", err.Error())
 	}
 
-	cache, err := New(TEST_CACHE_FILEPATH)
+	cache, err := New(TEST_CACHE_DIRPATH)
 	if err != nil {
 		t.Fatalf("Error when creating cache: %s", err.Error())
 	}
@@ -163,18 +163,18 @@ func TestSet(t *testing.T) {
 	earliestInvalidationDate := earliestSetDate.Add(testDuration)
 	latestInvalidationDate := latestSetDate.Add(testDuration)
 
-	err = cache.Set(TEST_FILE_FILEPATH, TEST_FILE_CONTENT, testDuration)
+	err = cache.Set(TEST_FILE_FILENAME, TEST_FILE_CONTENT, testDuration)
 	if err != nil {
 		t.Fatalf("Error when setting entry in cache: %s", err.Error())
 	}
 
-	entry, err := cache.GetEntry(TEST_FILE_FILEPATH)
+	entry, err := cache.GetEntry(TEST_FILE_FILENAME)
 	if err != nil {
 		t.Fatalf("Error when getting entry from cache: %s", err.Error())
 	}
 
-	if entry.Filepath != testFileAbsPath {
-		t.Fatalf("Entry filepath is incorrect. Wanted: %s, got: %s", testFileAbsPath, entry.Filepath)
+	if entry.Filename != TEST_FILE_FILENAME {
+		t.Fatalf("Entry filename is incorrect. Wanted: %s, got: %s", TEST_FILE_FILENAME, entry.Filename)
 	}
 	if !(entry.SetDate.After(earliestSetDate) && entry.SetDate.Before(latestSetDate)) {
 		t.Fatalf(
@@ -206,15 +206,12 @@ func TestIsValid(t *testing.T) {
 		t.Fatalf("Setup failed: %s", err.Error())
 	}
 
-	cache, err := New(TEST_CACHE_FILEPATH)
+	cache, err := New(TEST_CACHE_DIRPATH)
 	if err != nil {
 		t.Fatalf("Error creating cache: %s", err.Error())
 	}
 
-	isValid, err := cache.IsValid(TEST_FILE_FILEPATH)
-	if err != nil {
-		t.Fatalf("Error when checking entry's validity: %s", err.Error())
-	}
+	isValid := cache.IsValid(TEST_FILE_FILENAME)
 	if isValid {
 		t.Fatalf(
 			"Non-existent entry returned as valid from cache. Wanted: %t, got: %t",
@@ -223,16 +220,14 @@ func TestIsValid(t *testing.T) {
 		)
 	}
 
-	err = cache.Set(TEST_FILE_FILEPATH, TEST_FILE_CONTENT, 50*time.Millisecond)
+	err = cache.Set(TEST_FILE_FILENAME, TEST_FILE_CONTENT, 20*time.Millisecond)
 	if err != nil {
 		t.Fatalf("Error when setting value in cache: %s", err.Error())
 	}
 
-	time.Sleep(55 * time.Millisecond) // Wait until entry is invalid
-	isValid, err = cache.IsValid(TEST_FILE_FILEPATH)
-	if err != nil {
-		t.Fatalf("Error when checking entry's validity: %s", err.Error())
-	}
+	time.Sleep(40 * time.Millisecond) // Wait until entry is invalid
+
+	isValid = cache.IsValid(TEST_FILE_FILENAME)
 	if isValid {
 		t.Fatalf(
 			"Invalid entry returned as valid from cache. Wanted: %t, got: %t",
@@ -241,15 +236,12 @@ func TestIsValid(t *testing.T) {
 		)
 	}
 
-	err = cache.Set(TEST_FILE_FILEPATH, TEST_FILE_CONTENT, time.Hour)
+	err = cache.Set(TEST_FILE_FILENAME, TEST_FILE_CONTENT, time.Hour)
 	if err != nil {
 		t.Fatalf("Error when setting value in cache: %s", err.Error())
 	}
 
-	isValid, err = cache.IsValid(TEST_FILE_FILEPATH)
-	if err != nil {
-		t.Fatalf("Error when checking entry's validity: %s", err.Error())
-	}
+	isValid = cache.IsValid(TEST_FILE_FILENAME)
 	if !isValid {
 		t.Fatalf(
 			"Valid entry returned as invalid from cache. Wanted: %t, got: %t",
@@ -270,33 +262,33 @@ func TestGet(t *testing.T) {
 		t.Fatalf("Setup failed: %s", err.Error())
 	}
 
-	cache, err := New(TEST_CACHE_FILEPATH)
+	cache, err := New(TEST_CACHE_DIRPATH)
 	if err != nil {
 		t.Fatalf("Error creating cache: %s", err.Error())
 	}
 
-	_, err = cache.Get(TEST_FILE_FILEPATH)
+	_, err = cache.Get(TEST_FILE_FILENAME)
 	if err == nil {
 		t.Fatalf("Error not returned when getting a non-existent cache entry")
 	}
 
-	err = cache.Set(TEST_FILE_FILEPATH, TEST_FILE_CONTENT, 50*time.Millisecond)
+	err = cache.Set(TEST_FILE_FILENAME, TEST_FILE_CONTENT, 50*time.Millisecond)
 	if err != nil {
 		t.Fatalf("Error when setting value in cache: %s", err.Error())
 	}
 
 	time.Sleep(55 * time.Millisecond) // Wait until entry is invalid
-	_, err = cache.Get(TEST_FILE_FILEPATH)
+	_, err = cache.Get(TEST_FILE_FILENAME)
 	if err == nil {
 		t.Fatalf("Error not returned when getting invalid entry: %s", err.Error())
 	}
 
-	err = cache.Set(TEST_FILE_FILEPATH, TEST_FILE_CONTENT, time.Hour)
+	err = cache.Set(TEST_FILE_FILENAME, TEST_FILE_CONTENT, time.Hour)
 	if err != nil {
 		t.Fatalf("Error when setting value in cache: %s", err.Error())
 	}
 
-	content, err := cache.Get(TEST_FILE_FILEPATH)
+	content, err := cache.Get(TEST_FILE_FILENAME)
 	if err != nil {
 		t.Fatalf("Error when getting valid value from cache: %s", err.Error())
 	}
@@ -315,38 +307,38 @@ func TestGet(t *testing.T) {
 }
 
 func TestParse(t *testing.T) {
-	testFileAbsPath, _, testDuration, err := setup()
+	_, _, testDuration, err := setup()
 	if err != nil {
 		t.Fatalf("Setup failed: %s", err.Error())
 	}
 
-	_, err = ParseCache(TEST_CACHE_FILEPATH)
+	_, err = ParseCache("./NON_EXISTENT_DIR")
 	if err == nil {
 		t.Fatalf(
 			"No error returned when parsing cache from non-existent file. Filepath from test: %s",
-			TEST_CACHE_FILEPATH,
+			"./NON_EXISTENT_DIR",
 		)
 	}
 
-	cache, err := New(TEST_CACHE_FILEPATH)
+	cache, err := New(TEST_CACHE_DIRPATH)
 	if err != nil {
 		t.Fatalf("Error creating new cache: %s", err.Error())
 	}
 
-	err = cache.Set(TEST_FILE_FILEPATH, TEST_FILE_CONTENT, testDuration)
+	err = cache.Set(TEST_FILE_FILENAME, TEST_FILE_CONTENT, testDuration)
 	if err != nil {
 		t.Fatalf("Error when setting cache entry: %s", err.Error())
 	}
 
-	setDate := cache.Entries[testFileAbsPath].SetDate
+	setDate := cache.Entries[TEST_FILE_FILENAME].SetDate
 	invalidationDate := setDate.Add(testDuration)
 
-	cache, err = ParseCache(TEST_CACHE_FILEPATH)
+	cache, err = ParseCache(TEST_CACHE_DIRPATH)
 	if err != nil {
 		t.Fatalf("Error when parsing cache from existing file: %s", err.Error())
 	}
 
-	content, err := cache.Get(TEST_FILE_FILEPATH)
+	content, err := cache.Get(TEST_FILE_FILENAME)
 	if err != nil {
 		t.Fatalf("Error when getting file content from cache: %s", err.Error())
 	}
@@ -354,12 +346,12 @@ func TestParse(t *testing.T) {
 		t.Fatalf("Incorrect file content returned. Wanted: %s, got: %s", TEST_FILE_CONTENT, content)
 	}
 
-	entry, err := cache.GetEntry(TEST_FILE_FILEPATH)
+	entry, err := cache.GetEntry(TEST_FILE_FILENAME)
 	if err != nil {
 		t.Fatalf("Error when getting entry for test file from cache: %s", err.Error())
 	}
-	if entry.Filepath != testFileAbsPath {
-		t.Fatalf("Incorrect filepath retrieved. Wanted: %s, got: %s", testFileAbsPath, entry.Filepath)
+	if entry.Filename != TEST_FILE_FILENAME {
+		t.Fatalf("Incorrect filepath retrieved. Wanted: %s, got: %s", TEST_FILE_FILENAME, entry.Filename)
 	}
 	if !entry.SetDate.Equal(setDate) {
 		t.Fatalf(

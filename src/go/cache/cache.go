@@ -8,34 +8,50 @@ import (
 	"time"
 )
 
-// TODO: Doc comments
-// TODO: Use
+// TODO: Doc comments for types
+const (
+	CACHE_FILENAME = "cache.json"
+)
 
 type Cache struct {
-	Filepath string                `json:"-"`
-	Entries  map[string]CacheEntry `json:"entries"`
+	Dirpath string                `json:"-"`
+	Entries map[string]CacheEntry `json:"entries"`
 }
 
 type CacheEntry struct {
 	SetDate          time.Time `json:"setAt"`
 	InvalidationDate time.Time `json:"invalidFrom"`
-	Filepath         string    `json:"filepath"`
+	Filename         string    `json:"file"`
 }
 
-// Creates and returns a new cache using the given filepath as the location for the cache file.
+// Creates and returns a new cache.
+// The given cacheDirpath is used as the directory to store cached files and cache metadata.
+// Previous caches using cacheDirpath are overwritten.
 // Returns an error if an error occurred when writing to the given filepath.
-func New(cacheFilepath string) (*Cache, error) {
-	err := utils.WriteBytesToFile(make([]byte, 0), cacheFilepath)
+func New(cacheDirpath string) (*Cache, error) {
+	cacheFilepath, err := getCacheFileFilepath(cacheDirpath)
+	if err != nil {
+		return nil, utils.PrependToError(err, "failed to generate cache filepath")
+	}
+
+	err = utils.WriteBytesToFile(make([]byte, 0), cacheFilepath)
 	if err != nil {
 		return nil, utils.PrependToError(err, "failed to write to cache file")
 	}
 	return &Cache{
-		Filepath: cacheFilepath,
-		Entries:  make(map[string]CacheEntry),
+		Dirpath: cacheDirpath,
+		Entries: make(map[string]CacheEntry),
 	}, nil
 }
 
-func ParseCache(cacheFilepath string) (*Cache, error) {
+// Parses and returns a cache created at the given cacheDirpath.
+// Returns an error if no cache exists at cacheDirpath or if there was an issue reading files.
+func ParseCache(cacheDirpath string) (*Cache, error) {
+	cacheFilepath, err := getCacheFileFilepath(cacheDirpath)
+	if err != nil {
+		return nil, utils.PrependToError(err, "failed to generate cache filepath")
+	}
+
 	cacheFileBytes, err := utils.FileToBytes(cacheFilepath)
 	if err != nil {
 		return nil, utils.PrependToError(
@@ -45,149 +61,164 @@ func ParseCache(cacheFilepath string) (*Cache, error) {
 	}
 
 	var c Cache
-
 	err = json.Unmarshal(cacheFileBytes, &c)
 	if err != nil {
 		return nil, err
 	}
+	c.Dirpath = cacheDirpath
 
-	c.Filepath = cacheFilepath
 	return &c, nil
 }
 
-func ParseIfExistsElseNew(cacheFilepath string) (*Cache, error) {
+// Parses and returns a cache if one exists at the given cacheDirpath.
+// Creates and returns a new cache otherwise.
+// Returns an error if an error occurs during the checking or creation process.
+func ParseIfExistsElseNew(cacheDirpath string) (*Cache, error) {
+	cacheFilepath, err := getCacheFileFilepath(cacheDirpath)
+	if err != nil {
+		return nil, utils.PrependToError(err, "failed to generate cache filepath")
+	}
+
 	exists, err := utils.FileExists(cacheFilepath)
 	if err != nil {
 		return nil, err
 	}
 
 	if !exists {
-		return New(cacheFilepath)
+		return New(cacheDirpath)
 	}
-	return ParseCache(cacheFilepath)
+	return ParseCache(cacheDirpath)
 }
 
 // TODO: Test
-// TODO: Doc
-// Returns true if the given filepath is in the cache.
+// Returns true if the given file is in the cache.
 // Returns false otherwise.
-// Returns an error if the given
-func (cache Cache) Contains(filepath string) (bool, error) {
-	absFilepath, err := utils.AbsoluteFilepath(filepath)
-	if err != nil {
-		return false, err
-	}
-	return cache.containsAbsPath(absFilepath), nil
-}
-
-// Returns true if the given absolute filepath is in the cache (valid OR invalid).
-// Returns false otherwise.
-func (cache Cache) containsAbsPath(absFilepath string) bool {
-	_, exists := cache.Entries[absFilepath]
+func (cache Cache) Contains(file string) bool {
+	_, exists := cache.Entries[file]
 	return exists
 }
 
-// TODO: Test
-// Returns true if the given filepath is in the cache and is valid.
-// Returns false otherwise.
-// Returns an error if the filepath is not a valid UNIX filepath.
-func (cache Cache) IsValid(filepath string) (bool, error) {
-	absFilepath, err := utils.AbsoluteFilepath(filepath)
-	if err != nil {
-		return false, err
+// Returns the CacheEntry for the file if it's in the cache.
+// Returns an error otherwise.
+func (cache Cache) GetEntry(file string) (*CacheEntry, error) {
+	if !cache.Contains(file) {
+		return nil, fmt.Errorf("entry does not exist: %s", file)
 	}
-	return cache.isValidAbsPath(absFilepath), nil
+	entry := cache.Entries[file]
+	return &entry, nil
 }
 
-// Returns true if the given absolute filepath is in the cache and is valid.
+// TODO: Test
+// Returns true if the given file is in the cache and is valid.
 // Returns false otherwise.
-func (cache Cache) isValidAbsPath(absFilepath string) bool {
-	if !cache.containsAbsPath(absFilepath) {
+func (cache Cache) IsValid(file string) bool {
+	if !cache.Contains(file) {
 		return false
 	}
-	entry := cache.getEntryAbsPath(absFilepath)
+	entry, err := cache.GetEntry(file)
+	if err != nil {
+		return false
+	}
 	return entry.InvalidationDate.After(time.Now())
 }
 
 // TODO: Test & convert return to stream
-// Returns the cached file's content if the given filepath is in the cache and is valid.
-// Returns an error otherwise or if the filepath is not a valid UNIX filepath.
-func (cache Cache) Get(filepath string) (string, error) {
-	absFilepath, err := utils.AbsoluteFilepath(filepath)
+// Returns the cached file's contents if the given file is in the cache and is valid.
+// Returns an error otherwise or if an error occurs during the file reading process.
+func (cache Cache) Get(file string) (string, error) {
+	if !cache.IsValid(file) {
+		return "", errors.New("cache entry is invalid")
+	}
+	contents, err := cache.GetIgnoringValidity(file)
 	if err != nil {
 		return "", err
 	}
-	if !cache.isValidAbsPath(absFilepath) {
-		return "", errors.New("cache entry is invalid")
-	}
-	entry := cache.getEntryAbsPath(absFilepath)
-	return utils.FileToString(entry.Filepath)
+	return contents, nil
 }
 
-// Returns the CacheEntry associated with the given filepath.
-// Returns an error if the given filepath is not a valid UNIX path
-// or if the entry does not exist in the cache.
-func (cache Cache) GetEntry(filepath string) (*CacheEntry, error) {
-	absFilepath, err := utils.AbsoluteFilepath(filepath)
+// TODO: Test
+// Returns the cached file's contents if the given file is in the cache, regardless of its validity.
+// Returns an error otherwise or if an error occurs during the file reading process.
+func (cache Cache) GetIgnoringValidity(file string) (string, error) {
+	if !cache.Contains(file) {
+		return "", fmt.Errorf("cache does not contain file: %s", file)
+	}
+
+	path, err := cache.getFileFilepath(file)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	if !cache.containsAbsPath(absFilepath) {
-		return nil, fmt.Errorf("entry does not exist: %s", filepath)
-	}
-	entry := cache.getEntryAbsPath(absFilepath)
-	return &entry, nil
-}
 
-func (cache Cache) getEntryAbsPath(absFilepath string) CacheEntry {
-	return cache.Entries[absFilepath]
+	return utils.FileToString(path)
 }
 
 // TODO: Use stream, not string
-// Writes fileContent to a file at filepath and creates a valid entry in the cache.
-// The entry is valid for the duration of lifetime.
+// Writes fileContent to a file named filename in the cache directory and creates a
+// representative entry in the cache, which is valid for a duration of lifetime.
 // Returns an error if the file could not be written or value could not be set.
-func (cache Cache) Set(filepath string, fileContent string, lifetime time.Duration) error {
-	absFilepath, err := utils.AbsoluteFilepath(filepath)
+func (cache Cache) Set(filename string, fileContent string, lifetime time.Duration) error {
+	path, err := utils.CreateFilepath(cache.Dirpath, filename)
 	if err != nil {
 		return err
 	}
 
-	err = utils.WriteStringToFile(fileContent, absFilepath)
+	err = utils.WriteStringToFile(fileContent, path)
 	if err != nil {
 		return utils.PrependToError(err, "failed to write cache entry to file")
 	}
 
-	oldEntry := cache.getEntryAbsPath(absFilepath)
+	oldEntry, oldEntryErr := cache.GetEntry(filename)
 
 	now := time.Now()
 	invalid := now.Add(lifetime)
 
-	cache.Entries[absFilepath] = CacheEntry{
+	cache.Entries[filename] = CacheEntry{
 		SetDate:          now,
 		InvalidationDate: invalid,
-		Filepath:         absFilepath,
+		Filename:         filename,
 	}
 
-	// TODO: Improve this consistency
 	err = cache.writeToFile()
 	if err != nil {
-		cache.Entries[filepath] = oldEntry
+		if oldEntryErr == nil {
+			cache.Entries[filename] = *oldEntry
+		}
 		return utils.PrependToError(
 			err,
-			"failed to write cache to disk. WARNING: file data may have been written",
+			"failed to write cache to disk. WARNING: file data may be inconsistent with in-memory cache",
 		)
 	}
 
 	return nil
 }
 
-// Writes cache to its given filepath in JSON format
+// TODO: Doc
+func (cache Cache) getFileFilepath(file string) (string, error) {
+	return utils.CreateFilepath(cache.Dirpath, file)
+}
+
+// TODO: Doc
+func getCacheFileFilepath(cacheDirpath string) (string, error) {
+	return utils.CreateFilepath(cacheDirpath, CACHE_FILENAME)
+}
+
+// TODO: Doc
+func (cache Cache) getCacheFileFilepath() (string, error) {
+	return getCacheFileFilepath(cache.Dirpath)
+}
+
+// Writes cache to its given filepath in JSON format.
 func (cache Cache) writeToFile() error {
+	cacheFilepath, err := cache.getCacheFileFilepath()
+	if err != nil {
+		return utils.PrependToError(err, "failed to generate cache filepath")
+	}
+
 	cacheAsJsonBytes, err := json.Marshal(cache)
 	if err != nil {
 		return err
 	}
-	err = utils.WriteBytesToFile(cacheAsJsonBytes, cache.Filepath)
+
+	err = utils.WriteBytesToFile(cacheAsJsonBytes, cacheFilepath)
 	return err
 }

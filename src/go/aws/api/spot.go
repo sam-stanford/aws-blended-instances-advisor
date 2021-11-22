@@ -2,7 +2,7 @@ package api
 
 import (
 	"context"
-	. "ec2-test/aws/types"
+	types "ec2-test/aws/types"
 	"ec2-test/config"
 	"ec2-test/utils"
 	"encoding/json"
@@ -17,12 +17,12 @@ import (
 // TODO: Remove dep on Config
 func GetSpotInstances(
 	config *config.ApiConfig,
-	regions []Region,
+	regions []types.Region,
 	creds credentials.StaticCredentialsProvider,
 	logger *zap.Logger,
-) (map[Region][]Instance, error) {
+) (map[types.Region][]types.Instance, error) {
 
-	regionToInstanceMap := make(map[Region][]Instance)
+	regionToInstanceMap := make(map[types.Region][]types.Instance)
 
 	regionRevocationInfoMap, instanceSpecMap, err := fetchSpotInstanceRevocationInfoAndSpecsMap(config, logger)
 	if err != nil {
@@ -77,7 +77,7 @@ func createInstancePriceMap(spotPrices []ec2Types.SpotPrice) map[string]ec2Types
 
 func getSpotInstancePricesForRegion(
 	config *config.ApiConfig,
-	region Region,
+	region types.Region,
 	creds credentials.StaticCredentialsProvider,
 	logger *zap.Logger,
 ) ([]ec2Types.SpotPrice, error) {
@@ -183,16 +183,16 @@ func fetchSpotInstanceRevocationInfoAndSpecsMap(
 }
 
 func createRegionSpotInstances(
-	region Region,
+	region types.Region,
 	regionRevocationInfo *regionSpotInstanceRevocationInfo,
 	regionInstancePriceMap map[string]ec2Types.SpotPrice,
 	instanceSpecMap map[string]spotInstanceSpecs,
 	logger *zap.Logger,
 ) (
-	[]Instance,
+	[]types.Instance,
 	error,
 ) {
-	instances := make([]Instance, 0)
+	instances := make([]types.Instance, 0)
 
 	// TODO: Wrap this in method to avoid repeated code for Windows
 
@@ -212,7 +212,7 @@ func createRegionSpotInstances(
 			continue
 		}
 
-		instance, err := createInstanceFromSpotInstanceInfo(&price, &revocationInfo, &spec, region, Linux)
+		instance, err := createInstanceFromSpotInstanceInfo(&price, &revocationInfo, &spec, region, types.Linux)
 		if err != nil {
 			logger.Error("failed to create instance from given spot instance info", zap.Error(err))
 		}
@@ -235,7 +235,7 @@ func createRegionSpotInstances(
 			continue
 		}
 
-		instance, err := createInstanceFromSpotInstanceInfo(&price, &revocationInfo, &spec, region, Windows)
+		instance, err := createInstanceFromSpotInstanceInfo(&price, &revocationInfo, &spec, region, types.Windows)
 		if err != nil {
 			logger.Error("failed to create instance from given spot instance info", zap.Error(err))
 		}
@@ -249,10 +249,10 @@ func createInstanceFromSpotInstanceInfo(
 	spotPrice *ec2Types.SpotPrice,
 	revocationInfo *spotInstanceRevocationInfo,
 	specs *spotInstanceSpecs,
-	region Region,
-	os OperatingSystem,
+	region types.Region,
+	os types.OperatingSystem,
 ) (
-	*Instance,
+	*types.Instance,
 	error,
 ) {
 
@@ -265,7 +265,7 @@ func createInstanceFromSpotInstanceInfo(
 		return nil, err
 	}
 
-	return &Instance{
+	return &types.Instance{
 		Name:                  string(spotPrice.InstanceType),
 		MemoryGb:              specs.MemoryGb,
 		Vcpus:                 specs.Vcpus,

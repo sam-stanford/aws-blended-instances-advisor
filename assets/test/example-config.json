@@ -32,7 +32,7 @@
     "downloadsDir": "TEST_DIR"
   },
   "cache": {
-    "filepath": "TEST_CACHE_FILE",
+    "dirpath": "TEST_CACHE_DIRPATH",
     "defaultLifetime": 200
   }
 }

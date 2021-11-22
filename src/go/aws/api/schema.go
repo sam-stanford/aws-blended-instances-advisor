@@ -2,7 +2,7 @@ package api
 
 // TODO: Rename these
 import (
-	. "ec2-test/aws/types"
+	types "ec2-test/aws/types"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -107,7 +107,7 @@ type spotInstanceRevocationInfo struct {
 	PercentageSavings         int `json:"s"` // Over on-demand
 }
 
-func (info *onDemandInstanceInfo) toInstance() (*Instance, error) {
+func (info *onDemandInstanceInfo) toInstance() (*types.Instance, error) {
 	vcpus, err := parseOnDemandVcpus(info)
 	if err != nil {
 		return nil, err
@@ -116,11 +116,11 @@ func (info *onDemandInstanceInfo) toInstance() (*Instance, error) {
 	if err != nil {
 		return nil, err
 	}
-	region, err := NewRegion(info.Specs.Attributes.Location)
+	region, err := types.NewRegion(info.Specs.Attributes.Location)
 	if err != nil {
 		return nil, err
 	}
-	os, err := NewOperatingSystemFromString(info.Specs.Attributes.OperatingSystem)
+	os, err := types.NewOperatingSystemFromString(info.Specs.Attributes.OperatingSystem)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +129,7 @@ func (info *onDemandInstanceInfo) toInstance() (*Instance, error) {
 		return nil, err
 	}
 
-	return &Instance{
+	return &types.Instance{
 		Name:                  info.Specs.Attributes.InstanceType,
 		MemoryGb:              mem,
 		Vcpus:                 vcpus,
@@ -141,9 +141,9 @@ func (info *onDemandInstanceInfo) toInstance() (*Instance, error) {
 	}, nil
 }
 
-func parseOnDemandApiResponseToInstances(resp *pricing.GetProductsOutput, logger *zap.Logger) []Instance {
+func parseOnDemandApiResponseToInstances(resp *pricing.GetProductsOutput, logger *zap.Logger) []types.Instance {
 
-	instances := make([]Instance, 0)
+	instances := make([]types.Instance, 0)
 
 	for _, instanceInfoJson := range resp.PriceList {
 		var info onDemandInstanceInfo
@@ -224,10 +224,9 @@ func (info *spotInstanceRevocationInfo) getRevocationProbability() (float32, err
 	case 4:
 		return 0.3, nil // TODO: >20% => ?
 	default:
-		return -1, errors.New(
-			fmt.Sprintf(
-				"provided revocation probability tier does not exist: %d",
-				info.RevocationProbabilityTier,
-			))
+		return -1, fmt.Errorf(
+			"provided revocation probability tier does not exist: %d",
+			info.RevocationProbabilityTier,
+		)
 	}
 }

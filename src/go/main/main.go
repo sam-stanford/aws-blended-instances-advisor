@@ -2,6 +2,7 @@ package main
 
 import (
 	awsApi "ec2-test/aws/api"
+	"ec2-test/cache"
 	"ec2-test/config"
 	"ec2-test/utils"
 	"fmt"
@@ -20,15 +21,15 @@ func main() {
 	logCommandLineFlags(&clf, logger)
 
 	config := parseAndLogConfig(clf.configFilepath, logger)
-	creds := getCredentialsForMode(clf.productionMode, config)
+	cache := createCache(config.CacheConfig.Dirpath, clf.clearCache, logger)
 
-	// TODO
-	os.Exit(0)
+	creds := getCredentialsForMode(clf.productionMode, config)
 
 	regionInstancesMap, err := awsApi.GetInstances(
 		&config.ApiConfig,
-		&creds,
 		config.GetRegions(),
+		&creds,
+		cache,
 		logger,
 	)
 	if err != nil {
@@ -94,7 +95,7 @@ func logConfig(config *config.Config, configFilepath string, logger *zap.Logger)
 	logger.Info(
 		"config parsed",
 		zap.String("configFilepath", configFilepath),
-		zap.String("config", config.ToString()),
+		zap.String("config", config.ToString()), // TODO: Rename to String for Go convention
 	)
 	// TODO: Stop escaping quotes
 }
@@ -107,7 +108,27 @@ func getCredentialsForMode(isProductionMode bool, c *config.Config) config.Crede
 }
 
 func logCommandLineFlags(clf *commandLineFlags, logger *zap.Logger) {
-	fmt.Printf("FLAGS: %+v\n", clf)
 	// TODO: Not printing parsed flags
 	logger.Info("command line flags parsed", zap.Any("flags", clf))
+}
+
+func createCache(cacheFilepath string, useNewCache bool, logger *zap.Logger) *cache.Cache {
+	var c *cache.Cache
+	var err error
+
+	if useNewCache {
+		c, err = cache.New(cacheFilepath)
+	} else {
+		c, err = cache.ParseIfExistsElseNew(cacheFilepath)
+	}
+
+	if err != nil {
+		err = utils.PrependToError(
+			err,
+			fmt.Sprintf("failed to create cache from %s", cacheFilepath),
+		)
+		utils.StopProgramExecution(err, 1)
+	}
+
+	return c
 }
