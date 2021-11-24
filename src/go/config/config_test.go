@@ -63,8 +63,8 @@ func TestParseConfig(t *testing.T) {
 	if math.Abs(service.MinMemory-2.0) > 0.001 {
 		t.Fatalf("Incorrect service memory parsed. Wanted: %f, got: %f", 2.0, service.MinMemory)
 	}
-	if service.MinVcpu != 1 {
-		t.Fatalf("Incorrect service VCPU parsed. Wanted: %d, got: %d", 1, service.MinVcpu)
+	if service.MaxVcpu != 1 {
+		t.Fatalf("Incorrect service VCPU parsed. Wanted: %d, got: %d", 1, service.MaxVcpu)
 	}
 	if math.Abs(service.RevocationSensitivity-0.1) > 0.001 {
 		t.Fatalf("Incorrect service revocation sensitivity parsed. Wanted: %f, got: %f", 0.1, service.RevocationSensitivity)
@@ -181,13 +181,13 @@ func TestValidationErrorForDuplicateServiceNames(t *testing.T) {
 		{
 			Name:                  "DUPLICATE NAME",
 			MinMemory:             0,
-			MinVcpu:               1,
+			MaxVcpu:               1,
 			RevocationSensitivity: 0.5,
 		},
 		{
 			Name:                  "DUPLICATE NAME",
 			MinMemory:             0,
-			MinVcpu:               1,
+			MaxVcpu:               1,
 			RevocationSensitivity: 0.5,
 		},
 	}

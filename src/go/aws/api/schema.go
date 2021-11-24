@@ -91,7 +91,7 @@ type spotInstancesInfo struct {
 }
 
 type spotInstanceSpecs struct {
-	MemoryGb float32 `json:"ram_gb"`
+	MemoryGb float64 `json:"ram_gb"`
 	Vcpus    int     `json:"cores"`
 	Emr      bool    `json:"emr"`
 }
@@ -171,7 +171,7 @@ func parseOnDemandVcpus(info *onDemandInstanceInfo) (int, error) {
 	return strconv.Atoi(info.Specs.Attributes.Vcpu)
 }
 
-func parseOnDemandMemory(info *onDemandInstanceInfo) (float32, error) {
+func parseOnDemandMemory(info *onDemandInstanceInfo) (float64, error) {
 	// TODO: Manage non-GB / non-GiB values
 	memStr := info.Specs.Attributes.Memory
 
@@ -182,10 +182,10 @@ func parseOnDemandMemory(info *onDemandInstanceInfo) (float32, error) {
 
 	mem, err := strconv.ParseFloat(memStr[:index], 32)
 	if err != nil {
-		return -1, fmt.Errorf("cannot parse a memory value of %s to float32: %s", info.Specs.Attributes.Memory, err.Error())
+		return -1, fmt.Errorf("cannot parse a memory value of %s to float64: %s", info.Specs.Attributes.Memory, err.Error())
 	}
 
-	return float32(mem), nil
+	return float64(mem), nil
 }
 
 func isNumber(b byte) bool {
@@ -210,7 +210,7 @@ func parseOnDemandPrice(info *onDemandInstanceInfo) (float64, error) {
 	return -1, nil
 }
 
-func (info *spotInstanceRevocationInfo) getRevocationProbability() (float32, error) {
+func (info *spotInstanceRevocationInfo) getRevocationProbability() (float64, error) {
 	// Return the upper bound of the tier
 	switch info.RevocationProbabilityTier {
 	case 0:

@@ -121,6 +121,22 @@ func PrependToError(err error, message string) error {
 	return fmt.Errorf("%s: %s", message, err.Error())
 }
 
+// Checks whether start (inclusive) and end (exclusive) are valid indexes for
+// the given lenght of a slice.
+// TODO: Test
+func ValidateIndexes(sliceLength, start, end int) error {
+	if start >= end {
+		return fmt.Errorf("provided indexes of %d and %d provide a subslice of 0 elements", start, end)
+	}
+	if start < 0 {
+		return fmt.Errorf("provided start of %d is out of bounds for slice of length %d", start, sliceLength)
+	}
+	if end > sliceLength {
+		return fmt.Errorf("provided end of %d is out of bounds for slice of length %d", end, sliceLength)
+	}
+	return nil
+}
+
 func CreateMockLogger() (*zap.Logger, error) {
 	cfg := zap.NewProductionConfig()
 	cfg.OutputPaths = []string{}

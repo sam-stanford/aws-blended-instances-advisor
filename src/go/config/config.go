@@ -37,7 +37,7 @@ type Credentials struct {
 type ServiceDescription struct {
 	Name                  string  `json:"name"`
 	MinMemory             float64 `json:"minMemory"`
-	MinVcpu               int     `json:"minVcpu"`
+	MaxVcpu               int     `json:"maxVcpu"`
 	RevocationSensitivity float64 `json:"revocationSensitivity"`
 }
 

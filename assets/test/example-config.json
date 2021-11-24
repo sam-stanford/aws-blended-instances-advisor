@@ -19,7 +19,7 @@
       {
       "name": "TS1",
       "minMemory": 2.0,
-      "minVcpu": 1,
+      "maxVcpu": 1,
       "revocationSensitivity": 0.1
       }
     ]

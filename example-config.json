@@ -1,4 +1,3 @@
-// TODO: Update
 {
   "credentials":{
     "production": {
@@ -15,17 +14,23 @@
     }
   },
   "constraints": {
-    "maxInstanceCount": 1000,
     "regions": ["us-west-1"],
     "services": [{
       "name": "Test Service 1",
       "minMemory": 1,
-      "minVcpu": 1,
+      "maxVcpu": 1,
       "revocationSensitivity": 0.4
     }]
   },
-  "endpoints": {
-    "awsSpotInstanceInfoUrl": "https://spot-bid-advisor.s3.amazonaws.com/spot-advisor-data.json"
+  "api": {
+    "endpoints": {
+      "awsSpotInstanceInfoUrl": "https://spot-bid-advisor.s3.amazonaws.com/spot-advisor-data.json"
+    },
+    "maxInstancesToFetch": 1000,
+    "downloadsDir": "../../assets/downloads"
   },
-  "downloadsDir": "../../assets/downloads"
+  "cache": {
+    "dirpath": "../../assets/cache",
+    "defaultLifetime": 168
+  }
 }
