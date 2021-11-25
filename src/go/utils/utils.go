@@ -18,6 +18,8 @@ const (
 	WRITE_PERMISSION_CODE = 0755
 )
 
+// TODO: Split into multiple files
+
 // TODO: Doc comments
 
 func FileToString(filepath string) (string, error) {

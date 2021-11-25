@@ -1,3 +1,6 @@
+//go:build integration
+// +build integration
+
 package api
 
 import (
@@ -7,7 +10,7 @@ import (
 	"testing"
 )
 
-func TestGetOnDemandInstances(t *testing.T) {
+func TestGetSpotInstances(t *testing.T) {
 	cfg, err := config.ParseConfig(CONFIG_FILEPATH)
 	if err != nil {
 		t.Fatalf("Failed to read config: %s", err.Error())
@@ -27,9 +30,9 @@ func TestGetOnDemandInstances(t *testing.T) {
 		t.Fatalf("Error occured when parsing test regions: %s", err.Error())
 	}
 
-	regionInstanceMap, err := GetOnDemandInstances(&cfg.ApiConfig, []types.Region{*region1, *region2}, creds, logger)
+	regionInstanceMap, err := GetSpotInstances(&cfg.ApiConfig, []types.Region{*region1, *region2}, creds, logger)
 	if err != nil {
-		t.Fatalf("Error thrown when fetching on-demand instances: %s", err.Error())
+		t.Fatalf("Error thrown when fetching spot instances: %s", err.Error())
 	}
 
 	instances, ok := regionInstanceMap[*region1]

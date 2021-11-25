@@ -18,6 +18,11 @@ type Instance struct {
 	RevocationProbability float64                  `json:"revocProb"`
 }
 
+// 20*8 + 64 + 32 + 32 + 20*8 + 32 + 64 + 64
+// 76B per Instance
+
+// 100,000 => 10^5 => 100 * 10^3 * 76 => 7600 KB =>
+
 /* TODO: Notes
 
 1) For each region in config...

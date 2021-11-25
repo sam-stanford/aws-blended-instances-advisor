@@ -5,6 +5,7 @@ import (
 	types "ec2-test/aws/types"
 	"ec2-test/cache"
 	"ec2-test/config"
+	"ec2-test/instances"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -32,7 +33,7 @@ func GetInstances(
 	cache *cache.Cache,
 	logger *zap.Logger,
 ) (
-	map[types.Region][]types.Instance,
+	map[types.Region][]instances.Instance,
 	error,
 ) {
 
@@ -69,12 +70,12 @@ func GetInstances(
 	return instances, nil
 }
 
-func getInstancesFromCache(instancesCacheFilename string, c *cache.Cache) map[types.Region][]types.Instance {
+func getInstancesFromCache(instancesCacheFilename string, c *cache.Cache) map[types.Region][]instances.Instance {
 	isValid := c.IsValid(instancesCacheFilename)
 	if isValid {
 		instancesFileContent, err := c.Get(instancesCacheFilename)
 		if err != nil {
-			var instanceToRegionMap map[types.Region][]types.Instance
+			var instanceToRegionMap map[types.Region][]instances.Instance
 			err := json.Unmarshal([]byte(instancesFileContent), &instanceToRegionMap)
 			if err != nil {
 				return instanceToRegionMap
@@ -84,7 +85,7 @@ func getInstancesFromCache(instancesCacheFilename string, c *cache.Cache) map[ty
 	return nil
 }
 
-func storeInstancesInCache(instanceToRegionMap map[types.Region][]types.Instance, instancesCacheFilename string, c *cache.Cache) error {
+func storeInstancesInCache(instanceToRegionMap map[types.Region][]instances.Instance, instancesCacheFilename string, c *cache.Cache) error {
 	instancesFileContent, err := json.Marshal(instanceToRegionMap)
 	if err != nil {
 		return err
@@ -120,10 +121,10 @@ func createAwsPricingClient(awsCredentials credentials.StaticCredentialsProvider
 }
 
 func joinSpotAndOnDemandInstances(
-	onDemandInstances map[types.Region][]types.Instance,
-	spotInstances map[types.Region][]types.Instance,
+	onDemandInstances map[types.Region][]instances.Instance,
+	spotInstances map[types.Region][]instances.Instance,
 	regions []types.Region,
-) map[types.Region][]types.Instance {
+) map[types.Region][]instances.Instance {
 	for _, region := range regions {
 		onDemandInstances[region] = append(onDemandInstances[region], spotInstances[region]...)
 	}

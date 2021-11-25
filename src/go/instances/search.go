@@ -9,8 +9,8 @@ import (
 // Returns the index of the element with largest memory if no elements have a memory greater than wantedMemory.
 // Returns an error if there is a problem with the given indexes.
 //
-// GetIndexOfMinimumMemoryFromSortedInstances should be called for improved performance on a sorted slice.
-func GetIndexOfMinimumMemoryFromInstances(instances []Instance, wantedMemory float64, startIndex int, endIndex int) (int, error) {
+// GetIndexOfMemoryValueFromSortedInstances should be called for improved performance on a sorted slice.
+func GetIndexOfMemoryValue(instances []Instance, wantedMemory float64, startIndex int, endIndex int) (int, error) {
 	err := utils.ValidateIndexes(len(instances), startIndex, endIndex)
 	if err != nil {
 		return -1, err
@@ -33,9 +33,13 @@ func GetIndexOfMinimumMemoryFromInstances(instances []Instance, wantedMemory flo
 // Returns the index of the element in sortedInstances from startIndex (inclusive) to endIndex (exclusive) that has the smallest memory value that is larger than wantedMemory.
 // Undefined behaviour for a given slice of unsorted instances; however, an error will likely be returned.
 //
-// GetIndexOfMinimumMemoryFromInstances should be used for unsorted slices.
-func GetIndexOfMinimumMemoryFromSortedInstances(sortedInstances []Instance, wantedMemory float64, startIndex int, endIndex int) (int, error) {
-	// TODO: Validate indexes
+// GetIndexOfMemoryValue should be used for unsorted slices.
+func GetIndexOfMemoryValueFromSortedInstances(sortedInstances []Instance, wantedMemory float64, startIndex int, endIndex int) (int, error) {
+	err := utils.ValidateIndexes(len(sortedInstances), startIndex, endIndex)
+	if err != nil {
+		return -1, err
+	}
+
 	left, right := startIndex, endIndex-1
 	for left <= right {
 		if left == right {

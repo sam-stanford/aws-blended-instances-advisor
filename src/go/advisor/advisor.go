@@ -1,11 +1,11 @@
 package advisor
 
 import (
-	awsTypes "ec2-test/aws/types"
 	"ec2-test/config"
+	"ec2-test/instances"
 )
 
 type Advisor interface {
-	AdviseForRegion(awsTypes.RegionInstancesMap, *config.Constraints) ([]awsTypes.Instance, InstanceApplicationMap, error)
-	Advise([]awsTypes.Instance, *config.Constraints) ([]awsTypes.Instance, InstanceApplicationMap, error)
+	Advise([]instances.Instance, *config.Constraints) ([]instances.Instance, InstanceApplicationMap, error)
+	AdviseForRegions(instances.RegionInstancesMap, *config.Constraints) ([]instances.Instance, InstanceApplicationMap, error)
 }

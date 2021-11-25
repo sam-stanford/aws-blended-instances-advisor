@@ -3,6 +3,7 @@ package api
 // TODO: Rename these
 import (
 	types "ec2-test/aws/types"
+	"ec2-test/instances"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -107,7 +108,7 @@ type spotInstanceRevocationInfo struct {
 	PercentageSavings         int `json:"s"` // Over on-demand
 }
 
-func (info *onDemandInstanceInfo) toInstance() (*types.Instance, error) {
+func (info *onDemandInstanceInfo) toInstance() (*instances.Instance, error) {
 	vcpus, err := parseOnDemandVcpus(info)
 	if err != nil {
 		return nil, err
@@ -129,7 +130,7 @@ func (info *onDemandInstanceInfo) toInstance() (*types.Instance, error) {
 		return nil, err
 	}
 
-	return &types.Instance{
+	return &instances.Instance{
 		Name:                  info.Specs.Attributes.InstanceType,
 		MemoryGb:              mem,
 		Vcpus:                 vcpus,
@@ -141,9 +142,9 @@ func (info *onDemandInstanceInfo) toInstance() (*types.Instance, error) {
 	}, nil
 }
 
-func parseOnDemandApiResponseToInstances(resp *pricing.GetProductsOutput, logger *zap.Logger) []types.Instance {
+func parseOnDemandApiResponseToInstances(resp *pricing.GetProductsOutput, logger *zap.Logger) []instances.Instance {
 
-	instances := make([]types.Instance, 0)
+	instances := make([]instances.Instance, 0)
 
 	for _, instanceInfoJson := range resp.PriceList {
 		var info onDemandInstanceInfo

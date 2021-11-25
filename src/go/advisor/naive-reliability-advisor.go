@@ -1,9 +1,8 @@
 package advisor
 
 import (
-	awsTypes "ec2-test/aws/types"
 	"ec2-test/config"
-	"ec2-test/utils"
+	"ec2-test/instances"
 	"fmt"
 )
 
@@ -19,53 +18,54 @@ func NewNaiveReliabilityAdvisor() NaiveReliabilityAdvisor {
 
 // TODO: Doc
 func (advisor NaiveReliabilityAdvisor) Advise(
-	instances []awsTypes.Instance,
+	instances []instances.Instance,
 	constraints *config.Constraints,
 ) (
-	[]awsTypes.Instance,
+	[]instances.Instance,
 	InstanceApplicationMap, // TODO: Rename to instanceServiceMap
 	error,
 ) {
-	for _, service := range constraints.Services {
-		// TODO: Abstract out
+	/*
+		for _, service := range constraints.Services {
+			// TODO: Abstract out
 
-		// TODO: Sort for each iteration is worse than linear search
-		// ... but is necessary for finding desired instances
+			// TODO: Sort for each iteration is worse than linear search
+			// ... but is necessary for finding desired instances
 
-		// Find min mem
-		awsTypes.SortInstancesByMemory(instances, 0, len(instances))
-		minMemoryIndex, err := awsTypes.GetIndexOfMinimumMemoryFromSortedInstances(instances, service.MinMemory, 0, len(instances))
-		if err != nil {
-			return nil, nil, utils.PrependToError(err, "error when finding index of instance with minimum memory requirement")
-		}
+			// Find min mem
+			instances.SortInstancesByMemory(instances, 0, len(instances))
+			minMemoryIndex, err := instances.GetIndexOfMinimumMemoryFromSortedInstances(instances, service.MinMemory, 0, len(instances))
+			if err != nil {
+				return nil, nil, utils.PrependToError(err, "error when finding index of instance with minimum memory requirement")
+			}
 
-		// Find non-revocable
-		awsTypes.SortInstancesByRevocationProbability(instances, minMemoryIndex, len(instances))
-		minRevocationProbabilityIndex, err := awsTypes.GetIndexOfMinimumMemoryFromSortedInstances(instances, 1, minMemoryIndex, len(instances))
-		if err != nil {
-			return nil, nil, utils.PrependToError(err, "error when finding index of instance with desired revocation probability")
-		}
+			// Find non-revocable
+			instances.SortInstancesByRevocationProbability(instances, minMemoryIndex, len(instances))
+			minRevocationProbabilityIndex, err := instances.GetIndexOfMinimumMemoryFromSortedInstances(instances, 1, minMemoryIndex, len(instances))
+			if err != nil {
+				return nil, nil, utils.PrependToError(err, "error when finding index of instance with desired revocation probability")
+			}
 
-		// Find minimum desired cpu
-		awsTypes.SortInstancesByVcpu(instances, minRevocationProbabilityIndex, len(instances))
-		desiredVcpuIndex, err := awsTypes.GetIndexOfMinimumVcpuFromSortedInstances(instances, service.MaxVcpu, minRevocationProbabilityIndex, len(instances))
-		if err != nil {
-			return nil, nil, utils.PrependToError(err, "error when finding index of instance with desired VCPU")
-		}
+			// Find minimum desired cpu
+			instances.SortInstancesByVcpu(instances, minRevocationProbabilityIndex, len(instances))
+			desiredVcpuIndex, err := instances.GetIndexOfMinimumVcpuFromSortedInstances(instances, service.MaxVcpu, minRevocationProbabilityIndex, len(instances))
+			if err != nil {
+				return nil, nil, utils.PrependToError(err, "error when finding index of instance with desired VCPU")
+			}
 
-		// Find lowest price
-		indexOfLowestPrice := awsTypes.GetIndexOfMinimumPriceFromInstances(instances, -1, desiredVcpuIndex, len(instances)) // -1 for lowest price
+			// Find lowest price
+			indexOfLowestPrice := instances.GetIndexOfMinimumPriceFromInstances(instances, -1, desiredVcpuIndex, len(instances)) // -1 for lowest price
 
-	}
+		}*/
 
 	return nil, nil, nil
 }
 
 func (advisor NaiveReliabilityAdvisor) AdviseForRegions(
-	regionInstancesMap awsTypes.RegionInstancesMap,
+	regionInstancesMap instances.RegionInstancesMap,
 	constraints *config.Constraints,
 ) (
-	[]awsTypes.Instance,
+	[]instances.Instance,
 	InstanceApplicationMap,
 	error,
 ) {
