@@ -104,11 +104,9 @@ func TestSortInstancesByVcpus(t *testing.T) {
 }
 
 func TestSortInstancesByRevocationProbability(t *testing.T) {
-	t.skip()
-	// TODO
 	i0 := Instance{Name: "0", RevocationProbability: 0}
-	i1 := Instance{Name: "1", RevocationProbability: 0}
-	i2 := Instance{Name: "2", RevocationProbability: 0.05}
+	i1 := Instance{Name: "1", RevocationProbability: 0.05}
+	i2 := Instance{Name: "2", RevocationProbability: 0.10}
 	i3 := Instance{Name: "3", RevocationProbability: 0.215}
 
 	sortedSlice := []Instance{i0, i1, i2, i3}
@@ -137,19 +135,13 @@ func TestSortInstancesByRevocationProbability(t *testing.T) {
 
 func TestSortInstancesByOperatingSystem(t *testing.T) {
 	i0 := Instance{Name: "0", OperatingSystem: awsTypes.Linux}
-	i1 := Instance{Name: "1", OperatingSystem: awsTypes.Linux}
-	i2 := Instance{Name: "2", OperatingSystem: awsTypes.Windows}
-	i3 := Instance{Name: "3", OperatingSystem: awsTypes.Windows}
+	i1 := Instance{Name: "1", OperatingSystem: awsTypes.Windows}
 
-	sortedSlice := []Instance{i0, i1, i2, i3}
+	sortedSlice := []Instance{i0, i1}
 
 	tests := []instanceSortTest{
-		{instances: []Instance{i0, i1, i2, i3}, start: 0, end: 4, expected: sortedSlice},
-		{instances: []Instance{i1, i2, i3, i0}, start: 0, end: 4, expected: sortedSlice},
-		{instances: []Instance{i2, i3, i0, i1}, start: 0, end: 4, expected: sortedSlice},
-		{instances: []Instance{i3, i2, i1, i0}, start: 0, end: 2, expected: []Instance{i2, i3, i1, i0}},
-		{instances: []Instance{i3, i2, i1, i0}, start: 2, end: 4, expected: []Instance{i3, i2, i0, i1}},
-		{instances: []Instance{i1, i1, i0, i0}, start: 0, end: 4, expected: []Instance{i0, i0, i1, i1}},
+		{instances: []Instance{i0, i1}, start: 0, end: 2, expected: sortedSlice},
+		{instances: []Instance{i1, i0}, start: 0, end: 2, expected: sortedSlice},
 	}
 
 	for index, test := range tests {

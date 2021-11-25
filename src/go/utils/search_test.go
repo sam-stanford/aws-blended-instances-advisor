@@ -104,6 +104,9 @@ func TestLinearSearchFloat(t *testing.T) {
 		"between values, slice length 2, no duplicates":          {slice: twoElementSlice, value: 15, want: 0},
 		"greater than all values, slice length 2, no duplicates": {slice: twoElementSlice, value: 100, want: 0},
 
+		"equals first value, slice length 4":     {slice: []float64{8, 4, 62.4, 16}, value: 8, want: 0},
+		"equals duplicate value, slice length 4": {slice: []float64{0, 0, 0.01, 0.01}, value: 0.01, want: 2},
+
 		"less than all values, slice length 5, no duplicates":    {slice: standardSlice, value: -100, want: 2},
 		"equals first value, slice length 5, no duplicates":      {slice: standardSlice, value: 9, want: 0},
 		"equals last value, slice length 5, no duplicates":       {slice: standardSlice, value: 6, want: 4},
