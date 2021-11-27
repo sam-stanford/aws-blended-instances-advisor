@@ -2,7 +2,8 @@ package advisor
 
 import (
 	"ec2-test/config"
-	"ec2-test/instances"
+	instancesPkg "ec2-test/instances"
+	"ec2-test/utils"
 	"fmt"
 )
 
@@ -18,60 +19,63 @@ func NewNaiveReliabilityAdvisor() NaiveReliabilityAdvisor {
 
 // TODO: Doc
 func (advisor NaiveReliabilityAdvisor) Advise(
-	instances []instances.Instance,
+	instances []instancesPkg.Instance,
 	constraints *config.Constraints,
 ) (
-	[]instances.Instance,
+	[]instancesPkg.Instance,
 	InstanceApplicationMap, // TODO: Rename to instanceServiceMap
 	error,
 ) {
-	/*
-		for _, service := range constraints.Services {
-			// TODO: Abstract out
 
-			// TODO: Sort for each iteration is worse than linear search
-			// ... but is necessary for finding desired instances
+	selectedInstances := []instancesPkg.Instance{}
 
-			// Find min mem
-			instances.SortInstancesByMemory(instances, 0, len(instances))
-			minMemoryIndex, err := instances.GetIndexOfMinimumMemoryFromSortedInstances(instances, service.MinMemory, 0, len(instances))
-			if err != nil {
-				return nil, nil, utils.PrependToError(err, "error when finding index of instance with minimum memory requirement")
-			}
+	for _, service := range constraints.Services {
+		// TODO: Abstract out sort & find
 
-			// Find non-revocable
-			instances.SortInstancesByRevocationProbability(instances, minMemoryIndex, len(instances))
-			minRevocationProbabilityIndex, err := instances.GetIndexOfMinimumMemoryFromSortedInstances(instances, 1, minMemoryIndex, len(instances))
-			if err != nil {
-				return nil, nil, utils.PrependToError(err, "error when finding index of instance with desired revocation probability")
-			}
+		searchStart, searchEnd := 0, len(instances)
 
-			// Find minimum desired cpu
-			instances.SortInstancesByVcpu(instances, minRevocationProbabilityIndex, len(instances))
-			desiredVcpuIndex, err := instances.GetIndexOfMinimumVcpuFromSortedInstances(instances, service.MaxVcpu, minRevocationProbabilityIndex, len(instances))
-			if err != nil {
-				return nil, nil, utils.PrependToError(err, "error when finding index of instance with desired VCPU")
-			}
+		// Find min mem
+		instancesPkg.SortInstancesByMemory(instances, 0, len(instances))
+		searchStart, err := instancesPkg.FindMinimumMemorySortedInstances(instances, service.MinMemory, searchStart, searchEnd)
+		if err != nil {
+			return nil, nil, utils.PrependToError(err, "error when finding index of instance with minimum memory requirement")
+		}
 
-			// Find lowest price
-			indexOfLowestPrice := instances.GetIndexOfMinimumPriceFromInstances(instances, -1, desiredVcpuIndex, len(instances)) // -1 for lowest price
+		// Find non-revocable
+		instancesPkg.SortInstancesByRevocationProbability(instances, searchStart, searchEnd)
+		searchEnd, err = instancesPkg.FindMinimumRevocationProbabilitySortedInstances(instances, 1, searchStart, searchEnd) // TODO: Change 1 to 0
+		if err != nil {
+			return nil, nil, utils.PrependToError(err, "error when finding index of instance with desired revocation probability")
+		}
 
-		}*/
+		// Find minimum desired cpu
+		instancesPkg.SortInstancesByVcpus(instances, searchStart, searchEnd)
+		searchStart, err = instancesPkg.FindMinimumVcpuSortedInstances(instances, service.MaxVcpu, searchStart, searchEnd)
+		if err != nil {
+			return nil, nil, utils.PrependToError(err, "error when finding index of instance with desired VCPU")
+		}
 
-	return nil, nil, nil
+		// Find lowest price
+		instancesPkg.SortInstancesByPrice(instances, searchStart, searchEnd)
+		selectedInstance := instances[searchStart]
+
+		selectedInstances = append(selectedInstances, selectedInstance)
+	}
+
+	return selectedInstances, nil, nil
 }
 
 func (advisor NaiveReliabilityAdvisor) AdviseForRegions(
-	regionInstancesMap instances.RegionInstancesMap,
+	regionInstancesMap instancesPkg.RegionInstancesMap,
 	constraints *config.Constraints,
 ) (
-	[]instances.Instance,
+	[]instancesPkg.Instance,
 	InstanceApplicationMap,
 	error,
 ) {
 	for region, instances := range regionInstancesMap {
 		advisedInstances, instanceApplicationMap, err := advisor.Advise(instances, constraints)
-		fmt.Printf("Region: %s, advisedInstances: %+v, instanceAppMap: %+v, err: %s\n", region.ToCodeString(), advisedInstances, instanceApplicationMap, err.Error())
+		fmt.Println(region, advisedInstances, instanceApplicationMap, err)
 		// TODO
 	}
 	// TODO: Score & choose

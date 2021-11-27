@@ -7,7 +7,7 @@ import (
 	"ec2-test/config"
 	"ec2-test/instances"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -37,13 +37,13 @@ func GetInstances(
 	error,
 ) {
 
-	instances := getInstancesFromCache(INSTANCES_CACHE_FILENAME, cache)
-	if instances != nil {
-		fmt.Println("DEBUG: Fetched from cache")
-		logger.Info("instances retrieved from cache") // TODO: Details
+	instances, err := getInstancesFromCache(INSTANCES_CACHE_FILENAME, cache)
+	if err != nil {
+		logger.Info("no instances found in cache", zap.String("reason", err.Error()))
+	} else {
+		logger.Info("instances retrieved from cache")
 		return instances, nil
 	}
-	fmt.Println("DEBUG: Did not use cache")
 
 	awsCreds := createAwsCredentials(creds)
 
@@ -62,27 +62,27 @@ func GetInstances(
 	err = storeInstancesInCache(instances, INSTANCES_CACHE_FILENAME, cache)
 	if err != nil {
 		logger.Error("failed to store instances in cache", zap.Error(err))
-		fmt.Println("DEBUG: error writing to cache")
-		// TODO: Remove this return
 		return nil, err
 	}
 
 	return instances, nil
 }
 
-func getInstancesFromCache(instancesCacheFilename string, c *cache.Cache) map[types.Region][]instances.Instance {
+func getInstancesFromCache(instancesCacheFilename string, c *cache.Cache) (map[types.Region][]instances.Instance, error) {
 	isValid := c.IsValid(instancesCacheFilename)
 	if isValid {
 		instancesFileContent, err := c.Get(instancesCacheFilename)
 		if err != nil {
-			var instanceToRegionMap map[types.Region][]instances.Instance
-			err := json.Unmarshal([]byte(instancesFileContent), &instanceToRegionMap)
-			if err != nil {
-				return instanceToRegionMap
-			}
+			return nil, err
 		}
+		var instanceToRegionMap map[types.Region][]instances.Instance
+		err = json.Unmarshal([]byte(instancesFileContent), &instanceToRegionMap)
+		if err != nil {
+			return nil, err
+		}
+		return instanceToRegionMap, nil
 	}
-	return nil
+	return nil, errors.New("instances not in cache")
 }
 
 func storeInstancesInCache(instanceToRegionMap map[types.Region][]instances.Instance, instancesCacheFilename string, c *cache.Cache) error {

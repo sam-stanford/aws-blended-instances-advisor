@@ -1,6 +1,7 @@
 package main
 
 import (
+	"ec2-test/advisor"
 	awsApi "ec2-test/aws/api"
 	"ec2-test/cache"
 	"ec2-test/config"
@@ -33,10 +34,15 @@ func main() {
 		logger,
 	)
 	if err != nil {
-		fmt.Println(err)
-	} else {
-		fmt.Println(regionInstancesMap)
+		logger.Error("Error fetching instances", zap.Error(err))
 	}
+
+	for region, instances := range regionInstancesMap {
+		logger.Info("Instance count for region", zap.String("region", region.ToCodeString()), zap.Int("instanceCount", len(instances)))
+	}
+
+	advisor := advisor.NewNaiveReliabilityAdvisor()
+	advisor.AdviseForRegions(regionInstancesMap, &config.Constraints)
 }
 
 func createLogger(debugMode bool) (logger *zap.Logger, deferCallback func() error) {
@@ -95,7 +101,7 @@ func logConfig(config *config.Config, configFilepath string, logger *zap.Logger)
 	logger.Info(
 		"config parsed",
 		zap.String("configFilepath", configFilepath),
-		zap.String("config", config.ToString()), // TODO: Rename to String for Go convention
+		zap.Any("config", config.ToString()), // TODO: Rename to String for Go convention
 	)
 	// TODO: Stop escaping quotes
 }

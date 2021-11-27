@@ -52,7 +52,7 @@ func getRegionToOnDemandInstancesMap(
 		nextToken := ""
 		firstIter := true
 		total := 0
-		for (total <= maxInstanceCount || maxInstanceCount <= 0) && (nextToken != "" || firstIter) {
+		for (total < maxInstanceCount || maxInstanceCount <= 0) && (nextToken != "" || firstIter) {
 
 			resp, err := getOnDemandInstancesFromApi(pricingClient, region, nextToken)
 			if err != nil {

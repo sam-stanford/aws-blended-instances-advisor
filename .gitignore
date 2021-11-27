@@ -2,3 +2,6 @@ config.json
 assets/downloads/*
 .VSCodeCounter
 .vscode
+logs
+logs/*
+notes.txt

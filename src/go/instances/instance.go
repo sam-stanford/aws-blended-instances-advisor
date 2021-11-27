@@ -36,6 +36,7 @@ type Instance struct {
 Time preference
 - Naive: Take most powerful on-demand instance
 	- BUT we can achieve same performance for cheaper
+		- (perhaps EVEN better if powerful spot instance available)
 		- This is the key challenge
 
 Monetary preference

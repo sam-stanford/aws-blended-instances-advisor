@@ -9,7 +9,7 @@ import (
 // in increasing order of price.
 func SortInstancesByPrice(instances []Instance, startIndex int, endIndex int) {
 	sort.Slice(instances[startIndex:endIndex], func(i, j int) bool {
-		return instances[i].PricePerHour < instances[j].PricePerHour
+		return instances[startIndex+i].PricePerHour < instances[startIndex+j].PricePerHour
 	})
 }
 
@@ -17,7 +17,7 @@ func SortInstancesByPrice(instances []Instance, startIndex int, endIndex int) {
 // in increasing order of memory.
 func SortInstancesByMemory(instances []Instance, startIndex int, endIndex int) {
 	sort.Slice(instances[startIndex:endIndex], func(i, j int) bool {
-		return instances[i].MemoryGb < instances[j].MemoryGb
+		return instances[startIndex+i].MemoryGb < instances[startIndex+j].MemoryGb
 	})
 }
 
@@ -25,7 +25,7 @@ func SortInstancesByMemory(instances []Instance, startIndex int, endIndex int) {
 // in increasing order of the number of VCPUs.
 func SortInstancesByVcpus(instances []Instance, startIndex int, endIndex int) {
 	sort.Slice(instances[startIndex:endIndex], func(i, j int) bool {
-		return instances[i].Vcpus < instances[j].Vcpus
+		return instances[startIndex+i].Vcpus < instances[startIndex+j].Vcpus
 	})
 }
 
@@ -33,7 +33,7 @@ func SortInstancesByVcpus(instances []Instance, startIndex int, endIndex int) {
 // in increasing order of their revocation probabilities.
 func SortInstancesByRevocationProbability(instances []Instance, startIndex int, endIndex int) {
 	sort.Slice(instances[startIndex:endIndex], func(i, j int) bool {
-		return instances[i].RevocationProbability < instances[j].RevocationProbability
+		return instances[startIndex+i].RevocationProbability < instances[startIndex+j].RevocationProbability
 	})
 }
 
@@ -42,8 +42,8 @@ func SortInstancesByRevocationProbability(instances []Instance, startIndex int, 
 func SortInstancesByOperatingSystem(instances []Instance, startIndex int, endIndex int) {
 	sort.Slice(instances[startIndex:endIndex], func(i, j int) bool {
 		return strings.Compare(
-			instances[i].OperatingSystem.ToString(),
-			instances[j].OperatingSystem.ToString(),
+			instances[startIndex+i].OperatingSystem.ToString(),
+			instances[startIndex+j].OperatingSystem.ToString(),
 		) == -1
 	})
 }
@@ -53,8 +53,8 @@ func SortInstancesByOperatingSystem(instances []Instance, startIndex int, endInd
 func SortInstancesByRegion(instances []Instance, startIndex int, endIndex int) {
 	sort.Slice(instances[startIndex:endIndex], func(i, j int) bool {
 		return strings.Compare(
-			instances[i].Region.ToCodeString(),
-			instances[j].Region.ToCodeString(),
+			instances[startIndex+i].Region.ToCodeString(),
+			instances[startIndex+j].Region.ToCodeString(),
 		) == -1
 	})
 }

@@ -25,6 +25,7 @@ func TestLinearSearchInt(t *testing.T) {
 	twoElementSlice := []int{20, 10}                        // Sorted: 10, 20
 	standardSlice := []int{9, 8, -3, 4, 6}                  // Sorted: -3, 4, 6, 8, 9
 	duplicatesSlice := []int{9, 8, 4, 8, 2, 3, -2, 2, 2, 5} // Sorted: -2, 2, 2, 2, 3, 4, 5, 8, 8, 9
+	allDuplicatesSlice := []int{1, 1, 1, 1, 1}
 
 	tests := map[string]intSearchTest{
 		"less than value, singleton slice":    {slice: singletonSlice, value: 0, want: 0},
@@ -50,6 +51,10 @@ func TestLinearSearchInt(t *testing.T) {
 		"equals duplicate value, slice length 10, duplicates":  {slice: duplicatesSlice, value: 2, want: 4},
 		"between values, slice length 10, duplicates":          {slice: duplicatesSlice, value: 0, want: 4},
 		"greater than all values, slice length 10, duplicates": {slice: duplicatesSlice, value: 1000, want: 0},
+
+		"equals value, slice length 5, all duplcates":            {slice: allDuplicatesSlice, value: 1, want: 0},
+		"less than all values, slice length 5, all duplcates":    {slice: allDuplicatesSlice, value: 0, want: 0},
+		"greater than all values, slice length 5, all duplcates": {slice: allDuplicatesSlice, value: 2, want: 4},
 	}
 
 	for name, test := range tests {
@@ -92,6 +97,7 @@ func TestLinearSearchFloat(t *testing.T) {
 	twoElementSlice := []float64{20.02, 9.99}                                             // Sorted: 9.99, 20.02
 	standardSlice := []float64{9, 8.01, -3.2, 4.99, 6}                                    // Sorted: -3.2, 4.99, 6, 8.01, 9
 	duplicatesSlice := []float64{9.00, 8.01, 4.62, 8.01, 2.1, 3.9, -2.22, 2.1, 2.1, 5.01} // Sorted: -2.22, 2.1, 2.1, 2.1, 3.9, 4.62, 5.01, 8.01, 8.01, 9.00
+	allDuplicatesSlice := []float64{1.1, 1.1, 1.1, 1.1, 1.1}
 
 	tests := map[string]floatSearchTest{
 		"less than value, singleton slice":    {slice: singletonSlice, value: 9.01, want: 0},
@@ -120,6 +126,10 @@ func TestLinearSearchFloat(t *testing.T) {
 		"equals duplicate value, slice length 10, duplicates":  {slice: duplicatesSlice, value: 2.1, want: 4},
 		"between values, slice length 10, duplicates":          {slice: duplicatesSlice, value: 0, want: 4},
 		"greater than all values, slice length 10, duplicates": {slice: duplicatesSlice, value: 1000, want: 0},
+
+		"equals value, slice length 5, all duplcates":            {slice: allDuplicatesSlice, value: 1.1, want: 0},
+		"less than all values, slice length 5, all duplcates":    {slice: allDuplicatesSlice, value: 0, want: 0},
+		"greater than all values, slice length 5, all duplcates": {slice: allDuplicatesSlice, value: 2, want: 4},
 	}
 
 	for name, test := range tests {
@@ -162,6 +172,7 @@ func TestLinearSearchString(t *testing.T) {
 	twoElementSlice := []string{"zebra", "apple"}                                                     // Sorted: "apple", "zebra"
 	standardSlice := []string{"potato", "octopus", "apple", "chocolate", "lemon"}                     // Sorted: "apple", "chocolate", "lemon", "octopus", "potato"
 	duplicatesSlice := []string{"zebra", "banana", "dolphin", "octopus", "banana", "banana", "apple"} // Sorted: "apple", "banana", "banana", "banana", "dolphin", "octopus", "zebra"
+	allDuplicatesSlice := []string{"b", "b", "b", "b", "b"}
 
 	tests := map[string]stringSearchTest{
 		"less than value, singleton slice":    {slice: singletonSlice, value: "apple", want: 0},
@@ -187,6 +198,10 @@ func TestLinearSearchString(t *testing.T) {
 		"equals duplicate value, slice length 7, duplicates":  {slice: duplicatesSlice, value: "banana", want: 1},
 		"between values, slice length 7, duplicates":          {slice: duplicatesSlice, value: "azure", want: 1},
 		"greater than all values, slice length 7, duplicates": {slice: duplicatesSlice, value: "zzzz", want: 0},
+
+		"equals value, slice length 5, all duplcates":            {slice: allDuplicatesSlice, value: "b", want: 0},
+		"less than all values, slice length 5, all duplcates":    {slice: allDuplicatesSlice, value: "a", want: 0},
+		"greater than all values, slice length 5, all duplcates": {slice: allDuplicatesSlice, value: "c", want: 4},
 	}
 
 	for name, test := range tests {
@@ -231,6 +246,7 @@ func TestBinarySearchInt(t *testing.T) {
 	oddLengthSlice := []int{1, 5, 10, 15, 20}
 	largeSlice := []int{-10, -5, -1, 2, 4, 9, 15, 72, 93, 250, 1002, 99999}
 	duplicatesSlice := []int{1, 2, 2, 5, 5, 5, 5, 8, 9, 9}
+	allDuplicatesSlice := []int{1, 1, 1, 1, 1}
 
 	tests := map[string]intSearchTest{
 		"less than value, singleton slice":    {slice: singletonSlice, value: 0, want: 0},
@@ -275,6 +291,10 @@ func TestBinarySearchInt(t *testing.T) {
 		"equals value (indexes 3 to 6), duplicates slice":  {slice: duplicatesSlice, value: 5, want: 3},
 		"between values (indexes 2 & 3), duplicates slice": {slice: duplicatesSlice, value: 3, want: 3},
 		"greater than all values, duplicates slice":        {slice: duplicatesSlice, value: 9999999, want: 9},
+
+		"equals value, slice length 5, all duplcates":            {slice: allDuplicatesSlice, value: 1, want: 0},
+		"less than all values, slice length 5, all duplcates":    {slice: allDuplicatesSlice, value: 0, want: 0},
+		"greater than all values, slice length 5, all duplcates": {slice: allDuplicatesSlice, value: 2, want: 4},
 	}
 
 	for name, test := range tests {
@@ -319,6 +339,7 @@ func TestBinarySearchFloat(t *testing.T) {
 	oddLengthSlice := []float64{3.2, 8.1, 10, 15.2, 20}
 	largeSlice := []float64{-10.1, -5, -1.2, 2.04, 4.001, 9, 15.2, 72.001, 93.92, 250.6, 1002, 99999.9}
 	duplicatesSlice := []float64{-1, 2.01, 2.01, 5.32, 5.32, 5.32, 5.32, 8, 9.1, 9.1}
+	allDuplicatesSlice := []float64{1.1, 1.1, 1.1, 1.1, 1.1}
 
 	tests := map[string]floatSearchTest{
 		"less than value, singleton slice":    {slice: singletonSlice, value: 0, want: 0},
@@ -363,6 +384,10 @@ func TestBinarySearchFloat(t *testing.T) {
 		"equals value (indexes 3 to 6), duplicates slice":  {slice: duplicatesSlice, value: 5.32, want: 3},
 		"between values (indexes 2 & 3), duplicates slice": {slice: duplicatesSlice, value: 3, want: 3},
 		"greater than all values, duplicates slice":        {slice: duplicatesSlice, value: 9999999, want: 9},
+
+		"equals value, slice length 5, all duplcates":            {slice: allDuplicatesSlice, value: 1.1, want: 0},
+		"less than all values, slice length 5, all duplcates":    {slice: allDuplicatesSlice, value: 0, want: 0},
+		"greater than all values, slice length 5, all duplcates": {slice: allDuplicatesSlice, value: 2, want: 4},
 	}
 
 	for name, test := range tests {
@@ -407,6 +432,7 @@ func TestBinarySearchString(t *testing.T) {
 	oddLengthSlice := []string{"apple", "carrot", "lemon", "money", "zebra"}
 	largeSlice := []string{"apple", "carrot", "lemon", "money", "octopus", "pumpkin", "red", "staple", "zebra"}
 	duplicatesSlice := []string{"apple", "banana", "banana", "dolphin", "dolphin", "dolphin", "dolphin", "hotel", "octopus", "octopus"}
+	allDuplicatesSlice := []string{"b", "b", "b", "b", "b"}
 
 	tests := map[string]stringSearchTest{
 		"less than value, singleton slice":    {slice: singletonSlice, value: "apple", want: 0},
@@ -451,6 +477,10 @@ func TestBinarySearchString(t *testing.T) {
 		"equals value (indexes 3 to 6), duplicates slice":  {slice: duplicatesSlice, value: "dolphin", want: 3},
 		"between values (indexes 2 & 3), duplicates slice": {slice: duplicatesSlice, value: "chocolate", want: 3},
 		"greater than all values, duplicates slice":        {slice: duplicatesSlice, value: "zzzzzz", want: 9},
+
+		"equals value, slice length 5, all duplcates":            {slice: allDuplicatesSlice, value: "b", want: 0},
+		"less than all values, slice length 5, all duplcates":    {slice: allDuplicatesSlice, value: "a", want: 0},
+		"greater than all values, slice length 5, all duplcates": {slice: allDuplicatesSlice, value: "c", want: 4},
 	}
 
 	for name, test := range tests {

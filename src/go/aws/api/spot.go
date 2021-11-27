@@ -15,7 +15,8 @@ import (
 	"go.uber.org/zap"
 )
 
-// TODO: Remove dep on Config
+// TODO: Add log of how many not parsed (like on-demand.go line 66)
+
 func GetSpotInstances(
 	config *config.ApiConfig,
 	regions []types.Region,
@@ -52,9 +53,8 @@ func GetSpotInstances(
 			)
 			return nil, err
 		}
-		logger.Debug("fetched price info")
+
 		regionPriceMap := createInstancePriceMap(regionSpotPrices)
-		logger.Debug("created price map info")
 
 		instances, err := createRegionSpotInstances(region, &regionRevocationInfo, regionPriceMap, instanceSpecMap, logger)
 		if err != nil {
@@ -62,7 +62,7 @@ func GetSpotInstances(
 		}
 		regionToInstanceMap[region] = instances
 		logger.Debug("Finished creating instances")
-		logger.Info("TOOD") // TODO: Log & count
+		logger.Info("TODO") // TODO: Log & count
 	}
 
 	return regionToInstanceMap, nil
@@ -105,7 +105,7 @@ func fetchSpotInstanceAvailabilityInfo(
 	nextToken := ""
 	firstIter := true
 	total := 0
-	for (total <= maxInstanceCount || maxInstanceCount <= 0) && (nextToken != "" || firstIter) {
+	for (total < maxInstanceCount || maxInstanceCount <= 0) && (nextToken != "" || firstIter) {
 		resp, err := ec2Client.DescribeSpotPriceHistory(context.TODO(), &ec2.DescribeSpotPriceHistoryInput{})
 		if err != nil {
 			logger.Error("error calling DescribeSpotInstancePriceHistory to EC2 client", zap.Error(err))
@@ -130,13 +130,14 @@ func fetchSpotInstanceAvailabilityInfo(
 		zap.Int("maxInstanceCount", maxInstanceCount),
 	)
 
-	if len(spotPrices) > maxInstanceCount {
-		logger.Info(
-			"removed excess instances to keep to max instance count",
-			zap.Int("removed", len(spotPrices)-maxInstanceCount),
-		)
-		spotPrices = spotPrices[:maxInstanceCount]
-	}
+	// TODO
+	// if len(spotPrices) > maxInstanceCount {
+	// 	logger.Info(
+	// 		"removed excess instances to keep to max instance count",
+	// 		zap.Int("removed", len(spotPrices)-maxInstanceCount),
+	// 	)
+	// 	spotPrices = spotPrices[:maxInstanceCount]
+	// }
 
 	return spotPrices, nil
 }
@@ -200,7 +201,7 @@ func createRegionSpotInstances(
 	for instanceType, revocationInfo := range regionRevocationInfo.LinuxInstances {
 		spec, ok := instanceSpecMap[instanceType]
 		if !ok {
-			logger.Error(
+			logger.Debug(
 				"failed to create spot instance because no instance specification exists",
 				zap.String("instance", instanceType),
 			)
@@ -209,13 +210,17 @@ func createRegionSpotInstances(
 
 		price, ok := regionInstancePriceMap[instanceType]
 		if !ok {
-			logger.Error("failed to create spot instance")
+			logger.Debug(
+				"failed to create spot instance because no price exists for instance",
+				zap.String("instance", instanceType),
+			)
 			continue
 		}
 
 		instance, err := createInstanceFromSpotInstanceInfo(&price, &revocationInfo, &spec, region, types.Linux)
 		if err != nil {
-			logger.Error("failed to create instance from given spot instance info", zap.Error(err))
+			logger.Debug("failed to create instance from given spot instance info", zap.Error(err))
+			continue
 		}
 		instances = append(instances, *instance)
 	}
@@ -223,7 +228,7 @@ func createRegionSpotInstances(
 	for instanceType, revocationInfo := range regionRevocationInfo.WindowsInstances {
 		spec, ok := instanceSpecMap[instanceType]
 		if !ok {
-			logger.Error(
+			logger.Debug(
 				"failed to create spot instance because no instance specification exists",
 				zap.String("instance", instanceType),
 			)
@@ -232,13 +237,14 @@ func createRegionSpotInstances(
 
 		price, ok := regionInstancePriceMap[instanceType]
 		if !ok {
-			logger.Error("failed to create spot instance")
+			logger.Debug("failed to create spot instance")
 			continue
 		}
 
 		instance, err := createInstanceFromSpotInstanceInfo(&price, &revocationInfo, &spec, region, types.Windows)
 		if err != nil {
-			logger.Error("failed to create instance from given spot instance info", zap.Error(err))
+			logger.Debug("failed to create instance from given spot instance info", zap.Error(err))
+			continue
 		}
 		instances = append(instances, *instance)
 	}

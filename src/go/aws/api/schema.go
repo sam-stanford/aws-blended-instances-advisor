@@ -150,14 +150,14 @@ func parseOnDemandApiResponseToInstances(resp *pricing.GetProductsOutput, logger
 		var info onDemandInstanceInfo
 		err := json.Unmarshal([]byte(instanceInfoJson), &info)
 		if err != nil {
-			logger.Error("failed to parse on-demand instance", zap.Error(err), zap.String("instance", instanceInfoJson))
+			logger.Debug("failed to parse on-demand instance", zap.Error(err), zap.String("instance", instanceInfoJson))
 			continue
 		}
 
 		if info.Specs.Attributes.MarketOption == "OnDemand" {
 			instance, err := info.toInstance()
 			if err != nil {
-				logger.Error("failed to parse on-demand instance", zap.Error(err), zap.String("instance", instanceInfoJson))
+				logger.Debug("failed to parse on-demand instance", zap.Error(err), zap.String("instance", instanceInfoJson))
 				continue
 			}
 

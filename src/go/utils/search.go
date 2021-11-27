@@ -15,8 +15,11 @@ func LinearSearchInt(slice []int, value int) (int, error) {
 	answer := 0
 
 	for thisIndex, thisValue := range slice {
-		if (slice[answer] < value && thisValue > slice[answer]) ||
-			(thisValue >= value && thisValue < slice[answer]) {
+		if thisValue == value {
+			return thisIndex, nil
+		}
+		if (slice[answer] < value && thisValue >= slice[answer]) ||
+			(thisValue > value && thisValue < slice[answer]) {
 			answer = thisIndex
 		}
 	}
@@ -32,8 +35,11 @@ func LinearSearchFloat(slice []float64, value float64) (int, error) {
 	answer := 0
 
 	for thisIndex, thisValue := range slice {
-		if (slice[answer] < value && thisValue > slice[answer]) ||
-			(thisValue >= value && thisValue < slice[answer]) {
+		if thisValue == value {
+			return thisIndex, nil
+		}
+		if (slice[answer] < value && thisValue >= slice[answer]) ||
+			(thisValue > value && thisValue < slice[answer]) {
 			answer = thisIndex
 		}
 	}
@@ -49,8 +55,11 @@ func LinearSearchString(slice []string, value string) (int, error) {
 	answer := 0
 
 	for thisIndex, thisValue := range slice {
-		if (slice[answer] < value && thisValue > slice[answer]) ||
-			(thisValue >= value && thisValue < slice[answer]) {
+		if thisValue == value {
+			return thisIndex, nil
+		}
+		if (slice[answer] < value && thisValue >= slice[answer]) ||
+			(thisValue > value && thisValue < slice[answer]) {
 			answer = thisIndex
 		}
 	}
@@ -96,7 +105,10 @@ func BinarySearchInt(sortedSlice []int, value int) (int, error) {
 
 		if midVal == value {
 			// Find first element == value
-			for mid >= 0 && midVal == value {
+			for midVal == value {
+				if mid == 0 {
+					return 0, nil
+				}
 				mid -= 1
 				midVal = sortedSlice[mid]
 			}
@@ -151,7 +163,10 @@ func BinarySearchFloat(sortedSlice []float64, value float64) (int, error) {
 
 		if midVal == value {
 			// Find first element == value
-			for mid >= 0 && midVal == value {
+			for midVal == value {
+				if mid == 0 {
+					return 0, nil
+				}
 				mid -= 1
 				midVal = sortedSlice[mid]
 			}
@@ -206,7 +221,10 @@ func BinarySearchString(sortedSlice []string, value string) (int, error) {
 
 		if midVal == value {
 			// Find first element == value
-			for mid >= 0 && midVal == value {
+			for midVal == value {
+				if mid == 0 {
+					return 0, nil
+				}
 				mid -= 1
 				midVal = sortedSlice[mid]
 			}
