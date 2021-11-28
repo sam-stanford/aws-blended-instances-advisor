@@ -1,0 +1,43 @@
+{
+  "credentials":{
+    "production": {
+      "awsKeyId": "PROD_KEY_ID",
+      "awsSecretKey": "PROD_SECRET_KEY"
+    },
+    "development": {
+      "awsKeyId": "DEV_KEY_ID",
+      "awsSecretKey": "DEV_SECRET_KEY"
+    },
+    "test": {
+      "awsKeyId": "TEST_KEY_ID",
+      "awsSecretKey": "TEST_SECRET_KEY"
+    }
+  },
+  "constraints": {
+    "regions": [],
+    "services": [
+      {
+        "name": "Test Service 1",
+        "minMemory": 16,
+        "maxVcpu": 4,
+        "focus": "performance",
+        "focusWeight": 0.4,
+        "instances": {
+          "minimum": 0,
+          "total": 2
+        }
+      }
+    ]
+  },
+  "api": {
+    "endpoints": {
+      "awsSpotInstanceInfoUrl": "TEST_URL"
+    },
+    "maxInstancesToFetch": 1000,
+    "downloadsDir": "TEST_DOWNLOADS_DIR"
+  },
+  "cache": {
+    "dirpath": "TEST_CACHE_DIRPATH",
+    "defaultLifetime": 200
+  }
+}

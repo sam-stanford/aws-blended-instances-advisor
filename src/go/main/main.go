@@ -28,7 +28,7 @@ func main() {
 
 	regionInstancesMap, err := awsApi.GetInstances(
 		&config.ApiConfig,
-		config.GetRegions(),
+		config.Constraints.GetRegions(),
 		&creds,
 		cache,
 		logger,
@@ -101,7 +101,7 @@ func logConfig(config *config.Config, configFilepath string, logger *zap.Logger)
 	logger.Info(
 		"config parsed",
 		zap.String("configFilepath", configFilepath),
-		zap.Any("config", config.ToString()), // TODO: Rename to String for Go convention
+		zap.Any("config", config.String()),
 	)
 	// TODO: Stop escaping quotes
 }
