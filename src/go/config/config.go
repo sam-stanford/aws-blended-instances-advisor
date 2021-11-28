@@ -16,6 +16,8 @@ const (
 	DEFAULT_CACHE_DEFAULT_LIFETIME     = 96
 )
 
+// TODO: Doc
+
 type Config struct {
 	Credentials CredentialsList `json:"credentials"`
 	Constraints Constraints     `json:"constraints"`
@@ -35,10 +37,17 @@ type Credentials struct {
 }
 
 type ServiceDescription struct {
-	Name                  string  `json:"name"`
-	MinMemory             float64 `json:"minMemory"`
-	MaxVcpu               int     `json:"maxVcpu"`
-	RevocationSensitivity float64 `json:"revocationSensitivity"`
+	Name        string                      `json:"name"`
+	MinMemory   float64                     `json:"minMemory"`
+	MaxVcpu     int                         `json:"maxVcpu"`
+	Instances   ServiceDescriptionInstances `json:"instances"`
+	Focus       string                      `json:"focus"`
+	FocusWeight float64                     `json:"focusWeight"`
+}
+
+type ServiceDescriptionInstances struct {
+	MinimumCount int `json:"minimum"`
+	TotalCount   int `json:"total"`
 }
 
 type Constraints struct {
@@ -57,11 +66,37 @@ type Endpoints struct {
 }
 
 type CacheConfig struct {
-	Dirpath         string `json:"dirpath"`
-	DefaultLifetime int    `json:"defaultLifetime"`
+	Dirpath string `json:"dirpath"`
 }
 
 // TODO: Doc comments
+
+func (c *Constraints) GetRegions() []awsTypes.Region {
+	regions := make([]awsTypes.Region, len(c.Regions))
+	for _, regionStr := range c.Regions {
+		region, err := awsTypes.NewRegion(regionStr)
+		if err == nil {
+			regions = append(regions, region)
+		}
+	}
+	return regions
+}
+
+func (svc *ServiceDescription) GetFocus() (ServiceFocus, error) {
+	return ParseServiceFocus(svc.Focus)
+}
+
+func (c *Config) String() string {
+	noCredsConfig := &Config{
+		Constraints: c.Constraints,
+		ApiConfig:   c.ApiConfig,
+		CacheConfig: c.CacheConfig,
+		Credentials: c.Credentials,
+	}
+
+	jsonBytes, _ := json.Marshal(noCredsConfig)
+	return string(jsonBytes)
+}
 
 func ParseConfig(filepath string) (*Config, error) {
 	configBytes, err := utils.FileToBytes(filepath)
@@ -78,8 +113,7 @@ func ParseConfig(filepath string) (*Config, error) {
 			MaxInstancesToFetch: DEFAULT_API_MAX_INSTANCES_TO_FETCH,
 		},
 		CacheConfig: CacheConfig{
-			Dirpath:         DEFAULT_CACHE_DIR,
-			DefaultLifetime: DEFAULT_CACHE_DEFAULT_LIFETIME,
+			Dirpath: DEFAULT_CACHE_DIR,
 		},
 	}
 
@@ -93,27 +127,6 @@ func ParseConfig(filepath string) (*Config, error) {
 	}
 
 	return &cfg, nil
-}
-
-func (config *Config) GetRegions() []awsTypes.Region {
-	regions := make([]awsTypes.Region, len(config.Constraints.Regions))
-	for _, regionStr := range config.Constraints.Regions {
-		region, err := awsTypes.NewRegion(regionStr)
-		if err == nil {
-			regions = append(regions, region)
-		}
-	}
-	return regions
-}
-
-func (c *Config) ToString() string {
-	noCredsConfig := &Config{
-		Constraints: c.Constraints,
-		ApiConfig:   c.ApiConfig,
-	}
-
-	jsonBytes, _ := json.Marshal(noCredsConfig)
-	return string(jsonBytes)
 }
 
 func (c *Config) Validate() error {
@@ -185,15 +198,19 @@ func (c *Config) validateServiceDescriptions() error {
 	return nil
 }
 
-func validateServiceDescription(service ServiceDescription) error {
-	if service.Name == "" {
+func validateServiceDescription(svc ServiceDescription) error {
+	if svc.Name == "" {
 		return errors.New("service name is empty")
 	}
-	if service.RevocationSensitivity < 0 || service.RevocationSensitivity > 1 {
+	_, err := svc.GetFocus()
+	if err != nil {
+		return err
+	}
+	if svc.FocusWeight < 0 || svc.FocusWeight > 1 {
 		return fmt.Errorf(
-			"service (%s) has revocation sensitive value outside of range of [0,1]: %f",
-			service.Name,
-			service.RevocationSensitivity,
+			"svc (%s) has focusWeight value outside of range of [0,1]: %f",
+			svc.Name,
+			svc.FocusWeight,
 		)
 	}
 	return nil
