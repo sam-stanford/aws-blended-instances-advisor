@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -187,4 +188,31 @@ func isNumericOrBoolType(k reflect.Kind) bool {
 	}
 
 	return false
+}
+
+// TODO: Test & Doc
+func FloatsEqual(a, b float64) bool {
+	return math.Abs(a-b) < 0.001 // TODO: Make epsilon const
+}
+
+func MinOfInts(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func MaxOfInts(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func MinOfFloats(a, b float64) float64 {
+	return math.Min(a, b)
+}
+
+func MaxOfFloats(a, b float64) float64 {
+	return math.Max(a, b)
 }

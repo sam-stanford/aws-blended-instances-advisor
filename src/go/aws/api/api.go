@@ -5,7 +5,7 @@ import (
 	types "ec2-test/aws/types"
 	"ec2-test/cache"
 	"ec2-test/config"
-	"ec2-test/instances"
+	"ec2-test/instance"
 	"encoding/json"
 	"errors"
 	"time"
@@ -20,9 +20,9 @@ import (
 )
 
 const (
-	AWS_PRICING_API_REGION   = "us-east-1"      // Only us-east-1 works currently (2021-11-11)
-	INSTANCES_CACHE_FILENAME = "instances.json" // TODO: Inject
-	INSTANCES_CACHE_DURATION = 672              // TODO: Inject
+	AWS_PRICING_API_REGION   = "us-east-1"     // Only us-east-1 works currently (2021-11-11)
+	INSTANCES_CACHE_FILENAME = "instance.json" // TODO: Inject
+	INSTANCES_CACHE_DURATION = 672             // TODO: Inject
 )
 
 // TODO: Doc comment & use go routines to parallelise fetches
@@ -33,7 +33,7 @@ func GetInstances(
 	cache *cache.Cache,
 	logger *zap.Logger,
 ) (
-	map[types.Region][]instances.Instance,
+	map[types.Region][]instance.Instance,
 	error,
 ) {
 
@@ -68,14 +68,14 @@ func GetInstances(
 	return instances, nil
 }
 
-func getInstancesFromCache(instancesCacheFilename string, c *cache.Cache) (map[types.Region][]instances.Instance, error) {
+func getInstancesFromCache(instancesCacheFilename string, c *cache.Cache) (map[types.Region][]instance.Instance, error) {
 	isValid := c.IsValid(instancesCacheFilename)
 	if isValid {
 		instancesFileContent, err := c.Get(instancesCacheFilename)
 		if err != nil {
 			return nil, err
 		}
-		var instanceToRegionMap map[types.Region][]instances.Instance
+		var instanceToRegionMap map[types.Region][]instance.Instance
 		err = json.Unmarshal([]byte(instancesFileContent), &instanceToRegionMap)
 		if err != nil {
 			return nil, err
@@ -85,7 +85,7 @@ func getInstancesFromCache(instancesCacheFilename string, c *cache.Cache) (map[t
 	return nil, errors.New("instances not in cache")
 }
 
-func storeInstancesInCache(instanceToRegionMap map[types.Region][]instances.Instance, instancesCacheFilename string, c *cache.Cache) error {
+func storeInstancesInCache(instanceToRegionMap map[types.Region][]instance.Instance, instancesCacheFilename string, c *cache.Cache) error {
 	instancesFileContent, err := json.Marshal(instanceToRegionMap)
 	if err != nil {
 		return err
@@ -121,10 +121,10 @@ func createAwsPricingClient(awsCredentials credentials.StaticCredentialsProvider
 }
 
 func joinSpotAndOnDemandInstances(
-	onDemandInstances map[types.Region][]instances.Instance,
-	spotInstances map[types.Region][]instances.Instance,
+	onDemandInstances map[types.Region][]instance.Instance,
+	spotInstances map[types.Region][]instance.Instance,
 	regions []types.Region,
-) map[types.Region][]instances.Instance {
+) map[types.Region][]instance.Instance {
 	for _, region := range regions {
 		onDemandInstances[region] = append(onDemandInstances[region], spotInstances[region]...)
 	}

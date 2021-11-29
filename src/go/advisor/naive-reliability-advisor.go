@@ -2,32 +2,31 @@ package advisor
 
 import (
 	"ec2-test/config"
-	instancesPkg "ec2-test/instances"
+	"ec2-test/instance"
 	"ec2-test/utils"
 	"fmt"
 )
 
-//
+// TODO: Doc
 type NaiveReliabilityAdvisor struct {
 }
 
 // Instantiates a NaiveReliabilityAdvisor
 func NewNaiveReliabilityAdvisor() NaiveReliabilityAdvisor {
-	// TODO
 	return NaiveReliabilityAdvisor{}
 }
 
 // TODO: Doc
 func (advisor NaiveReliabilityAdvisor) Advise(
-	instances []instancesPkg.Instance,
+	instances []instance.Instance,
 	constraints *config.Constraints,
 ) (
-	[]instancesPkg.Instance,
+	[]instance.Instance,
 	InstanceApplicationMap, // TODO: Rename to instanceServiceMap
 	error,
 ) {
 
-	selectedInstances := []instancesPkg.Instance{}
+	selectedInstances := []instance.Instance{}
 
 	for _, service := range constraints.Services {
 		// TODO: Abstract out sort & find
@@ -35,28 +34,28 @@ func (advisor NaiveReliabilityAdvisor) Advise(
 		searchStart, searchEnd := 0, len(instances)
 
 		// Find min mem
-		instancesPkg.SortInstancesByMemory(instances, 0, len(instances))
-		searchStart, err := instancesPkg.FindMinimumMemorySortedInstances(instances, service.MinMemory, searchStart, searchEnd)
+		instance.SortInstancesByMemory(instances, 0, len(instances))
+		searchStart, err := instance.FindMinimumMemorySortedInstances(instances, service.MinMemory, searchStart, searchEnd)
 		if err != nil {
 			return nil, nil, utils.PrependToError(err, "error when finding index of instance with minimum memory requirement")
 		}
 
 		// Find non-revocable
-		instancesPkg.SortInstancesByRevocationProbability(instances, searchStart, searchEnd)
-		searchEnd, err = instancesPkg.FindMinimumRevocationProbabilitySortedInstances(instances, 1, searchStart, searchEnd) // TODO: Change 1 to 0
+		instance.SortInstancesByRevocationProbability(instances, searchStart, searchEnd)
+		searchEnd, err = instance.FindMinimumRevocationProbabilitySortedInstances(instances, 1, searchStart, searchEnd) // TODO: Change 1 to 0
 		if err != nil {
 			return nil, nil, utils.PrependToError(err, "error when finding index of instance with desired revocation probability")
 		}
 
 		// Find minimum desired cpu
-		instancesPkg.SortInstancesByVcpus(instances, searchStart, searchEnd)
-		searchStart, err = instancesPkg.FindMinimumVcpuSortedInstances(instances, service.MaxVcpu, searchStart, searchEnd)
+		instance.SortInstancesByVcpu(instances, searchStart, searchEnd)
+		searchStart, err = instance.FindMinimumVcpuSortedInstances(instances, service.MaxVcpu, searchStart, searchEnd)
 		if err != nil {
 			return nil, nil, utils.PrependToError(err, "error when finding index of instance with desired VCPU")
 		}
 
 		// Find lowest price
-		instancesPkg.SortInstancesByPrice(instances, searchStart, searchEnd)
+		instance.SortInstancesByPrice(instances, searchStart, searchEnd)
 		selectedInstance := instances[searchStart]
 
 		selectedInstances = append(selectedInstances, selectedInstance)
@@ -65,11 +64,11 @@ func (advisor NaiveReliabilityAdvisor) Advise(
 	return selectedInstances, nil, nil
 }
 
-func (advisor NaiveReliabilityAdvisor) AdviseForRegions(
-	regionInstancesMap instancesPkg.RegionInstancesMap,
+func (advisor NaiveReliabilityAdvisor) AdviseForEachRegion(
+	regionInstancesMap instance.RegionInstancesMap,
 	constraints *config.Constraints,
 ) (
-	[]instancesPkg.Instance,
+	[]instance.Instance,
 	InstanceApplicationMap,
 	error,
 ) {

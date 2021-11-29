@@ -42,7 +42,7 @@ func main() {
 	}
 
 	advisor := advisor.NewNaiveReliabilityAdvisor()
-	advisor.AdviseForRegions(regionInstancesMap, &config.Constraints)
+	advisor.AdviseForEachRegion(regionInstancesMap, &config.Constraints)
 }
 
 func createLogger(debugMode bool) (logger *zap.Logger, deferCallback func() error) {

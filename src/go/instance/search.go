@@ -1,4 +1,4 @@
-package instances
+package instance
 
 import (
 	"ec2-test/utils"
@@ -8,8 +8,8 @@ import (
 // Returns the index of the element with largest memory if no elements have a memory greater than wantedMemory.
 // Returns an error if there is a problem with the given indexes.
 //
-// FindMinimumMemorySortedInstances should be called for improved performance on a sorted slice.
-func FindMinimumMemory(instances []Instance, wantedMemory float64, startIndex int, endIndex int) (int, error) {
+// FindMemorySorted should be called for improved performance on a sorted slice.
+func FindMemory(instances []Instance, wantedMemory float64, startIndex int, endIndex int) (int, error) {
 	err := utils.ValidateIndexes(len(instances), startIndex, endIndex)
 	if err != nil {
 		return -1, err
@@ -31,8 +31,8 @@ func FindMinimumMemory(instances []Instance, wantedMemory float64, startIndex in
 // Returns the index of the element in sortedInstances from startIndex (inclusive) to endIndex (exclusive) that has the smallest memory value that is larger than wantedMemory.
 // Undefined behaviour for a given slice of unsorted instances; however, an error will likely be returned.
 //
-// FindMinimumMemory should be used for unsorted slices.
-func FindMinimumMemorySortedInstances(sortedInstances []Instance, wantedMemory float64, startIndex int, endIndex int) (int, error) {
+// FindMemory should be used for unsorted slices.
+func FindMemorySorted(sortedInstances []Instance, wantedMemory float64, startIndex int, endIndex int) (int, error) {
 	err := utils.ValidateIndexes(len(sortedInstances), startIndex, endIndex)
 	if err != nil {
 		return -1, err
@@ -52,7 +52,13 @@ func FindMinimumMemorySortedInstances(sortedInstances []Instance, wantedMemory f
 }
 
 // TODO: Doc
-func FindMinimumPrice(instances []Instance, wantedPrice float64, startIndex int, endIndex int) (int, error) {
+func SortAndFindMemory(instances []Instance, wantedMemory float64, startIndex, endIndex int) (int, error) {
+	SortInstancesByMemory(instances, startIndex, endIndex)
+	return FindMemorySorted(instances, wantedMemory, startIndex, endIndex)
+}
+
+// TODO: Doc
+func FindPrice(instances []Instance, wantedPrice float64, startIndex int, endIndex int) (int, error) {
 	err := utils.ValidateIndexes(len(instances), startIndex, endIndex)
 	if err != nil {
 		return -1, err
@@ -72,7 +78,7 @@ func FindMinimumPrice(instances []Instance, wantedPrice float64, startIndex int,
 }
 
 // TODO: Doc
-func FindMinimumPriceSortedInstances(sortedInstances []Instance, wantedPrice float64, startIndex int, endIndex int) (int, error) {
+func FindPriceSorted(sortedInstances []Instance, wantedPrice float64, startIndex int, endIndex int) (int, error) {
 	err := utils.ValidateIndexes(len(sortedInstances), startIndex, endIndex)
 	if err != nil {
 		return -1, err
@@ -92,7 +98,13 @@ func FindMinimumPriceSortedInstances(sortedInstances []Instance, wantedPrice flo
 }
 
 // TODO: Doc
-func FindMinimumVcpu(instances []Instance, wantedVcpu int, startIndex int, endIndex int) (int, error) {
+func SortAndFindPrice(instances []Instance, wantedPrice float64, startIndex, endIndex int) (int, error) {
+	SortInstancesByPrice(instances, startIndex, endIndex)
+	return FindPriceSorted(instances, wantedPrice, startIndex, endIndex)
+}
+
+// TODO: Doc
+func FindVcpu(instances []Instance, wantedVcpu int, startIndex int, endIndex int) (int, error) {
 	err := utils.ValidateIndexes(len(instances), startIndex, endIndex)
 	if err != nil {
 		return -1, err
@@ -100,7 +112,7 @@ func FindMinimumVcpu(instances []Instance, wantedVcpu int, startIndex int, endIn
 
 	vcpus := []int{}
 	for _, instance := range instances[startIndex:endIndex] {
-		vcpus = append(vcpus, instance.Vcpus) // TODO: Rename Vcpus to vcpu cos it don't make sense
+		vcpus = append(vcpus, instance.Vcpu)
 	}
 
 	index, err := utils.LinearSearchInt(vcpus, wantedVcpu)
@@ -112,7 +124,7 @@ func FindMinimumVcpu(instances []Instance, wantedVcpu int, startIndex int, endIn
 }
 
 // TODO: Doc
-func FindMinimumVcpuSortedInstances(sortedInstances []Instance, wantedVcpu int, startIndex int, endIndex int) (int, error) {
+func FindVcpuSorted(sortedInstances []Instance, wantedVcpu int, startIndex int, endIndex int) (int, error) {
 	err := utils.ValidateIndexes(len(sortedInstances), startIndex, endIndex)
 	if err != nil {
 		return -1, err
@@ -120,7 +132,7 @@ func FindMinimumVcpuSortedInstances(sortedInstances []Instance, wantedVcpu int, 
 
 	vcpus := []int{}
 	for _, instance := range sortedInstances[startIndex:endIndex] {
-		vcpus = append(vcpus, instance.Vcpus)
+		vcpus = append(vcpus, instance.Vcpu)
 	}
 
 	index, err := utils.BinarySearchInt(vcpus, wantedVcpu)
@@ -132,7 +144,13 @@ func FindMinimumVcpuSortedInstances(sortedInstances []Instance, wantedVcpu int, 
 }
 
 // TODO: Doc
-func FindMinimumRevocationProbability(instances []Instance, wantedProbability float64, startIndex int, endIndex int) (int, error) {
+func SortAndFindVcpu(instances []Instance, wantedVcpu int, startIndex, endIndex int) (int, error) {
+	SortInstancesByVcpu(instances, startIndex, endIndex)
+	return FindVcpuSorted(instances, wantedVcpu, startIndex, endIndex)
+}
+
+// TODO: Doc
+func FindRevocationProbability(instances []Instance, wantedProbability float64, startIndex int, endIndex int) (int, error) {
 	err := utils.ValidateIndexes(len(instances), startIndex, endIndex)
 	if err != nil {
 		return -1, err
@@ -152,7 +170,7 @@ func FindMinimumRevocationProbability(instances []Instance, wantedProbability fl
 }
 
 // TODO: Doc
-func FindMinimumRevocationProbabilitySortedInstances(sortedInstances []Instance, wantedProbability float64, startIndex int, endIndex int) (int, error) {
+func FindRevocationProbabilitySorted(sortedInstances []Instance, wantedProbability float64, startIndex int, endIndex int) (int, error) {
 	err := utils.ValidateIndexes(len(sortedInstances), startIndex, endIndex)
 	if err != nil {
 		return -1, err
@@ -169,4 +187,10 @@ func FindMinimumRevocationProbabilitySortedInstances(sortedInstances []Instance,
 	}
 
 	return startIndex + index, nil
+}
+
+// TODO: Doc
+func SortAndFindRevocationProbability(instances []Instance, wantedProbability float64, startIndex, endIndex int) (int, error) {
+	SortInstancesByRevocationProbability(instances, startIndex, endIndex)
+	return FindRevocationProbabilitySorted(instances, wantedProbability, startIndex, endIndex)
 }

@@ -3,7 +3,7 @@ package api
 // TODO: Rename these
 import (
 	types "ec2-test/aws/types"
-	"ec2-test/instances"
+	"ec2-test/instance"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -93,7 +93,7 @@ type spotInstancesInfo struct {
 
 type spotInstanceSpecs struct {
 	MemoryGb float64 `json:"ram_gb"`
-	Vcpus    int     `json:"cores"`
+	Vcpu     int     `json:"cores"`
 	Emr      bool    `json:"emr"`
 }
 
@@ -108,8 +108,8 @@ type spotInstanceRevocationInfo struct {
 	PercentageSavings         int `json:"s"` // Over on-demand
 }
 
-func (info *onDemandInstanceInfo) toInstance() (*instances.Instance, error) {
-	vcpus, err := parseOnDemandVcpus(info)
+func (info *onDemandInstanceInfo) toInstance() (*instance.Instance, error) {
+	vcpu, err := parseOnDemandVcpu(info)
 	if err != nil {
 		return nil, err
 	}
@@ -130,10 +130,10 @@ func (info *onDemandInstanceInfo) toInstance() (*instances.Instance, error) {
 		return nil, err
 	}
 
-	return &instances.Instance{
+	return &instance.Instance{
 		Name:                  info.Specs.Attributes.InstanceType,
 		MemoryGb:              mem,
-		Vcpus:                 vcpus,
+		Vcpu:                  vcpu,
 		Region:                region,
 		AvailabilityZone:      info.Specs.Attributes.AvailabilityZone, // TODO: "NA" for most fetched values
 		OperatingSystem:       os,
@@ -142,9 +142,9 @@ func (info *onDemandInstanceInfo) toInstance() (*instances.Instance, error) {
 	}, nil
 }
 
-func parseOnDemandApiResponseToInstances(resp *pricing.GetProductsOutput, logger *zap.Logger) []instances.Instance {
+func parseOnDemandApiResponseToInstances(resp *pricing.GetProductsOutput, logger *zap.Logger) []instance.Instance {
 
-	instances := make([]instances.Instance, 0)
+	instances := make([]instance.Instance, 0)
 
 	for _, instanceInfoJson := range resp.PriceList {
 		var info onDemandInstanceInfo
@@ -168,7 +168,7 @@ func parseOnDemandApiResponseToInstances(resp *pricing.GetProductsOutput, logger
 	return instances
 }
 
-func parseOnDemandVcpus(info *onDemandInstanceInfo) (int, error) {
+func parseOnDemandVcpu(info *onDemandInstanceInfo) (int, error) {
 	return strconv.Atoi(info.Specs.Attributes.Vcpu)
 }
 
