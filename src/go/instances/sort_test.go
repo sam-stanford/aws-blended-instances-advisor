@@ -1,4 +1,4 @@
-package instance
+package instances
 
 import (
 	awsTypes "ec2-test/aws/types"

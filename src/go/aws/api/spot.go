@@ -4,7 +4,7 @@ import (
 	"context"
 	types "ec2-test/aws/types"
 	"ec2-test/config"
-	"ec2-test/instance"
+	instPkg "ec2-test/instances"
 	"ec2-test/utils"
 	"encoding/json"
 	"strconv"
@@ -22,9 +22,9 @@ func GetSpotInstances(
 	regions []types.Region,
 	creds credentials.StaticCredentialsProvider,
 	logger *zap.Logger,
-) (map[types.Region][]instance.Instance, error) {
+) (map[types.Region][]instPkg.Instance, error) {
 
-	regionToInstanceMap := make(map[types.Region][]instance.Instance)
+	regionToInstanceMap := make(map[types.Region][]instPkg.Instance)
 
 	regionRevocationInfoMap, instanceSpecMap, err := fetchSpotInstanceRevocationInfoAndSpecsMap(config, logger)
 	if err != nil {
@@ -191,10 +191,10 @@ func createRegionSpotInstances(
 	instanceSpecMap map[string]spotInstanceSpecs,
 	logger *zap.Logger,
 ) (
-	[]instance.Instance,
+	[]instPkg.Instance,
 	error,
 ) {
-	instances := make([]instance.Instance, 0)
+	instances := make([]instPkg.Instance, 0)
 
 	// TODO: Wrap this in method to avoid repeated code for Windows
 
@@ -259,7 +259,7 @@ func createInstanceFromSpotInstanceInfo(
 	region types.Region,
 	os types.OperatingSystem,
 ) (
-	*instance.Instance,
+	*instPkg.Instance,
 	error,
 ) {
 
@@ -272,7 +272,7 @@ func createInstanceFromSpotInstanceInfo(
 		return nil, err
 	}
 
-	return &instance.Instance{
+	return &instPkg.Instance{
 		Name:                  string(spotPrice.InstanceType),
 		MemoryGb:              specs.MemoryGb,
 		Vcpu:                  specs.Vcpu,

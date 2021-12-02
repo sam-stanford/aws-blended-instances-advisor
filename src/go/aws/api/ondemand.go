@@ -3,7 +3,7 @@ package api
 import (
 	types "ec2-test/aws/types"
 	"ec2-test/config"
-	"ec2-test/instance"
+	instPkg "ec2-test/instances"
 
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/pricing"
@@ -22,7 +22,7 @@ func GetOnDemandInstances(
 	creds credentials.StaticCredentialsProvider,
 	logger *zap.Logger,
 ) (
-	map[types.Region][]instance.Instance,
+	map[types.Region][]instPkg.Instance,
 	error,
 ) {
 	pricingClient := createAwsPricingClient(creds)
@@ -40,14 +40,14 @@ func getRegionToOnDemandInstancesMap(
 	maxInstanceCount int,
 	logger *zap.Logger,
 ) (
-	map[types.Region][]instance.Instance,
+	map[types.Region][]instPkg.Instance,
 	error,
 ) {
 
-	regionToInstancesMap := make(map[types.Region][]instance.Instance)
+	regionToInstancesMap := make(map[types.Region][]instPkg.Instance)
 
 	for _, region := range regions {
-		regionInstances := make([]instance.Instance, 0)
+		regionInstances := make([]instPkg.Instance, 0)
 
 		nextToken := ""
 		firstIter := true

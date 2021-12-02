@@ -1,4 +1,4 @@
-package instance
+package instances
 
 import (
 	"ec2-test/utils"

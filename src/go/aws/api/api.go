@@ -5,10 +5,8 @@ import (
 	types "ec2-test/aws/types"
 	"ec2-test/cache"
 	"ec2-test/config"
-	"ec2-test/instance"
-	"encoding/json"
-	"errors"
-	"time"
+	"ec2-test/instances"
+	instPkg "ec2-test/instances"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
@@ -20,29 +18,30 @@ import (
 )
 
 const (
-	AWS_PRICING_API_REGION   = "us-east-1"     // Only us-east-1 works currently (2021-11-11)
-	INSTANCES_CACHE_FILENAME = "instance.json" // TODO: Inject
-	INSTANCES_CACHE_DURATION = 672             // TODO: Inject
+	AWS_PRICING_API_REGION   = "us-east-1"      // Only us-east-1 works currently (2021-11-11)
+	INSTANCES_CACHE_FILENAME = "instances.json" // TODO: Inject
+	INSTANCES_CACHE_DURATION = 672              // TODO: Inject
 )
 
 // TODO: Doc comment & use go routines to parallelise fetches
-func GetInstances(
+
+func GetInstancesRegionInfoMap(
 	apiConfig *config.ApiConfig,
 	regions []types.Region,
 	creds *config.Credentials,
 	cache *cache.Cache,
 	logger *zap.Logger,
 ) (
-	map[types.Region][]instance.Instance,
+	instPkg.RegionInfoMap,
 	error,
 ) {
 
-	instances, err := getInstancesFromCache(INSTANCES_CACHE_FILENAME, cache)
+	regionInfoMap, err := getRegionInfoMapFromCache(INSTANCES_CACHE_FILENAME, cache)
 	if err != nil {
 		logger.Info("no instances found in cache", zap.String("reason", err.Error()))
 	} else {
-		logger.Info("instances retrieved from cache")
-		return instances, nil
+		logger.Info("instances retrieved from cache") // TODO: Details & validate all regions are fetched
+		return regionInfoMap, nil
 	}
 
 	awsCreds := createAwsCredentials(creds)
@@ -58,43 +57,14 @@ func GetInstances(
 		return nil, err
 	}
 
-	instances = joinSpotAndOnDemandInstances(onDemandInstances, spotInstances, regions)
-	err = storeInstancesInCache(instances, INSTANCES_CACHE_FILENAME, cache)
+	regionInfoMap = createRegionInfoMap(onDemandInstances, spotInstances, regions)
+	err = storeRegionInfoMapInCache(regionInfoMap, INSTANCES_CACHE_FILENAME, cache)
 	if err != nil {
 		logger.Error("failed to store instances in cache", zap.Error(err))
 		return nil, err
 	}
 
-	return instances, nil
-}
-
-func getInstancesFromCache(instancesCacheFilename string, c *cache.Cache) (map[types.Region][]instance.Instance, error) {
-	isValid := c.IsValid(instancesCacheFilename)
-	if isValid {
-		instancesFileContent, err := c.Get(instancesCacheFilename)
-		if err != nil {
-			return nil, err
-		}
-		var instanceToRegionMap map[types.Region][]instance.Instance
-		err = json.Unmarshal([]byte(instancesFileContent), &instanceToRegionMap)
-		if err != nil {
-			return nil, err
-		}
-		return instanceToRegionMap, nil
-	}
-	return nil, errors.New("instances not in cache")
-}
-
-func storeInstancesInCache(instanceToRegionMap map[types.Region][]instance.Instance, instancesCacheFilename string, c *cache.Cache) error {
-	instancesFileContent, err := json.Marshal(instanceToRegionMap)
-	if err != nil {
-		return err
-	}
-	err = c.Set(instancesCacheFilename, string(instancesFileContent), time.Hour*INSTANCES_CACHE_DURATION)
-	if err != nil {
-		return err
-	}
-	return nil
+	return regionInfoMap, nil
 }
 
 func createAwsCredentials(creds *config.Credentials) credentials.StaticCredentialsProvider {
@@ -120,17 +90,22 @@ func createAwsPricingClient(awsCredentials credentials.StaticCredentialsProvider
 	})
 }
 
-func joinSpotAndOnDemandInstances(
-	onDemandInstances map[types.Region][]instance.Instance,
-	spotInstances map[types.Region][]instance.Instance,
+func createRegionInfoMap(
+	onDemandInstances map[types.Region][]instances.Instance,
+	spotInstances map[types.Region][]instances.Instance,
 	regions []types.Region,
-) map[types.Region][]instance.Instance {
+) instPkg.RegionInfoMap {
+
+	regionInfoMap := make(instPkg.RegionInfoMap)
 	for _, region := range regions {
-		onDemandInstances[region] = append(onDemandInstances[region], spotInstances[region]...)
+
+		thisRegionInfo := instPkg.CreateRegionInfo(onDemandInstances[region], spotInstances[region])
+		regionInfoMap[region] = thisRegionInfo
 	}
-	return onDemandInstances
+	return regionInfoMap
 }
 
+// TODO: Is this appropriate here?
 func getOnDemandInstancesFromApi(
 	pricingClient *pricing.Client,
 	region types.Region,

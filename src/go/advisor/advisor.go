@@ -1,26 +1,28 @@
 package advisor
 
 import (
+	"ec2-test/aws/types"
 	"ec2-test/config"
-	instances "ec2-test/instance"
+	"ec2-test/instances"
 )
 
 type Advisor interface {
-	Advise(
-		[]instances.Instance,
+	AdviseForRegion(
+		*instances.RegionInfo,
 		*config.Constraints,
 	) (
-		[]instances.Instance,
-		InstanceApplicationMap,
+		Advice,
 		error,
 	)
 
-	AdviseForEachRegion(
-		instances.RegionInstancesMap,
+	Advise(
+		*instances.RegionInfoMap,
 		*config.Constraints,
 	) (
-		[]instances.Instance,
-		InstanceApplicationMap,
+		map[types.Region]Advice,
 		error,
 	)
+
+	// TODO: Make Advise generic and create a AdviseForOneRegion
+	// TODO: ... and have Advise return one Advice selection
 }

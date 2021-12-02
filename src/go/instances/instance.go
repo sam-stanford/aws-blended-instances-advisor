@@ -1,10 +1,8 @@
-package instance
+package instances
 
 import (
 	awsTypes "ec2-test/aws/types"
 )
-
-type RegionInstancesMap map[awsTypes.Region][]Instance // TODO: Use
 
 // TODO: Doc
 type Instance struct {

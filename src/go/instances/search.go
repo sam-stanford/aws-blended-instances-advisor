@@ -1,8 +1,10 @@
-package instance
+package instances
 
 import (
 	"ec2-test/utils"
 )
+
+// TODO: Own package
 
 // Returns the index of the element in instances from startIndex (inclusive) to endIndex (exclusive) that has the smallest memory value greater than wantedMemory.
 // Returns the index of the element with largest memory if no elements have a memory greater than wantedMemory.
