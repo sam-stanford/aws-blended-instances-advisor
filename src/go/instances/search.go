@@ -99,7 +99,7 @@ func FindPriceSorted(sortedInstances []Instance, wantedPrice float64, startIndex
 	return startIndex + index, nil
 }
 
-// TODO: Doc
+// TODO: Doc & simple test
 func SortAndFindPrice(instances []Instance, wantedPrice float64, startIndex, endIndex int) (int, error) {
 	SortInstancesByPrice(instances, startIndex, endIndex)
 	return FindPriceSorted(instances, wantedPrice, startIndex, endIndex)

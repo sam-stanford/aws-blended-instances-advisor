@@ -167,7 +167,7 @@ func TestFindPrice(t *testing.T) {
 	}
 
 	for name, test := range tests {
-		foundIndex, err := FindMemory(test.instances, test.value, test.start, test.end)
+		foundIndex, err := FindPrice(test.instances, test.value, test.start, test.end)
 		if err != nil {
 			t.Fatalf(
 				"Error occurred when searching for test \"%s\": %s",
