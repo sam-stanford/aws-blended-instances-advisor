@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	TEST_CACHE_DIRPATH = "../../../assets/test/test-cache/"
+	TEST_CACHE_DIRPATH = "./testdata"
 
 	TEST_FILE_FILENAME       = "test-cache-file.txt"
 	TEST_FILE_CONTENT        = "TEST CONTENT"
@@ -158,7 +158,7 @@ func TestSet(t *testing.T) {
 	}
 
 	earliestSetDate := time.Now()
-	latestSetDate := earliestSetDate.Add(time.Second * 2)
+	latestSetDate := earliestSetDate.Add(time.Second * 5)
 
 	earliestInvalidationDate := earliestSetDate.Add(testDuration)
 	latestInvalidationDate := latestSetDate.Add(testDuration)
