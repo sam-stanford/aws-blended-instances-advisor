@@ -107,7 +107,7 @@ func (advisor *Weighted) selectInstanceForService(
 	searchStart, searchEnd := 0, len(instances)
 
 	// TODO: Max VCPU
-	// TODO: Mem seems to be maxing out
+	// TODO: Mem seems to be maxing out - set total to 0 in weighted search if cpu > max useful
 
 	searchStart, err := instPkg.SortAndFindMemory(
 		instances,
@@ -120,7 +120,14 @@ func (advisor *Weighted) selectInstanceForService(
 	}
 
 	weights := instPkg.GetSortWeights(svc.GetFocus(), svc.FocusWeight)
-	instPkg.SortInstancesWeighted(instances, aggregates, searchStart, searchEnd, weights)
+	instPkg.SortInstancesWeightedWithVcpuLimiter(
+		instances,
+		aggregates,
+		searchStart,
+		searchEnd,
+		weights,
+		svc.MaxVcpu,
+	)
 
 	return &instances[searchStart], nil
 }
