@@ -44,8 +44,9 @@ func TestParseConfigValid(t *testing.T) {
 					Endpoints: Endpoints{
 						AwsSpotInstanceInfoUrl: "TEST_URL",
 					},
-					MaxInstancesToFetch: 1000,
-					DownloadsDir:        "TEST_DOWNLOADS_DIR",
+					MaxInstancesToFetch:   1000,
+					DownloadsDir:          "TEST_DOWNLOADS_DIR",
+					ConsiderFreeInstances: true,
 				},
 				CacheConfig: CacheConfig{
 					Dirpath: "TEST_CACHE_DIRPATH",
@@ -91,8 +92,9 @@ func TestParseConfigValid(t *testing.T) {
 					Endpoints: Endpoints{
 						AwsSpotInstanceInfoUrl: "TEST_URL",
 					},
-					DownloadsDir:        "TEST_DOWNLOADS_DIR",
-					MaxInstancesToFetch: 1000,
+					DownloadsDir:          "TEST_DOWNLOADS_DIR",
+					MaxInstancesToFetch:   1000,
+					ConsiderFreeInstances: false,
 				},
 				CacheConfig: CacheConfig{
 					Dirpath: "TEST_CACHE_DIRPATH",

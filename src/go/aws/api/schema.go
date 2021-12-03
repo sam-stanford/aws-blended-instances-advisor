@@ -161,6 +161,13 @@ func parseOnDemandApiResponseToInstances(resp *pricing.GetProductsOutput, logger
 				continue
 			}
 
+			// TODO: remove from here
+			if instance.PricePerHour == 0 {
+				fmt.Printf("\nZERO PRICE INSTANCE: %s\n", instanceInfoJson)
+			}
+
+			// TODO: remove to here
+
 			instances = append(instances, *instance)
 		}
 	}

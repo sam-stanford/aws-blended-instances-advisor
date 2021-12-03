@@ -56,9 +56,10 @@ type Constraints struct {
 }
 
 type ApiConfig struct {
-	Endpoints           Endpoints `json:"endpoints"`
-	DownloadsDir        string    `json:"downloadsDir"`
-	MaxInstancesToFetch int       `json:"maxInstancesToFetch"`
+	Endpoints             Endpoints `json:"endpoints"`
+	DownloadsDir          string    `json:"downloadsDir"`
+	MaxInstancesToFetch   int       `json:"maxInstancesToFetch"`
+	ConsiderFreeInstances bool      `json:"freeInstances"`
 }
 
 type Endpoints struct {
