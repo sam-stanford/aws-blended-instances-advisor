@@ -5,7 +5,6 @@ import (
 	types "ec2-test/aws/types"
 	"ec2-test/cache"
 	"ec2-test/config"
-	"ec2-test/instances"
 	instPkg "ec2-test/instances"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -13,7 +12,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/pricing"
-	pricingTypes "github.com/aws/aws-sdk-go-v2/service/pricing/types"
 	"go.uber.org/zap"
 )
 
@@ -91,8 +89,8 @@ func createAwsPricingClient(awsCredentials credentials.StaticCredentialsProvider
 }
 
 func createRegionInfoMap(
-	onDemandInstances map[types.Region][]instances.Instance,
-	spotInstances map[types.Region][]instances.Instance,
+	onDemandInstances map[types.Region][]instPkg.Instance,
+	spotInstances map[types.Region][]instPkg.Instance,
 	regions []types.Region,
 ) instPkg.RegionInfoMap {
 
@@ -103,26 +101,4 @@ func createRegionInfoMap(
 		regionInfoMap[region] = thisRegionInfo
 	}
 	return regionInfoMap
-}
-
-// TODO: Is this appropriate here?
-func getOnDemandInstancesFromApi(
-	pricingClient *pricing.Client,
-	region types.Region,
-	nextToken string,
-) (*pricing.GetProductsOutput, error) {
-
-	serviceCode := EC2_SERVICE_CODE
-	locationFilterKey := LOCATION_FILTER_KEY
-	locationFilterValue := region.ToNameString()
-
-	return pricingClient.GetProducts(context.TODO(), &pricing.GetProductsInput{
-		ServiceCode: &serviceCode,
-		NextToken:   &nextToken,
-		Filters: []pricingTypes.Filter{{
-			Field: &locationFilterKey,
-			Value: &locationFilterValue,
-			Type:  TERM_MATCH_FILTER_TYPE,
-		}},
-	})
 }

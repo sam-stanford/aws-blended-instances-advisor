@@ -3,6 +3,7 @@ package api
 // TODO: Rename these
 import (
 	types "ec2-test/aws/types"
+	"ec2-test/config"
 	instPkg "ec2-test/instances"
 	"encoding/json"
 	"errors"
@@ -142,7 +143,7 @@ func (info *onDemandInstanceInfo) toInstance() (*instPkg.Instance, error) {
 	}, nil
 }
 
-func parseOnDemandApiResponseToInstances(resp *pricing.GetProductsOutput, logger *zap.Logger) []instPkg.Instance {
+func parseOnDemandApiResponseToInstances(cfg *config.ApiConfig, resp *pricing.GetProductsOutput, logger *zap.Logger) []instPkg.Instance {
 
 	instances := make([]instPkg.Instance, 0)
 
@@ -161,14 +162,9 @@ func parseOnDemandApiResponseToInstances(resp *pricing.GetProductsOutput, logger
 				continue
 			}
 
-			// TODO: remove from here
-			if instance.PricePerHour == 0 {
-				fmt.Printf("\nZERO PRICE INSTANCE: %s\n", instanceInfoJson)
+			if cfg.ConsiderFreeInstances || instance.PricePerHour != 0 {
+				instances = append(instances, *instance)
 			}
-
-			// TODO: remove to here
-
-			instances = append(instances, *instance)
 		}
 	}
 

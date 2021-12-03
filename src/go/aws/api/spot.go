@@ -56,7 +56,7 @@ func GetSpotInstances(
 
 		regionPriceMap := createInstancePriceMap(regionSpotPrices)
 
-		instances, err := createRegionSpotInstances(region, &regionRevocationInfo, regionPriceMap, instanceSpecMap, logger)
+		instances, err := createRegionSpotInstances(config, region, &regionRevocationInfo, regionPriceMap, instanceSpecMap, logger)
 		if err != nil {
 			return nil, err
 		}
@@ -86,8 +86,10 @@ func getSpotInstancePricesForRegion(
 	if err != nil {
 		return nil, err
 	}
+
 	ec2Client := createEc2Client(awsConfig)
 	logger.Info("created EC2 client")
+
 	return fetchSpotInstanceAvailabilityInfo(ec2Client, config.MaxInstancesToFetch, logger)
 }
 
@@ -185,6 +187,7 @@ func fetchSpotInstanceRevocationInfoAndSpecsMap(
 }
 
 func createRegionSpotInstances(
+	cfg *config.ApiConfig,
 	region types.Region,
 	regionRevocationInfo *regionSpotInstanceRevocationInfo,
 	regionInstancePriceMap map[string]ec2Types.SpotPrice,
@@ -246,7 +249,10 @@ func createRegionSpotInstances(
 			logger.Debug("failed to create instance from given spot instance info", zap.Error(err))
 			continue
 		}
-		instances = append(instances, *instance)
+
+		if cfg.ConsiderFreeInstances || instance.PricePerHour != 0 {
+			instances = append(instances, *instance)
+		}
 	}
 
 	return instances, nil
