@@ -56,9 +56,10 @@ type Constraints struct {
 }
 
 type ApiConfig struct {
-	Endpoints           Endpoints `json:"endpoints"`
-	DownloadsDir        string    `json:"downloadsDir"`
-	MaxInstancesToFetch int       `json:"maxInstancesToFetch"`
+	Endpoints             Endpoints `json:"endpoints"`
+	DownloadsDir          string    `json:"downloadsDir"`
+	MaxInstancesToFetch   int       `json:"maxInstancesToFetch"`
+	ConsiderFreeInstances bool      `json:"freeInstances"`
 }
 
 type Endpoints struct {
@@ -82,8 +83,8 @@ func (c *Constraints) GetRegions() []awsTypes.Region {
 	return regions
 }
 
-func (svc *ServiceDescription) GetFocus() (ServiceFocus, error) {
-	return ParseServiceFocus(svc.Focus)
+func (svc *ServiceDescription) GetFocus() ServiceFocus {
+	return ServiceFocusFromString(svc.Focus)
 }
 
 func (c *Config) String() string {
@@ -202,7 +203,7 @@ func validateServiceDescription(svc ServiceDescription) error {
 	if svc.Name == "" {
 		return errors.New("service name is empty")
 	}
-	_, err := svc.GetFocus()
+	err := ValidateServiceFocus(svc.Focus)
 	if err != nil {
 		return err
 	}

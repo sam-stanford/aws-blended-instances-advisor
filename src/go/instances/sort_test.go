@@ -73,11 +73,11 @@ func TestSortInstancesByMemory(t *testing.T) {
 	}
 }
 
-func TestSortInstancesByVcpus(t *testing.T) {
-	i0 := Instance{Name: "0", Vcpus: 1}
-	i1 := Instance{Name: "1", Vcpus: 4}
-	i2 := Instance{Name: "2", Vcpus: 16}
-	i3 := Instance{Name: "3", Vcpus: 128}
+func TestSortInstancesByVcpu(t *testing.T) {
+	i0 := Instance{Name: "0", Vcpu: 1}
+	i1 := Instance{Name: "1", Vcpu: 4}
+	i2 := Instance{Name: "2", Vcpu: 16}
+	i3 := Instance{Name: "3", Vcpu: 128}
 
 	sortedSlice := []Instance{i0, i1, i2, i3}
 
@@ -91,7 +91,7 @@ func TestSortInstancesByVcpus(t *testing.T) {
 	}
 
 	for index, test := range tests {
-		SortInstancesByVcpus(test.instances, test.start, test.end)
+		SortInstancesByVcpu(test.instances, test.start, test.end)
 		if !reflect.DeepEqual(test.instances, test.expected) {
 			t.Fatalf(
 				"Instances are not sorted correctly for test %d. Wanted: %+v, got: %+v",

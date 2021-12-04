@@ -4,7 +4,7 @@ import (
 	"context"
 	types "ec2-test/aws/types"
 	"ec2-test/config"
-	"ec2-test/instances"
+	instPkg "ec2-test/instances"
 	"ec2-test/utils"
 	"encoding/json"
 	"strconv"
@@ -22,9 +22,9 @@ func GetSpotInstances(
 	regions []types.Region,
 	creds credentials.StaticCredentialsProvider,
 	logger *zap.Logger,
-) (map[types.Region][]instances.Instance, error) {
+) (map[types.Region][]instPkg.Instance, error) {
 
-	regionToInstanceMap := make(map[types.Region][]instances.Instance)
+	regionToInstanceMap := make(map[types.Region][]instPkg.Instance)
 
 	regionRevocationInfoMap, instanceSpecMap, err := fetchSpotInstanceRevocationInfoAndSpecsMap(config, logger)
 	if err != nil {
@@ -56,7 +56,7 @@ func GetSpotInstances(
 
 		regionPriceMap := createInstancePriceMap(regionSpotPrices)
 
-		instances, err := createRegionSpotInstances(region, &regionRevocationInfo, regionPriceMap, instanceSpecMap, logger)
+		instances, err := createRegionSpotInstances(config, region, &regionRevocationInfo, regionPriceMap, instanceSpecMap, logger)
 		if err != nil {
 			return nil, err
 		}
@@ -86,8 +86,10 @@ func getSpotInstancePricesForRegion(
 	if err != nil {
 		return nil, err
 	}
+
 	ec2Client := createEc2Client(awsConfig)
 	logger.Info("created EC2 client")
+
 	return fetchSpotInstanceAvailabilityInfo(ec2Client, config.MaxInstancesToFetch, logger)
 }
 
@@ -185,16 +187,17 @@ func fetchSpotInstanceRevocationInfoAndSpecsMap(
 }
 
 func createRegionSpotInstances(
+	cfg *config.ApiConfig,
 	region types.Region,
 	regionRevocationInfo *regionSpotInstanceRevocationInfo,
 	regionInstancePriceMap map[string]ec2Types.SpotPrice,
 	instanceSpecMap map[string]spotInstanceSpecs,
 	logger *zap.Logger,
 ) (
-	[]instances.Instance,
+	[]instPkg.Instance,
 	error,
 ) {
-	instances := make([]instances.Instance, 0)
+	instances := make([]instPkg.Instance, 0)
 
 	// TODO: Wrap this in method to avoid repeated code for Windows
 
@@ -246,7 +249,10 @@ func createRegionSpotInstances(
 			logger.Debug("failed to create instance from given spot instance info", zap.Error(err))
 			continue
 		}
-		instances = append(instances, *instance)
+
+		if cfg.ConsiderFreeInstances || instance.PricePerHour != 0 {
+			instances = append(instances, *instance)
+		}
 	}
 
 	return instances, nil
@@ -259,7 +265,7 @@ func createInstanceFromSpotInstanceInfo(
 	region types.Region,
 	os types.OperatingSystem,
 ) (
-	*instances.Instance,
+	*instPkg.Instance,
 	error,
 ) {
 
@@ -272,10 +278,10 @@ func createInstanceFromSpotInstanceInfo(
 		return nil, err
 	}
 
-	return &instances.Instance{
+	return &instPkg.Instance{
 		Name:                  string(spotPrice.InstanceType),
 		MemoryGb:              specs.MemoryGb,
-		Vcpus:                 specs.Vcpus,
+		Vcpu:                  specs.Vcpu,
 		Region:                region,
 		OperatingSystem:       os,
 		AvailabilityZone:      *spotPrice.AvailabilityZone,

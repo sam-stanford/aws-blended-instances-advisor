@@ -16,7 +16,7 @@ type instanceIntSearchTest struct {
 	want       int
 }
 
-func TestFindMinimumMemory(t *testing.T) {
+func TestFindMemory(t *testing.T) {
 	i0 := Instance{Name: "0", MemoryGb: 4}
 	i1 := Instance{Name: "1", MemoryGb: 8}
 	i2 := Instance{Name: "2", MemoryGb: 16}
@@ -43,7 +43,7 @@ func TestFindMinimumMemory(t *testing.T) {
 	}
 
 	for name, test := range tests {
-		foundIndex, err := FindMinimumMemory(test.instances, test.value, test.start, test.end)
+		foundIndex, err := FindMemory(test.instances, test.value, test.start, test.end)
 		if err != nil {
 			t.Fatalf(
 				"Error occurred when searching for test \"%s\": %s",
@@ -71,7 +71,7 @@ func TestFindMinimumMemory(t *testing.T) {
 	}
 
 	for name, test := range errorThrowingTests {
-		_, err := FindMinimumMemory(test.instances, test.value, test.start, test.end)
+		_, err := FindMemory(test.instances, test.value, test.start, test.end)
 		if err == nil {
 			t.Fatalf(
 				"Test did not return error: \"%s\"",
@@ -81,7 +81,7 @@ func TestFindMinimumMemory(t *testing.T) {
 	}
 }
 
-func TestFindMinimumMemorySortedInstances(t *testing.T) {
+func TestFindMemorySorted(t *testing.T) {
 	i0 := Instance{Name: "0", MemoryGb: 4}
 	i1 := Instance{Name: "1", MemoryGb: 8}
 	i2 := Instance{Name: "2", MemoryGb: 16}
@@ -101,7 +101,7 @@ func TestFindMinimumMemorySortedInstances(t *testing.T) {
 	}
 
 	for name, test := range tests {
-		foundIndex, err := FindMinimumMemorySortedInstances(test.instances, test.value, test.start, test.end)
+		foundIndex, err := FindMemorySorted(test.instances, test.value, test.start, test.end)
 		if err != nil {
 			t.Fatalf(
 				"Error occurred when searching for test \"%s\": %s",
@@ -130,7 +130,7 @@ func TestFindMinimumMemorySortedInstances(t *testing.T) {
 	}
 
 	for name, test := range errorThrowingTests {
-		_, err := FindMinimumMemorySortedInstances(test.instances, test.value, test.start, test.end)
+		_, err := FindMemorySorted(test.instances, test.value, test.start, test.end)
 		if err == nil {
 			t.Fatalf(
 				"Test did not return error: \"%s\"",
@@ -140,7 +140,7 @@ func TestFindMinimumMemorySortedInstances(t *testing.T) {
 	}
 }
 
-func TestFindMinimumPrice(t *testing.T) {
+func TestFindPrice(t *testing.T) {
 	i0 := Instance{Name: "0", PricePerHour: 0.001}
 	i1 := Instance{Name: "1", PricePerHour: 0.005}
 	i2 := Instance{Name: "2", PricePerHour: 0.01}
@@ -167,7 +167,7 @@ func TestFindMinimumPrice(t *testing.T) {
 	}
 
 	for name, test := range tests {
-		foundIndex, err := FindMinimumPrice(test.instances, test.value, test.start, test.end)
+		foundIndex, err := FindPrice(test.instances, test.value, test.start, test.end)
 		if err != nil {
 			t.Fatalf(
 				"Error occurred when searching for test \"%s\": %s",
@@ -195,7 +195,7 @@ func TestFindMinimumPrice(t *testing.T) {
 	}
 
 	for name, test := range errorThrowingTests {
-		_, err := FindMinimumPrice(test.instances, test.value, test.start, test.end)
+		_, err := FindMemory(test.instances, test.value, test.start, test.end)
 		if err == nil {
 			t.Fatalf(
 				"Test did not return error: \"%s\"",
@@ -205,7 +205,7 @@ func TestFindMinimumPrice(t *testing.T) {
 	}
 }
 
-func TestFindMinimumPriceSortedInstances(t *testing.T) {
+func TestFindPriceSorted(t *testing.T) {
 	i0 := Instance{Name: "0", PricePerHour: 0.001}
 	i1 := Instance{Name: "1", PricePerHour: 0.005}
 	i2 := Instance{Name: "2", PricePerHour: 0.01}
@@ -225,7 +225,7 @@ func TestFindMinimumPriceSortedInstances(t *testing.T) {
 	}
 
 	for name, test := range tests {
-		foundIndex, err := FindMinimumPriceSortedInstances(test.instances, test.value, test.start, test.end)
+		foundIndex, err := FindPriceSorted(test.instances, test.value, test.start, test.end)
 		if err != nil {
 			t.Fatalf(
 				"Error occurred when searching for test \"%s\": %s",
@@ -254,7 +254,7 @@ func TestFindMinimumPriceSortedInstances(t *testing.T) {
 	}
 
 	for name, test := range errorThrowingTests {
-		_, err := FindMinimumPriceSortedInstances(test.instances, test.value, test.start, test.end)
+		_, err := FindPriceSorted(test.instances, test.value, test.start, test.end)
 		if err == nil {
 			t.Fatalf(
 				"Test did not return error: \"%s\"",
@@ -264,7 +264,7 @@ func TestFindMinimumPriceSortedInstances(t *testing.T) {
 	}
 }
 
-func TestFindMinimumRevocationProbability(t *testing.T) {
+func TestFindRevocationProbability(t *testing.T) {
 	i0 := Instance{Name: "0", RevocationProbability: 0.01}
 	i1 := Instance{Name: "1", RevocationProbability: 0.1}
 	i2 := Instance{Name: "2", RevocationProbability: 0.2}
@@ -291,7 +291,7 @@ func TestFindMinimumRevocationProbability(t *testing.T) {
 	}
 
 	for name, test := range tests {
-		foundIndex, err := FindMinimumRevocationProbability(test.instances, test.value, test.start, test.end)
+		foundIndex, err := FindRevocationProbability(test.instances, test.value, test.start, test.end)
 		if err != nil {
 			t.Fatalf(
 				"Error occurred when searching for test \"%s\": %s",
@@ -319,7 +319,7 @@ func TestFindMinimumRevocationProbability(t *testing.T) {
 	}
 
 	for name, test := range errorThrowingTests {
-		_, err := FindMinimumRevocationProbability(test.instances, test.value, test.start, test.end)
+		_, err := FindRevocationProbability(test.instances, test.value, test.start, test.end)
 		if err == nil {
 			t.Fatalf(
 				"Test did not return error: \"%s\"",
@@ -329,7 +329,7 @@ func TestFindMinimumRevocationProbability(t *testing.T) {
 	}
 }
 
-func TestFindMinimumRevocationProbabilitySortedInstances(t *testing.T) {
+func TestFindRevocationProbabilitySorted(t *testing.T) {
 	i0 := Instance{Name: "0", RevocationProbability: 0}
 	i1 := Instance{Name: "1", RevocationProbability: 0.01}
 	i2 := Instance{Name: "2", RevocationProbability: 0.05}
@@ -349,7 +349,7 @@ func TestFindMinimumRevocationProbabilitySortedInstances(t *testing.T) {
 	}
 
 	for name, test := range tests {
-		foundIndex, err := FindMinimumRevocationProbabilitySortedInstances(test.instances, test.value, test.start, test.end)
+		foundIndex, err := FindRevocationProbabilitySorted(test.instances, test.value, test.start, test.end)
 		if err != nil {
 			t.Fatalf(
 				"Error occurred when searching for test \"%s\": %s",
@@ -378,7 +378,7 @@ func TestFindMinimumRevocationProbabilitySortedInstances(t *testing.T) {
 	}
 
 	for name, test := range errorThrowingTests {
-		_, err := FindMinimumRevocationProbabilitySortedInstances(test.instances, test.value, test.start, test.end)
+		_, err := FindRevocationProbabilitySorted(test.instances, test.value, test.start, test.end)
 		if err == nil {
 			t.Fatalf(
 				"Test did not return error: \"%s\"",
@@ -388,11 +388,11 @@ func TestFindMinimumRevocationProbabilitySortedInstances(t *testing.T) {
 	}
 }
 
-func TestFindMinimumVcpu(t *testing.T) {
-	i0 := Instance{Name: "0", Vcpus: 4}
-	i1 := Instance{Name: "1", Vcpus: 8}
-	i2 := Instance{Name: "2", Vcpus: 16}
-	i3 := Instance{Name: "3", Vcpus: 32}
+func TestFindVcpu(t *testing.T) {
+	i0 := Instance{Name: "0", Vcpu: 4}
+	i1 := Instance{Name: "1", Vcpu: 8}
+	i2 := Instance{Name: "2", Vcpu: 16}
+	i3 := Instance{Name: "3", Vcpu: 32}
 
 	tests := map[string]instanceIntSearchTest{
 		"equals value, singleton slice": {instances: []Instance{i0}, value: 4, start: 0, end: 1, want: 0},
@@ -415,7 +415,7 @@ func TestFindMinimumVcpu(t *testing.T) {
 	}
 
 	for name, test := range tests {
-		foundIndex, err := FindMinimumVcpu(test.instances, test.value, test.start, test.end)
+		foundIndex, err := FindVcpu(test.instances, test.value, test.start, test.end)
 		if err != nil {
 			t.Fatalf(
 				"Error occurred when searching for test \"%s\": %s",
@@ -443,7 +443,7 @@ func TestFindMinimumVcpu(t *testing.T) {
 	}
 
 	for name, test := range errorThrowingTests {
-		_, err := FindMinimumVcpu(test.instances, test.value, test.start, test.end)
+		_, err := FindVcpu(test.instances, test.value, test.start, test.end)
 		if err == nil {
 			t.Fatalf(
 				"Test did not return error: \"%s\"",
@@ -453,11 +453,11 @@ func TestFindMinimumVcpu(t *testing.T) {
 	}
 }
 
-func TestFindMinimumVcpuSortedInstances(t *testing.T) {
-	i0 := Instance{Name: "0", Vcpus: 4}
-	i1 := Instance{Name: "1", Vcpus: 8}
-	i2 := Instance{Name: "2", Vcpus: 16}
-	i3 := Instance{Name: "3", Vcpus: 32}
+func TestFindVcpuSorted(t *testing.T) {
+	i0 := Instance{Name: "0", Vcpu: 4}
+	i1 := Instance{Name: "1", Vcpu: 8}
+	i2 := Instance{Name: "2", Vcpu: 16}
+	i3 := Instance{Name: "3", Vcpu: 32}
 
 	sortedInstances := []Instance{i0, i1, i2, i3}
 
@@ -473,7 +473,7 @@ func TestFindMinimumVcpuSortedInstances(t *testing.T) {
 	}
 
 	for name, test := range tests {
-		foundIndex, err := FindMinimumVcpuSortedInstances(test.instances, test.value, test.start, test.end)
+		foundIndex, err := FindVcpuSorted(test.instances, test.value, test.start, test.end)
 		if err != nil {
 			t.Fatalf(
 				"Error occurred when searching for test \"%s\": %s",
@@ -502,7 +502,7 @@ func TestFindMinimumVcpuSortedInstances(t *testing.T) {
 	}
 
 	for name, test := range errorThrowingTests {
-		_, err := FindMinimumVcpuSortedInstances(test.instances, test.value, test.start, test.end)
+		_, err := FindVcpuSorted(test.instances, test.value, test.start, test.end)
 		if err == nil {
 			t.Fatalf(
 				"Test did not return error: \"%s\"",

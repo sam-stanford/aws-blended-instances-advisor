@@ -5,3 +5,5 @@ assets/downloads/*
 logs
 logs/*
 notes.txt
+assets/cache/*
+assets/downloads/*

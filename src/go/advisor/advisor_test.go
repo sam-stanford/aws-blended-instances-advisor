@@ -3,5 +3,5 @@ package advisor
 import "testing"
 
 func TestNaiveReliabilityAdvisorIsAdvisor(t *testing.T) {
-	var _ Advisor = NaiveReliabilityAdvisor{}
+	// var _ Advisor = NaiveReliabilityAdvisor{}
 }

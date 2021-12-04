@@ -34,7 +34,8 @@
       "awsSpotInstanceInfoUrl": "TEST_URL"
     },
     "maxInstancesToFetch": 1000,
-    "downloadsDir": "TEST_DOWNLOADS_DIR"
+    "downloadsDir": "TEST_DOWNLOADS_DIR",
+    "freeInstances": true
   },
   "cache": {
     "dirpath": "TEST_CACHE_DIRPATH"

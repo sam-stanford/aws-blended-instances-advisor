@@ -1,12 +1,14 @@
 package api
 
 import (
+	"context"
 	types "ec2-test/aws/types"
 	"ec2-test/config"
-	"ec2-test/instances"
+	instPkg "ec2-test/instances"
 
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/pricing"
+	pricingTypes "github.com/aws/aws-sdk-go-v2/service/pricing/types"
 	"go.uber.org/zap"
 )
 
@@ -22,11 +24,12 @@ func GetOnDemandInstances(
 	creds credentials.StaticCredentialsProvider,
 	logger *zap.Logger,
 ) (
-	map[types.Region][]instances.Instance,
+	map[types.Region][]instPkg.Instance,
 	error,
 ) {
 	pricingClient := createAwsPricingClient(creds)
 	return getRegionToOnDemandInstancesMap(
+		config,
 		pricingClient,
 		regions,
 		config.MaxInstancesToFetch,
@@ -35,19 +38,20 @@ func GetOnDemandInstances(
 }
 
 func getRegionToOnDemandInstancesMap(
+	cfg *config.ApiConfig,
 	pricingClient *pricing.Client,
 	regions []types.Region,
 	maxInstanceCount int,
 	logger *zap.Logger,
 ) (
-	map[types.Region][]instances.Instance,
+	map[types.Region][]instPkg.Instance,
 	error,
 ) {
 
-	regionToInstancesMap := make(map[types.Region][]instances.Instance)
+	regionToInstancesMap := make(map[types.Region][]instPkg.Instance)
 
 	for _, region := range regions {
-		regionInstances := make([]instances.Instance, 0)
+		regionInstances := make([]instPkg.Instance, 0)
 
 		nextToken := ""
 		firstIter := true
@@ -61,7 +65,7 @@ func getRegionToOnDemandInstancesMap(
 			}
 			logger.Info("fetched on-demand instances", zap.Int("instanceCount", len(resp.PriceList)))
 
-			parsedInstances := parseOnDemandApiResponseToInstances(resp, logger)
+			parsedInstances := parseOnDemandApiResponseToInstances(cfg, resp, logger)
 
 			logger.Info(
 				"parsed on-demand instances",
@@ -101,4 +105,25 @@ func getRegionToOnDemandInstancesMap(
 	}
 
 	return regionToInstancesMap, nil
+}
+
+func getOnDemandInstancesFromApi(
+	pricingClient *pricing.Client,
+	region types.Region,
+	nextToken string,
+) (*pricing.GetProductsOutput, error) {
+
+	serviceCode := EC2_SERVICE_CODE
+	locationFilterKey := LOCATION_FILTER_KEY
+	locationFilterValue := region.ToNameString()
+
+	return pricingClient.GetProducts(context.TODO(), &pricing.GetProductsInput{
+		ServiceCode: &serviceCode,
+		NextToken:   &nextToken,
+		Filters: []pricingTypes.Filter{{
+			Field: &locationFilterKey,
+			Value: &locationFilterValue,
+			Type:  TERM_MATCH_FILTER_TYPE,
+		}},
+	})
 }

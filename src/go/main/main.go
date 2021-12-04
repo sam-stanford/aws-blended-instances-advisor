@@ -13,20 +13,21 @@ import (
 	"go.uber.org/zap"
 )
 
+// TODO: Make all references to instances pointers to make sure no memory dupe
+
 func main() {
 	clf := parseCommandLineFlags()
 
-	logger, deferCallback := createLogger(clf.debugMode)
-	defer deferCallback()
+	logger, syncLogger := createLogger(clf.debugMode)
+	defer syncLogger()
 
 	logCommandLineFlags(&clf, logger)
 
 	config := parseAndLogConfig(clf.configFilepath, logger)
 	cache := createCache(config.CacheConfig.Dirpath, clf.clearCache, logger)
-
 	creds := getCredentialsForMode(clf.productionMode, config)
 
-	regionInstancesMap, err := awsApi.GetInstances(
+	regionInstancesMap, err := awsApi.GetInstancesRegionInfoMap(
 		&config.ApiConfig,
 		config.Constraints.GetRegions(),
 		&creds,
@@ -37,15 +38,11 @@ func main() {
 		logger.Error("Error fetching instances", zap.Error(err))
 	}
 
-	for region, instances := range regionInstancesMap {
-		logger.Info("Instance count for region", zap.String("region", region.ToCodeString()), zap.Int("instanceCount", len(instances)))
-	}
-
-	advisor := advisor.NewNaiveReliabilityAdvisor()
-	advisor.AdviseForRegions(regionInstancesMap, &config.Constraints)
+	advisor := advisor.Weighted{}
+	advisor.Advise(regionInstancesMap, config.Constraints.Services)
 }
 
-func createLogger(debugMode bool) (logger *zap.Logger, deferCallback func() error) {
+func createLogger(debugMode bool) (logger *zap.Logger, syncLogger func() error) {
 	logger, err := instantiateLogger(debugMode)
 	if err != nil {
 		err = utils.PrependToError(err, "failed to start logger")

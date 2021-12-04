@@ -5,17 +5,13 @@ import (
 	types "ec2-test/aws/types"
 	"ec2-test/cache"
 	"ec2-test/config"
-	"ec2-test/instances"
-	"encoding/json"
-	"errors"
-	"time"
+	instPkg "ec2-test/instances"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/pricing"
-	pricingTypes "github.com/aws/aws-sdk-go-v2/service/pricing/types"
 	"go.uber.org/zap"
 )
 
@@ -26,23 +22,32 @@ const (
 )
 
 // TODO: Doc comment & use go routines to parallelise fetches
-func GetInstances(
+
+func GetInstancesRegionInfoMap(
 	apiConfig *config.ApiConfig,
 	regions []types.Region,
 	creds *config.Credentials,
 	cache *cache.Cache,
 	logger *zap.Logger,
 ) (
-	map[types.Region][]instances.Instance,
+	instPkg.RegionInfoMap,
 	error,
 ) {
 
-	instances, err := getInstancesFromCache(INSTANCES_CACHE_FILENAME, cache)
+	regionInfoMap, err := getRegionInfoMapFromCache(INSTANCES_CACHE_FILENAME, cache)
 	if err != nil {
 		logger.Info("no instances found in cache", zap.String("reason", err.Error()))
 	} else {
-		logger.Info("instances retrieved from cache")
-		return instances, nil
+		// TODO: Func wrapper for count log & validate fetched instances (or maybe do this in a test )
+		for _, region := range regions {
+			logger.Info(
+				"instances fetched from cache",
+				zap.String("region", region.ToCodeString()),
+				zap.Int("allInstancesCount", len(regionInfoMap[region].AllInstances.Instances)),
+				zap.Int("permanentInstanceCount", len(regionInfoMap[region].PermanentInstances.Instances)),
+			)
+		}
+		return regionInfoMap, nil
 	}
 
 	awsCreds := createAwsCredentials(creds)
@@ -58,43 +63,24 @@ func GetInstances(
 		return nil, err
 	}
 
-	instances = joinSpotAndOnDemandInstances(onDemandInstances, spotInstances, regions)
-	err = storeInstancesInCache(instances, INSTANCES_CACHE_FILENAME, cache)
+	regionInfoMap = createRegionInfoMap(onDemandInstances, spotInstances, regions)
+	err = storeRegionInfoMapInCache(regionInfoMap, INSTANCES_CACHE_FILENAME, cache)
 	if err != nil {
 		logger.Error("failed to store instances in cache", zap.Error(err))
 		return nil, err
 	}
 
-	return instances, nil
-}
+	// TODO: Func wrapper for count log
+	for _, region := range regions {
+		logger.Info(
+			"stored instances in cache",
+			zap.String("region", region.ToCodeString()),
+			zap.Int("allInstancesCount", len(regionInfoMap[region].AllInstances.Instances)),
+			zap.Int("permanentInstanceCount", len(regionInfoMap[region].PermanentInstances.Instances)),
+		)
+	}
 
-func getInstancesFromCache(instancesCacheFilename string, c *cache.Cache) (map[types.Region][]instances.Instance, error) {
-	isValid := c.IsValid(instancesCacheFilename)
-	if isValid {
-		instancesFileContent, err := c.Get(instancesCacheFilename)
-		if err != nil {
-			return nil, err
-		}
-		var instanceToRegionMap map[types.Region][]instances.Instance
-		err = json.Unmarshal([]byte(instancesFileContent), &instanceToRegionMap)
-		if err != nil {
-			return nil, err
-		}
-		return instanceToRegionMap, nil
-	}
-	return nil, errors.New("instances not in cache")
-}
-
-func storeInstancesInCache(instanceToRegionMap map[types.Region][]instances.Instance, instancesCacheFilename string, c *cache.Cache) error {
-	instancesFileContent, err := json.Marshal(instanceToRegionMap)
-	if err != nil {
-		return err
-	}
-	err = c.Set(instancesCacheFilename, string(instancesFileContent), time.Hour*INSTANCES_CACHE_DURATION)
-	if err != nil {
-		return err
-	}
-	return nil
+	return regionInfoMap, nil
 }
 
 func createAwsCredentials(creds *config.Credentials) credentials.StaticCredentialsProvider {
@@ -120,34 +106,17 @@ func createAwsPricingClient(awsCredentials credentials.StaticCredentialsProvider
 	})
 }
 
-func joinSpotAndOnDemandInstances(
-	onDemandInstances map[types.Region][]instances.Instance,
-	spotInstances map[types.Region][]instances.Instance,
+func createRegionInfoMap(
+	onDemandInstances map[types.Region][]instPkg.Instance,
+	spotInstances map[types.Region][]instPkg.Instance,
 	regions []types.Region,
-) map[types.Region][]instances.Instance {
+) instPkg.RegionInfoMap {
+
+	regionInfoMap := make(instPkg.RegionInfoMap)
 	for _, region := range regions {
-		onDemandInstances[region] = append(onDemandInstances[region], spotInstances[region]...)
+
+		thisRegionInfo := instPkg.CreateRegionInfo(onDemandInstances[region], spotInstances[region])
+		regionInfoMap[region] = thisRegionInfo
 	}
-	return onDemandInstances
-}
-
-func getOnDemandInstancesFromApi(
-	pricingClient *pricing.Client,
-	region types.Region,
-	nextToken string,
-) (*pricing.GetProductsOutput, error) {
-
-	serviceCode := EC2_SERVICE_CODE
-	locationFilterKey := LOCATION_FILTER_KEY
-	locationFilterValue := region.ToNameString()
-
-	return pricingClient.GetProducts(context.TODO(), &pricing.GetProductsInput{
-		ServiceCode: &serviceCode,
-		NextToken:   &nextToken,
-		Filters: []pricingTypes.Filter{{
-			Field: &locationFilterKey,
-			Value: &locationFilterValue,
-			Type:  TERM_MATCH_FILTER_TYPE,
-		}},
-	})
+	return regionInfoMap
 }

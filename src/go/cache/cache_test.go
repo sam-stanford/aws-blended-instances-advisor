@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	TEST_CACHE_DIRPATH = "../../../assets/test/test-cache/"
+	TEST_CACHE_DIRPATH = "./testdata"
 
 	TEST_FILE_FILENAME       = "test-cache-file.txt"
 	TEST_FILE_CONTENT        = "TEST CONTENT"
@@ -157,8 +157,9 @@ func TestSet(t *testing.T) {
 		t.Fatalf("Error when creating cache: %s", err.Error())
 	}
 
-	earliestSetDate := time.Now()
-	latestSetDate := earliestSetDate.Add(time.Second * 2)
+	now := time.Now()
+	earliestSetDate := now.Add(time.Second * -2)
+	latestSetDate := now.Add(time.Second * 2)
 
 	earliestInvalidationDate := earliestSetDate.Add(testDuration)
 	latestInvalidationDate := latestSetDate.Add(testDuration)

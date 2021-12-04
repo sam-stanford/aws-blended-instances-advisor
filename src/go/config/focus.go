@@ -2,7 +2,7 @@ package config
 
 import "fmt"
 
-// TODO: Doc
+// TODO: Docs
 type ServiceFocus int
 
 const (
@@ -27,17 +27,27 @@ func (sf ServiceFocus) String() string {
 	}
 }
 
-func ParseServiceFocus(serviceFocusString string) (ServiceFocus, error) {
+// TODO: Use this same setup for OS and Regions (i.e. from string and validate, rather than error every time)
+
+func ServiceFocusFromString(serviceFocusString string) ServiceFocus {
 	switch serviceFocusString {
 	case "availability":
-		return Availability, nil
-	case "balanced":
-		return Balanced, nil
+		return Availability
 	case "cost":
-		return Cost, nil
+		return Cost
 	case "performance":
-		return Performance, nil
+		return Performance
 	default:
-		return -1, fmt.Errorf("\"%s\" is not a ServiceFocus", serviceFocusString)
+		return Balanced
+
+	}
+}
+
+func ValidateServiceFocus(serviceFocusString string) error {
+	switch serviceFocusString {
+	case "availability", "balanced", "cost", "performance":
+		return nil
+	default:
+		return fmt.Errorf("\"%s\" is not a ServiceFocus", serviceFocusString)
 	}
 }

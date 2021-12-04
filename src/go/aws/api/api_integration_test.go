@@ -7,11 +7,14 @@ import (
 	"ec2-test/aws/types"
 	"ec2-test/cache"
 	"ec2-test/config"
+	instPkg "ec2-test/instances"
 	"ec2-test/utils"
+	"fmt"
 	"testing"
 	"time"
 )
 
+// TODO: Move to testdata directory
 const (
 	CONFIG_FILEPATH          = "../../../../config.json"
 	CONFIG_API_DOWNLOADS_DIR = "../../../../assets/downloads/"
@@ -55,86 +58,45 @@ func TestGetInstances(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error occured when parsing test regions: %s", err.Error())
 	}
+	regions := []types.Region{*region1, *region2}
 
 	noCacheStartTime := time.Now()
-	regionInstanceMap, err := GetInstances(&cfg.ApiConfig, []types.Region{*region1, *region2}, &cfg.Credentials.Test, cache, logger)
+	regionInfoMap, err := GetInstancesRegionInfoMap(
+		&cfg.ApiConfig,
+		regions,
+		&cfg.Credentials.Test,
+		cache,
+		logger,
+	)
 	if err != nil {
 		t.Fatalf("Error thrown when fecthing instances: %s", err.Error())
 	}
 	noCacheEndTime := time.Now()
 
-	instancesRegion1, ok := regionInstanceMap[*region1]
-	if !ok || len(instancesRegion1) == 0 {
-		t.Fatalf("Zero instances returned for region %s", REGION1)
-	}
-	if len(instancesRegion1) > cfg.ApiConfig.MaxInstancesToFetch*2 {
-		t.Fatalf(
-			"More instances returned than config max for region %s. Wanted: < %d, got: %d",
-			REGION1,
-			config.DEFAULT_API_MAX_INSTANCES_TO_FETCH,
-			len(instancesRegion1),
-		)
-	}
-
-	instancesRegion2, ok := regionInstanceMap[*region2]
-	if !ok || len(instancesRegion2) == 0 {
-		t.Fatalf("Zero instances returned for region %s", REGION2)
-	}
-	if len(instancesRegion2) > cfg.ApiConfig.MaxInstancesToFetch*2 {
-		t.Fatalf(
-			"More instances returned than config max for region %s. Wanted: < %d, got: %d",
-			REGION2,
-			config.DEFAULT_API_MAX_INSTANCES_TO_FETCH,
-			len(instancesRegion2),
-		)
+	err = validateRegionInfoMap(regionInfoMap, regions, 2*cfg.ApiConfig.MaxInstancesToFetch)
+	if err != nil {
+		t.Fatal(err.Error())
 	}
 
 	cachedStartTime := time.Now()
-	cachedRegionInstanceMap, err := GetInstances(&cfg.ApiConfig, []types.Region{*region1, *region2}, &cfg.Credentials.Test, cache, logger)
+	cachedRegionInstanceMap, err := GetInstancesRegionInfoMap(
+		&cfg.ApiConfig,
+		regions,
+		&cfg.Credentials.Test,
+		cache,
+		logger,
+	)
 	if err != nil {
 		t.Fatalf("Error thrown when fecthing instances for a second time: %s", err.Error())
 	}
 	cachedEndTime := time.Now()
 
-	cachedInstancesRegion1, ok := cachedRegionInstanceMap[*region1]
-	if !ok || len(cachedInstancesRegion1) == 0 {
-		t.Fatalf("Zero instances returned for region %s", REGION1)
-	}
-	if len(cachedInstancesRegion1) > cfg.ApiConfig.MaxInstancesToFetch*2 {
-		t.Fatalf(
-			"More instances returned than config max for region %s. Wanted: < %d, got: %d",
-			REGION1,
-			config.DEFAULT_API_MAX_INSTANCES_TO_FETCH,
-			len(cachedInstancesRegion1),
-		)
-	}
-	if len(cachedInstancesRegion1) != len(instancesRegion1) {
-		t.Fatalf(
-			"Different number of returned from cache than request. Wanted: %d, got: %d",
-			len(instancesRegion1),
-			len(cachedInstancesRegion1),
-		)
-	}
-
-	cachedInstancesRegion2, ok := cachedRegionInstanceMap[*region2]
-	if !ok || len(cachedInstancesRegion2) == 0 {
-		t.Fatalf("Zero instances returned for region %s", REGION2)
-	}
-	if len(cachedInstancesRegion2) > cfg.ApiConfig.MaxInstancesToFetch*2 {
-		t.Fatalf(
-			"More instances returned than config max for region %s. Wanted: < %d, got: %d",
-			REGION2,
-			config.DEFAULT_API_MAX_INSTANCES_TO_FETCH,
-			len(cachedInstancesRegion2),
-		)
-	}
-	if len(cachedInstancesRegion2) != len(instancesRegion2) {
-		t.Fatalf(
-			"Different number of returned from cache than request. Wanted: %d, got: %d",
-			len(instancesRegion2),
-			len(cachedInstancesRegion2),
-		)
-	}
+	validateCachedRegionInfoMap(
+		regionInfoMap,
+		cachedRegionInstanceMap,
+		regions,
+		2*cfg.ApiConfig.MaxInstancesToFetch,
+	)
 
 	noCacheFetchTime := noCacheEndTime.Sub(noCacheStartTime)
 	cacheFetchTime := cachedEndTime.Sub(cachedStartTime)
@@ -150,4 +112,103 @@ func TestGetInstances(t *testing.T) {
 			cacheFetchTime,
 		)
 	}
+}
+
+func validateRegionInfoMap(
+	regionInfoMap instPkg.RegionInfoMap,
+	regions []types.Region,
+	maxTotalInstances int,
+) error {
+
+	for _, region := range regions {
+
+		info, ok := regionInfoMap[region]
+
+		if !ok || len(info.AllInstances.Instances) == 0 {
+			return fmt.Errorf("Zero instances returned for region %s", REGION1)
+		}
+
+		if len(info.AllInstances.Instances) == 0 {
+			return fmt.Errorf("Zero length slice for AllInstances.Instances in info for region %s", REGION1)
+		}
+		if len(info.PermanentInstances.Instances) == 0 {
+			return fmt.Errorf("Zero length slice for PermanentInstances.Instances in info for region %s", REGION1)
+		}
+
+		if len(info.AllInstances.Instances) != info.AllInstances.Aggregates.Count {
+			return fmt.Errorf(
+				"Aggregates count does not match number of instances for AllInstances in region %s. "+
+					"Number of instances: %d, Aggregates count: %d",
+				region.ToCodeString(),
+				len(info.AllInstances.Instances),
+				info.AllInstances.Aggregates.Count,
+			)
+		}
+		if len(info.PermanentInstances.Instances) != info.PermanentInstances.Aggregates.Count {
+			return fmt.Errorf(
+				"Aggregates count does not match number of instances for PermanentInstances in region %s. "+
+					"Number of instances: %d, Aggregates count: %d",
+				region.ToCodeString(),
+				len(info.PermanentInstances.Instances),
+				info.PermanentInstances.Aggregates.Count,
+			)
+		}
+
+		if len(info.AllInstances.Instances) > maxTotalInstances {
+			return fmt.Errorf(
+				"More instances returned than config max for region %s. Wanted: < %d, got: %d",
+				region.ToCodeString(),
+				maxTotalInstances,
+				len(info.AllInstances.Instances),
+			)
+		}
+	}
+
+	return nil
+}
+
+func validateCachedRegionInfoMap(
+	fetchedRegionInfoMap instPkg.RegionInfoMap,
+	storedRegionInfoMap instPkg.RegionInfoMap,
+	regions []types.Region,
+	maxTotalInstances int,
+) error {
+
+	validateRegionInfoMap(fetchedRegionInfoMap, regions, maxTotalInstances)
+
+	for _, region := range regions {
+		storedInfo := storedRegionInfoMap[region]
+		fetchedInfo := fetchedRegionInfoMap[region]
+
+		if len(storedInfo.AllInstances.Instances) != len(fetchedInfo.AllInstances.Instances) {
+			return fmt.Errorf(
+				"Different number of instances (AllInstances) fetched from cache than stored. "+
+					"Region: %s, stored: %d, fetched: %d",
+				region.ToCodeString(),
+				len(storedInfo.AllInstances.Instances),
+				len(fetchedInfo.AllInstances.Instances),
+			)
+		}
+
+		if len(storedInfo.PermanentInstances.Instances) != len(fetchedInfo.PermanentInstances.Instances) {
+			return fmt.Errorf(
+				"Different number of instances (PermanentInstances) fetched from cache than stored. "+
+					"Region: %s, stored: %d, fetched: %d",
+				region.ToCodeString(),
+				len(storedInfo.PermanentInstances.Instances),
+				len(fetchedInfo.PermanentInstances.Instances),
+			)
+		}
+
+		if storedInfo.AllInstances.Aggregates.Count != fetchedInfo.PermanentInstances.Aggregates.Count {
+			return fmt.Errorf(
+				"Different aggregate values fetched from cache than stored. Region: %s, stored: %+v, fetched:%+v",
+				region.ToCodeString(),
+				storedInfo.AllInstances.Aggregates.Count,
+				fetchedInfo.PermanentInstances.Aggregates.Count,
+			)
+		}
+	}
+
+	return nil
 }
