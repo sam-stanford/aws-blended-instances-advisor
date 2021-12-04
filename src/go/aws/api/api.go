@@ -38,7 +38,15 @@ func GetInstancesRegionInfoMap(
 	if err != nil {
 		logger.Info("no instances found in cache", zap.String("reason", err.Error()))
 	} else {
-		logger.Info("instances retrieved from cache") // TODO: Details & validate all regions are fetched
+		// TODO: Func wrapper for count log & validate fetched instances (or maybe do this in a test )
+		for _, region := range regions {
+			logger.Info(
+				"instances fetched from cache",
+				zap.String("region", region.ToCodeString()),
+				zap.Int("allInstancesCount", len(regionInfoMap[region].AllInstances.Instances)),
+				zap.Int("permanentInstanceCount", len(regionInfoMap[region].PermanentInstances.Instances)),
+			)
+		}
 		return regionInfoMap, nil
 	}
 
@@ -60,6 +68,16 @@ func GetInstancesRegionInfoMap(
 	if err != nil {
 		logger.Error("failed to store instances in cache", zap.Error(err))
 		return nil, err
+	}
+
+	// TODO: Func wrapper for count log
+	for _, region := range regions {
+		logger.Info(
+			"stored instances in cache",
+			zap.String("region", region.ToCodeString()),
+			zap.Int("allInstancesCount", len(regionInfoMap[region].AllInstances.Instances)),
+			zap.Int("permanentInstanceCount", len(regionInfoMap[region].PermanentInstances.Instances)),
+		)
 	}
 
 	return regionInfoMap, nil

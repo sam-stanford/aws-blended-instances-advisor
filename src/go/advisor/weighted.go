@@ -26,7 +26,10 @@ func (advisor *Weighted) Advise(
 		if err != nil {
 			return nil, nil, err
 		}
-		fmt.Printf("Region: %s, instances: %+v, instAppMap: %+v\n", region.ToCodeString(), instances, instAppMap) // TODO: Improve
+		fmt.Printf("\n\nRegion: %s, instances: %+v, instAppMap: %+v\n", region.ToCodeString(), instances, instAppMap) // TODO: Improve
+		for _, instance := range instances {
+			fmt.Printf("\tInstance: %+v\n\n", *instance)
+		}
 		// TODO: Calc some form of score
 	}
 	return nil, nil, nil
@@ -62,16 +65,12 @@ func (advisor *Weighted) AdviseForRegion(
 			selectedInstances = append(selectedInstances, selectedInstance)
 			instanceApplicationMap[selectedInstance.Name] = append(
 				instanceApplicationMap[selectedInstance.Name],
-				selectedInstance.Name,
+				svc.Name,
 			)
 		}
 
-		fmt.Println("PERMANENT INSTANCES")
-		for _, instance := range selectedInstances {
-			fmt.Printf("%+v\n", instance)
-		}
-
-		for i := 0; i < svc.Instances.TotalCount-svc.Instances.MinimumCount; i += 1 {
+		transientInstanceCount := svc.Instances.TotalCount - svc.Instances.MinimumCount
+		for i := 0; i < transientInstanceCount; i += 1 {
 			selectedInstance, err := advisor.selectInstanceForService(
 				info.AllInstances.Instances,
 				info.AllInstances.Aggregates,
@@ -89,13 +88,6 @@ func (advisor *Weighted) AdviseForRegion(
 
 	}
 
-	fmt.Println("ALL INSTANCES")
-	for _, instance := range selectedInstances {
-		fmt.Printf("%+v\n", instance)
-	}
-
-	fmt.Printf("\n\nAggregates: %+v", info.AllInstances.Aggregates)
-
 	return selectedInstances, instanceApplicationMap, nil
 }
 
@@ -106,8 +98,10 @@ func (advisor *Weighted) selectInstanceForService(
 ) (*instPkg.Instance, error) {
 	searchStart, searchEnd := 0, len(instances)
 
-	// TODO: Max VCPU
-	// TODO: Mem seems to be maxing out - set total to 0 in weighted search if cpu > max useful
+	// TODO: Different result when using --clear-cache as to when not
+
+	// TODO: Function appears non-determinate
+	// TODO: Function sometimes returns instance with less mem than min mem
 
 	searchStart, err := instPkg.SortAndFindMemory(
 		instances,
