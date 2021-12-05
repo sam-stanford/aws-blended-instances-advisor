@@ -24,7 +24,7 @@ func GetOnDemandInstances(
 	creds credentials.StaticCredentialsProvider,
 	logger *zap.Logger,
 ) (
-	map[types.Region][]instPkg.Instance,
+	map[types.Region][]*instPkg.Instance,
 	error,
 ) {
 	pricingClient := createAwsPricingClient(creds)
@@ -44,14 +44,14 @@ func getRegionToOnDemandInstancesMap(
 	maxInstanceCount int,
 	logger *zap.Logger,
 ) (
-	map[types.Region][]instPkg.Instance,
+	map[types.Region][]*instPkg.Instance,
 	error,
 ) {
 
-	regionToInstancesMap := make(map[types.Region][]instPkg.Instance)
+	regionToInstancesMap := make(map[types.Region][]*instPkg.Instance)
 
 	for _, region := range regions {
-		regionInstances := make([]instPkg.Instance, 0)
+		regionInstances := make([]*instPkg.Instance, 0)
 
 		nextToken := ""
 		firstIter := true

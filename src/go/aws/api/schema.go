@@ -143,9 +143,13 @@ func (info *onDemandInstanceInfo) toInstance() (*instPkg.Instance, error) {
 	}, nil
 }
 
-func parseOnDemandApiResponseToInstances(cfg *config.AwsApiConfig, resp *pricing.GetProductsOutput, logger *zap.Logger) []instPkg.Instance {
+func parseOnDemandApiResponseToInstances(
+	cfg *config.AwsApiConfig,
+	resp *pricing.GetProductsOutput,
+	logger *zap.Logger,
+) []*instPkg.Instance {
 
-	instances := make([]instPkg.Instance, 0)
+	instances := make([]*instPkg.Instance, 0)
 
 	for _, instanceInfoJson := range resp.PriceList {
 		var info onDemandInstanceInfo
@@ -163,7 +167,7 @@ func parseOnDemandApiResponseToInstances(cfg *config.AwsApiConfig, resp *pricing
 			}
 
 			if cfg.ConsiderFreeInstances || instance.PricePerHour != 0 {
-				instances = append(instances, *instance)
+				instances = append(instances, instance)
 			}
 		}
 	}

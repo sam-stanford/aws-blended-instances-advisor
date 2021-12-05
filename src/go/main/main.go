@@ -41,7 +41,7 @@ func main() {
 
 	advisor := advisor.Weighted{}
 
-	StartAdviceService(&config.ApiConfig, logger, func(services []api.Service) (api.Advice, error) {
+	StartAdviceService(&config.ApiConfig, logger, func(services []api.Service) (*api.Advice, error) {
 		return advisor.Advise(regionInstancesMap, services)
 	})
 }

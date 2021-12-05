@@ -16,7 +16,7 @@ type SortWeightings struct {
 
 // Sorts a given slice of Instances in place from startIndex (inclusive) to endIndex (exclusive)
 // in increasing order of price.
-func SortInstancesByPrice(instances []Instance, startIndex, endIndex int) {
+func SortInstancesByPrice(instances []*Instance, startIndex, endIndex int) {
 	sort.Slice(instances[startIndex:endIndex], func(i, j int) bool {
 		return instances[startIndex+i].PricePerHour < instances[startIndex+j].PricePerHour
 	})
@@ -24,7 +24,7 @@ func SortInstancesByPrice(instances []Instance, startIndex, endIndex int) {
 
 // Sorts a given slice of Instances in place from startIndex (inclusive) to endIndex (exclusive)
 // in increasing order of memory.
-func SortInstancesByMemory(instances []Instance, startIndex, endIndex int) {
+func SortInstancesByMemory(instances []*Instance, startIndex, endIndex int) {
 	sort.Slice(instances[startIndex:endIndex], func(i, j int) bool {
 		return instances[startIndex+i].MemoryGb < instances[startIndex+j].MemoryGb
 	})
@@ -32,7 +32,7 @@ func SortInstancesByMemory(instances []Instance, startIndex, endIndex int) {
 
 // Sorts a given slice of Instances in place from startIndex (inclusive) to endIndex (exclusive)
 // in increasing order of their VCPU.
-func SortInstancesByVcpu(instances []Instance, startIndex, endIndex int) {
+func SortInstancesByVcpu(instances []*Instance, startIndex, endIndex int) {
 	sort.Slice(instances[startIndex:endIndex], func(i, j int) bool {
 		return instances[startIndex+i].Vcpu < instances[startIndex+j].Vcpu
 	})
@@ -40,7 +40,7 @@ func SortInstancesByVcpu(instances []Instance, startIndex, endIndex int) {
 
 // Sorts a given slice of Instances in place from startIndex (inclusive) to endIndex (exclusive)
 // in increasing order of their revocation probabilities.
-func SortInstancesByRevocationProbability(instances []Instance, startIndex, endIndex int) {
+func SortInstancesByRevocationProbability(instances []*Instance, startIndex, endIndex int) {
 	sort.Slice(instances[startIndex:endIndex], func(i, j int) bool {
 		return instances[startIndex+i].RevocationProbability < instances[startIndex+j].RevocationProbability
 	})
@@ -48,7 +48,7 @@ func SortInstancesByRevocationProbability(instances []Instance, startIndex, endI
 
 // Sorts a given slice of Instances in place from startIndex (inclusive) to endIndex (exclusive)
 // in increasing lexographcial order of their operating system.
-func SortInstancesByOperatingSystem(instances []Instance, startIndex, endIndex int) {
+func SortInstancesByOperatingSystem(instances []*Instance, startIndex, endIndex int) {
 	sort.Slice(instances[startIndex:endIndex], func(i, j int) bool {
 		return strings.Compare(
 			instances[startIndex+i].OperatingSystem.ToString(),
@@ -59,7 +59,7 @@ func SortInstancesByOperatingSystem(instances []Instance, startIndex, endIndex i
 
 // Sorts a given slice of Instances in place from startIndex (inclusive) to endIndex (exclusive)
 // in increasing lexographcial order of their Region code name.
-func SortInstancesByRegion(instances []Instance, startIndex, endIndex int) {
+func SortInstancesByRegion(instances []*Instance, startIndex, endIndex int) {
 	sort.Slice(instances[startIndex:endIndex], func(i, j int) bool {
 		return strings.Compare(
 			instances[startIndex+i].Region.ToCodeString(),
@@ -72,7 +72,7 @@ func SortInstancesByRegion(instances []Instance, startIndex, endIndex int) {
 // Sorts a given slice of Instances in place from startIndex (inclusive) to endIndex (exclusive)
 // in increasing order of their score calculated from the provided weightings and aggregates.
 func SortInstancesWeighted(
-	instances []Instance,
+	instances []*Instance,
 	aggregates Aggregates,
 	startIndex,
 	endIndex int,
@@ -97,7 +97,7 @@ func SortInstancesWeighted(
 // in increasing order of their score calculated from the provided weightings and aggregates, with
 // a limiter applied to instances' VCPUs after they exceed a maximum.
 func SortInstancesWeightedWithVcpuLimiter(
-	instances []Instance,
+	instances []*Instance,
 	aggregates Aggregates,
 	startIndex,
 	endIndex int,
@@ -123,7 +123,7 @@ func SortInstancesWeightedWithVcpuLimiter(
 
 // TODO: Doc & test / make private?
 func CalculateInstanceScoreFromWeights(
-	instance Instance,
+	instance *Instance,
 	aggregates Aggregates,
 	weightings SortWeightings, // TODO: Rename all "weightings" to "weights"
 ) float64 {
@@ -139,7 +139,7 @@ func CalculateInstanceScoreFromWeights(
 // TODO: Doc & test
 // TODO: Pointer to instance
 func CalculateInstanceScoreFromWeightsWithVcpuLimiter(
-	instance Instance,
+	instance *Instance,
 	aggregates Aggregates,
 	weightings SortWeightings,
 	maxVcpu int,
@@ -160,7 +160,7 @@ func CalculateInstanceScoreFromWeightsWithVcpuLimiter(
 }
 
 func calculatedInstanceScoreFromWeightsWithFixedVcpu(
-	instance Instance,
+	instance *Instance,
 	aggregates Aggregates,
 	weights SortWeightings,
 	fixedVcpu int,

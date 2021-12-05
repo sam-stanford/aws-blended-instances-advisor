@@ -22,9 +22,9 @@ func GetSpotInstances(
 	regions []types.Region,
 	creds credentials.StaticCredentialsProvider,
 	logger *zap.Logger,
-) (map[types.Region][]instPkg.Instance, error) {
+) (map[types.Region][]*instPkg.Instance, error) {
 
-	regionToInstanceMap := make(map[types.Region][]instPkg.Instance)
+	regionToInstanceMap := make(map[types.Region][]*instPkg.Instance)
 
 	regionRevocationInfoMap, instanceSpecMap, err := fetchSpotInstanceRevocationInfoAndSpecsMap(config, logger)
 	if err != nil {
@@ -194,10 +194,10 @@ func createRegionSpotInstances(
 	instanceSpecMap map[string]spotInstanceSpecs,
 	logger *zap.Logger,
 ) (
-	[]instPkg.Instance,
+	[]*instPkg.Instance,
 	error,
 ) {
-	instances := make([]instPkg.Instance, 0)
+	instances := make([]*instPkg.Instance, 0)
 
 	// TODO: Wrap this in method to avoid repeated code for Windows
 
@@ -225,7 +225,7 @@ func createRegionSpotInstances(
 			logger.Debug("failed to create instance from given spot instance info", zap.Error(err))
 			continue
 		}
-		instances = append(instances, *instance)
+		instances = append(instances, instance)
 	}
 
 	for instanceType, revocationInfo := range regionRevocationInfo.WindowsInstances {
@@ -251,7 +251,7 @@ func createRegionSpotInstances(
 		}
 
 		if cfg.ConsiderFreeInstances || instance.PricePerHour != 0 {
-			instances = append(instances, *instance)
+			instances = append(instances, instance)
 		}
 	}
 

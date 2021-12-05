@@ -107,8 +107,8 @@ func createAwsPricingClient(awsCredentials credentials.StaticCredentialsProvider
 }
 
 func createRegionInfoMap(
-	onDemandInstances map[types.Region][]instPkg.Instance,
-	spotInstances map[types.Region][]instPkg.Instance,
+	onDemandInstances map[types.Region][]*instPkg.Instance,
+	spotInstances map[types.Region][]*instPkg.Instance,
 	regions []types.Region,
 ) instPkg.RegionInfoMap {
 

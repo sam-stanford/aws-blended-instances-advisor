@@ -6,7 +6,7 @@ import (
 )
 
 type aggregatesTest struct {
-	instances []Instance
+	instances []*Instance
 	expected  Aggregates
 }
 
@@ -19,7 +19,7 @@ type normaliseTest struct {
 func TestCalculateAggregates(t *testing.T) {
 	tests := map[string]aggregatesTest{
 		"single instance": {
-			instances: []Instance{
+			instances: []*Instance{
 				{Vcpu: 4, RevocationProbability: 0, PricePerHour: 0.001},
 			},
 			expected: Aggregates{
@@ -39,7 +39,7 @@ func TestCalculateAggregates(t *testing.T) {
 			},
 		},
 		"multiple instances": {
-			instances: []Instance{
+			instances: []*Instance{
 				{Vcpu: 4, RevocationProbability: 0, PricePerHour: 0.001},
 				{Vcpu: 4, RevocationProbability: 0.1, PricePerHour: 0.005},
 				{Vcpu: 8, RevocationProbability: 0.2, PricePerHour: 0.01},

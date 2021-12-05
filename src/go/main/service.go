@@ -23,7 +23,7 @@ import (
 func StartAdviceService(
 	cfg *config.ApiConfig,
 	logger *zap.Logger,
-	advise func(services []api.Service) (api.Advice, error),
+	advise func(services []api.Service) (*api.Advice, error),
 ) {
 	http.HandleFunc("/advise", getAdviseEndpointHandler(advise, logger))
 	err := http.ListenAndServe(formatPort(cfg.Port), nil)
@@ -35,7 +35,7 @@ func formatPort(port int) string {
 }
 
 func getAdviseEndpointHandler(
-	advise func(services []api.Service) (api.Advice, error),
+	advise func(services []api.Service) (*api.Advice, error),
 	logger *zap.Logger,
 ) func(http.ResponseWriter, *http.Request) {
 
@@ -108,7 +108,7 @@ func writeErrorResponse(
 func writeAdviceResponse(
 	w http.ResponseWriter,
 	requestId string,
-	advice api.Advice,
+	advice *api.Advice,
 	logger *zap.Logger,
 ) error {
 	respBody, err := json.Marshal(advice)

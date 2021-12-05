@@ -2,7 +2,6 @@ package advisor
 
 import (
 	"ec2-test/api"
-	"ec2-test/config"
 	"ec2-test/instances"
 )
 
@@ -17,7 +16,7 @@ type Advisor interface {
 
 	AdviseForRegion(
 		instances.RegionInfo,
-		*config.Constraints,
+		[]api.Service,
 	) (
 		*api.RegionAdvice,
 		error,
