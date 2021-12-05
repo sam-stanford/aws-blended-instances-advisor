@@ -12,6 +12,8 @@ import (
 	"go.uber.org/zap"
 )
 
+// TODO: Test & maybe move to API package
+
 // TODO: Calc response time & log
 
 // TODO: Edit
@@ -26,7 +28,11 @@ func StartAdviceService(
 	advise func(services []api.Service) (*api.Advice, error),
 ) {
 	http.HandleFunc("/advise", getAdviseEndpointHandler(advise, logger))
+	logger.Info("registered API endpoint", zap.String("path", "/advise"))
+
+	logger.Info("starting API for advice service", zap.Int("port", cfg.Port))
 	err := http.ListenAndServe(formatPort(cfg.Port), nil)
+
 	logger.Fatal("API stopped listening to requests", zap.Error(err))
 }
 
@@ -47,19 +53,21 @@ func getAdviseEndpointHandler(
 			zap.String("requestId", reqId),
 		)
 
-		services, err := parseServicesFromRequest(r)
+		req, err := parseRequest(r, reqId, logger) // TODO: Use desired advisor from request - requires function overhaul
 		if err != nil {
 			writeErrorResponse(w, reqId, err, http.StatusBadRequest, logger)
+			return
 		}
 		logger.Info(
 			"services parsed from request",
 			zap.String("requestId", reqId),
-			zap.Any("parsedServices", services),
+			zap.Any("parsedServices", req.Services),
 		)
 
-		advice, err := advise(services)
+		advice, err := advise(req.Services)
 		if err != nil {
 			writeErrorResponse(w, reqId, err, http.StatusInternalServerError, logger)
+			return
 		}
 		logger.Info(
 			"advice generated for request",
@@ -70,22 +78,29 @@ func getAdviseEndpointHandler(
 		err = writeAdviceResponse(w, reqId, advice, logger)
 		if err != nil {
 			writeErrorResponse(w, reqId, err, http.StatusInternalServerError, logger)
+			return
 		}
 	}
 }
 
-func parseServicesFromRequest(r *http.Request) ([]api.Service, error) {
+func parseRequest(r *http.Request, reqId string, logger *zap.Logger) (*api.Request, error) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		return nil, utils.PrependToError(err, "could not read request body")
+		return nil, utils.PrependToError(err, "could not read request body") // TODO: Good for log, unhelpful to client
 	}
 
-	var services []api.Service
-	err = json.Unmarshal(body, &services)
+	logger.Info(
+		"request body read",
+		zap.String("requestId", reqId),
+		zap.ByteString("requestBody", body),
+	)
+
+	var req api.Request
+	err = json.Unmarshal(body, &req)
 	if err != nil {
-		return nil, utils.PrependToError(err, "could not parse body JSON")
+		return nil, utils.PrependToError(err, "could not parse body JSON") // TODO: GOod for log, Unhelpful to client
 	}
-	return services, nil
+	return &req, nil
 }
 
 func writeErrorResponse(

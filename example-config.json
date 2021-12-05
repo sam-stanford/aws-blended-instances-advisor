@@ -22,7 +22,7 @@
       "revocationSensitivity": 0.4
     }]
   },
-  "api": {
+  "awsApi": {
     "endpoints": {
       "awsSpotInstanceInfoUrl": "https://spot-bid-advisor.s3.amazonaws.com/spot-advisor-data.json"
     },

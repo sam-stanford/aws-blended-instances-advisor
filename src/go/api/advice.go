@@ -22,8 +22,21 @@ func (ra *RegionAdvice) AddAssignment(serviceName string, instance *Instance) {
 }
 
 func (a *Assignments) add(serviceName string, instanceId string) {
-	a.InstancesToServices[instanceId] = appendStringIfNotInSlice(a.InstancesToServices[instanceId], serviceName)
-	a.ServicesToInstances[serviceName] = appendStringIfNotInSlice(a.ServicesToInstances[serviceName], instanceId)
+	if a.InstancesToServices == nil {
+		a.InstancesToServices = map[string][]string{
+			instanceId: {serviceName},
+		}
+	} else {
+		a.InstancesToServices[instanceId] = appendStringIfNotInSlice(a.InstancesToServices[instanceId], serviceName)
+	}
+
+	if a.ServicesToInstances == nil {
+		a.ServicesToInstances = map[string][]string{
+			serviceName: {instanceId},
+		}
+	} else {
+		a.ServicesToInstances[serviceName] = appendStringIfNotInSlice(a.ServicesToInstances[serviceName], instanceId)
+	}
 }
 
 func appendInstanceIfNotInSlice(slice []Instance, instance *Instance) []Instance {

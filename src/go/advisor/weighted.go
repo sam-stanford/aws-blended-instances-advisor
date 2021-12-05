@@ -11,11 +11,11 @@ import (
 // TODO: Rename to FocusAdvisor & create CustomAdvisor which takes specified weights
 
 type Weighted struct {
-	focus       api.ServiceFocus
+	focus       api.AdvisorFocus
 	focusWeight float64
 }
 
-func NewWeighted(focus api.ServiceFocus, focusWeight float64) Weighted {
+func NewWeighted(focus api.AdvisorFocus, focusWeight float64) Weighted {
 	return Weighted{
 		focus:       focus,
 		focusWeight: focusWeight,

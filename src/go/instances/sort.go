@@ -175,7 +175,7 @@ func calculatedInstanceScoreFromWeightsWithFixedVcpu(
 }
 
 // TODO: Doc & test
-func GetSortWeights(focus api.ServiceFocus, focusWeight float64) SortWeightings {
+func GetSortWeights(focus api.AdvisorFocus, focusWeight float64) SortWeightings {
 	primaryFocusWeight := 0.33 + 2.0*0.33*focusWeight
 	secondaryFocusWeight := 0.33 * (1.0 - focusWeight)
 
