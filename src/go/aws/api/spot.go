@@ -18,7 +18,7 @@ import (
 // TODO: Add log of how many not parsed (like on-demand.go line 66)
 
 func GetSpotInstances(
-	config *config.ApiConfig,
+	config *config.AwsApiConfig,
 	regions []types.Region,
 	creds credentials.StaticCredentialsProvider,
 	logger *zap.Logger,
@@ -77,7 +77,7 @@ func createInstancePriceMap(spotPrices []ec2Types.SpotPrice) map[string]ec2Types
 }
 
 func getSpotInstancePricesForRegion(
-	config *config.ApiConfig,
+	config *config.AwsApiConfig,
 	region types.Region,
 	creds credentials.StaticCredentialsProvider,
 	logger *zap.Logger,
@@ -145,7 +145,7 @@ func fetchSpotInstanceAvailabilityInfo(
 }
 
 func fetchSpotInstanceRevocationInfoAndSpecsMap(
-	config *config.ApiConfig,
+	config *config.AwsApiConfig,
 	logger *zap.Logger,
 ) (
 	map[string]regionSpotInstanceRevocationInfo,
@@ -187,7 +187,7 @@ func fetchSpotInstanceRevocationInfoAndSpecsMap(
 }
 
 func createRegionSpotInstances(
-	cfg *config.ApiConfig,
+	cfg *config.AwsApiConfig,
 	region types.Region,
 	regionRevocationInfo *regionSpotInstanceRevocationInfo,
 	regionInstancePriceMap map[string]ec2Types.SpotPrice,

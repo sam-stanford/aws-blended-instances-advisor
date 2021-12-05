@@ -30,6 +30,9 @@
     ]
   },
   "api": {
+    "port": 123456
+  },
+  "awsApi": {
     "endpoints": {
       "awsSpotInstanceInfoUrl": "TEST_URL"
     },

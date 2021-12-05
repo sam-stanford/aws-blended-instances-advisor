@@ -24,7 +24,7 @@ const (
 // TODO: Doc comment & use go routines to parallelise fetches
 
 func GetInstancesRegionInfoMap(
-	apiConfig *config.ApiConfig,
+	apiConfig *config.AwsApiConfig,
 	regions []types.Region,
 	creds *config.Credentials,
 	cache *cache.Cache,

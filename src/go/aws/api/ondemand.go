@@ -19,7 +19,7 @@ const (
 )
 
 func GetOnDemandInstances(
-	config *config.ApiConfig,
+	config *config.AwsApiConfig,
 	regions []types.Region,
 	creds credentials.StaticCredentialsProvider,
 	logger *zap.Logger,
@@ -38,7 +38,7 @@ func GetOnDemandInstances(
 }
 
 func getRegionToOnDemandInstancesMap(
-	cfg *config.ApiConfig,
+	cfg *config.AwsApiConfig,
 	pricingClient *pricing.Client,
 	regions []types.Region,
 	maxInstanceCount int,

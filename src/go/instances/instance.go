@@ -15,3 +15,5 @@ type Instance struct {
 	PricePerHour          float64                  `json:"price"`
 	RevocationProbability float64                  `json:"revocProb"`
 }
+
+// TODO: Instance to api.Instance

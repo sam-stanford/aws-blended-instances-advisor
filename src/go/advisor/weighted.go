@@ -1,66 +1,76 @@
 package advisor
 
 import (
-	"ec2-test/config"
+	"ec2-test/api"
 	instPkg "ec2-test/instances"
 	"ec2-test/utils"
-	"fmt"
 )
 
 // TODO: Docs
 // TODO: Make all instance slices pointers
+// TODO: Rename to FocusAdvisor & create CustomAdvisor which takes specified weights
 
 type Weighted struct {
+	focus       api.ServiceFocus
+	focusWeight float64
+}
+
+func NewWeighted(focus api.ServiceFocus, focusWeight float64) Weighted {
+	return Weighted{
+		focus:       focus,
+		focusWeight: focusWeight,
+	}
 }
 
 func (advisor *Weighted) Advise(
 	regionInfoMap instPkg.RegionInfoMap,
-	services []config.ServiceDescription,
+	services []api.Service,
 ) (
-	[]instPkg.Instance,
-	InstanceApplicationMap,
+	api.Advice,
 	error,
 ) {
+	advice := make(api.Advice)
+
 	for region, info := range regionInfoMap {
-		instances, instAppMap, err := advisor.AdviseForRegion(info, services) // TODO var names
+		regionAdvice, err := advisor.AdviseForRegion(info, services)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
-		fmt.Printf("\n\nRegion: %s, instances: %+v, instAppMap: %+v\n", region.ToCodeString(), instances, instAppMap) // TODO: Improve
-		for _, instance := range instances {
-			fmt.Printf("\tInstance: %+v\n\n", *instance)
-		}
-		// TODO: Calc some form of score
+
+		advice[region.ToCodeString()] = regionAdvice
 	}
-	return nil, nil, nil
+
+	return advice, nil
 }
 
 func (advisor *Weighted) AdviseForRegion(
 	info instPkg.RegionInfo,
-	services []config.ServiceDescription,
+	services []api.Service,
 ) (
-	[]*instPkg.Instance,
-	InstanceApplicationMap,
+	*api.RegionAdvice,
 	error,
 ) {
 
-	selectedInstances := []*instPkg.Instance{}
-	instanceApplicationMap := make(InstanceApplicationMap)
+	// TODO: Calc some form of score
+
+	advice := &api.RegionAdvice{}
+
+	// TODO: Some form of map / set to know which instances are in advice
 
 	for _, svc := range services {
 
 		// TODO: Need to avoid already used and re-use already suggested instances
 		// TODO: Do we need to re-calc aggregates...? Don't think so, but should justify
 
-		// TODO: Func
-		for i := 0; i < svc.Instances.MinimumCount; i += 1 {
+		// TODO: Func (repeated code)
+		for i := 0; i < svc.MinInstances; i += 1 {
 			selectedInstance, err := advisor.selectInstanceForService(
 				info.PermanentInstances.Instances,
 				info.PermanentInstances.Aggregates,
 				svc,
 			)
 			if err != nil {
-				return nil, nil, err
+				return nil, err
 			}
 			selectedInstances = append(selectedInstances, selectedInstance)
 			instanceApplicationMap[selectedInstance.Name] = append(
@@ -69,15 +79,15 @@ func (advisor *Weighted) AdviseForRegion(
 			)
 		}
 
-		transientInstanceCount := svc.Instances.TotalCount - svc.Instances.MinimumCount
-		for i := 0; i < transientInstanceCount; i += 1 {
+		transientInstances := svc.TotalInstances - svc.MinInstances
+		for i := 0; i < transientInstances; i += 1 {
 			selectedInstance, err := advisor.selectInstanceForService(
 				info.AllInstances.Instances,
 				info.AllInstances.Aggregates,
 				svc,
 			)
 			if err != nil {
-				return nil, nil, err
+				return nil, err
 			}
 			selectedInstances = append(selectedInstances, selectedInstance)
 			instanceApplicationMap[selectedInstance.Name] = append(
@@ -94,7 +104,7 @@ func (advisor *Weighted) AdviseForRegion(
 func (advisor *Weighted) selectInstanceForService(
 	instances []instPkg.Instance,
 	aggregates instPkg.Aggregates,
-	svc config.ServiceDescription,
+	svc api.Service,
 ) (*instPkg.Instance, error) {
 	searchStart, searchEnd := 0, len(instances)
 
@@ -113,7 +123,8 @@ func (advisor *Weighted) selectInstanceForService(
 		return nil, utils.PrependToError(err, "could not find memory in instance slice")
 	}
 
-	weights := instPkg.GetSortWeights(svc.GetFocus(), svc.FocusWeight)
+	// TODO: Allow for user to pick these - maybe a diff advisor
+	weights := instPkg.GetSortWeights(advisor.focus, advisor.focusWeight)
 	instPkg.SortInstancesWeightedWithVcpuLimiter(
 		instances,
 		aggregates,

@@ -143,7 +143,7 @@ func (info *onDemandInstanceInfo) toInstance() (*instPkg.Instance, error) {
 	}, nil
 }
 
-func parseOnDemandApiResponseToInstances(cfg *config.ApiConfig, resp *pricing.GetProductsOutput, logger *zap.Logger) []instPkg.Instance {
+func parseOnDemandApiResponseToInstances(cfg *config.AwsApiConfig, resp *pricing.GetProductsOutput, logger *zap.Logger) []instPkg.Instance {
 
 	instances := make([]instPkg.Instance, 0)
 
