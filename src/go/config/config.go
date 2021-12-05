@@ -93,10 +93,6 @@ func (c *Constraints) GetRegions() []awsTypes.Region {
 	return regions
 }
 
-func (svc *ServiceDescription) GetFocus() ServiceFocus {
-	return ServiceFocusFromString(svc.Focus)
-}
-
 func (c *Config) String() string {
 	noCredsConfig := &Config{
 		Constraints: c.Constraints,
@@ -215,17 +211,6 @@ func (c *Config) validateServiceDescriptions() error {
 func validateServiceDescription(svc ServiceDescription) error {
 	if svc.Name == "" {
 		return errors.New("service name is empty")
-	}
-	err := ValidateServiceFocus(svc.Focus)
-	if err != nil {
-		return err
-	}
-	if svc.FocusWeight < 0 || svc.FocusWeight > 1 {
-		return fmt.Errorf(
-			"svc (%s) has focusWeight value outside of range of [0,1]: %f",
-			svc.Name,
-			svc.FocusWeight,
-		)
 	}
 	return nil
 }

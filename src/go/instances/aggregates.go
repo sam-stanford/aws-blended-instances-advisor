@@ -24,7 +24,7 @@ type Aggregates struct {
 
 // Calculates aggregates for a slice of instances, returning information in
 // an Aggregate struct.
-func CalculateAggregates(instances []Instance) Aggregates {
+func CalculateAggregates(instances []*Instance) Aggregates {
 	totalVcpu, minVcpu, maxVcpu := 0, instances[0].Vcpu, instances[0].Vcpu
 
 	totalPricePerHour := 0.0

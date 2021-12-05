@@ -1,6 +1,7 @@
 package api
 
 type Instance struct {
+	Id                    string  `json:"id"` // TODO: Add to instances pkg & generate on creation
 	Name                  string  `json:"name"`
 	MemoryGb              float64 `json:"memory"`
 	Vcpu                  int     `json:"vcpu"`

@@ -1,6 +1,6 @@
 package api
 
-// TODO: Doc in README
+// TODO: Doc in README & point to README from here
 
 type Advice map[string]RegionAdvice
 
@@ -13,4 +13,45 @@ type RegionAdvice struct {
 type Assignments struct {
 	ServicesToInstances map[string][]string `json:"servicesToInstances"`
 	InstancesToServices map[string][]string `json:"instancesToServices"`
+}
+
+// TODO: Doc & test
+func (ra *RegionAdvice) AddAssignment(serviceName string, instance *Instance) {
+	ra.Instances = appendInstanceIfNotInSlice(ra.Instances, instance)
+	ra.Assignments.add(serviceName, instance.Id)
+}
+
+func (a *Assignments) add(serviceName string, instanceId string) {
+	a.InstancesToServices[instanceId] = appendStringIfNotInSlice(a.InstancesToServices[instanceId], serviceName)
+	a.ServicesToInstances[serviceName] = appendStringIfNotInSlice(a.ServicesToInstances[serviceName], instanceId)
+}
+
+func appendInstanceIfNotInSlice(slice []Instance, instance *Instance) []Instance {
+	inSlice := false
+	for i := range slice {
+		if slice[i].Id == instance.Id {
+			inSlice = true
+			break
+		}
+	}
+
+	if !inSlice {
+		return append(slice, *instance)
+	}
+	return slice
+}
+
+func appendStringIfNotInSlice(slice []string, s string) []string {
+	inSlice := false
+	for i := range slice {
+		if slice[i] == s {
+			inSlice = true
+			break
+		}
+	}
+
+	if !inSlice {
+		return append(slice, s)
+	}
+	return slice
 }

@@ -1,7 +1,7 @@
 package instances
 
 import (
-	"ec2-test/config"
+	"ec2-test/api"
 	"sort"
 	"strings"
 )
@@ -175,33 +175,33 @@ func calculatedInstanceScoreFromWeightsWithFixedVcpu(
 }
 
 // TODO: Doc & test
-func GetSortWeights(focus config.ServiceFocus, focusWeight float64) SortWeightings {
+func GetSortWeights(focus api.ServiceFocus, focusWeight float64) SortWeightings {
 	primaryFocusWeight := 0.33 + 2.0*0.33*focusWeight
 	secondaryFocusWeight := 0.33 * (1.0 - focusWeight)
 
 	// TODO: Comment on negative weight for vcpu (want to max, while others are min)
 
 	switch focus {
-	case config.Availability:
+	case api.Availability:
 		return SortWeightings{
 			RevocationProbabilityWeight: primaryFocusWeight,
 			VcpuWeight:                  -1.0 * secondaryFocusWeight,
 			PriceWeight:                 secondaryFocusWeight,
 		}
-	case config.Cost:
+	case api.Cost:
 		return SortWeightings{
 			RevocationProbabilityWeight: secondaryFocusWeight,
 			VcpuWeight:                  -1.0 * secondaryFocusWeight,
 			PriceWeight:                 primaryFocusWeight,
 		}
 
-	case config.Performance:
+	case api.Performance:
 		return SortWeightings{
 			RevocationProbabilityWeight: secondaryFocusWeight,
 			VcpuWeight:                  -1.0 * primaryFocusWeight,
 			PriceWeight:                 secondaryFocusWeight,
 		}
-	default: // Implicitly includes config.Balanced
+	default: // Implicitly includes api.Balanced
 		return SortWeightings{
 			RevocationProbabilityWeight: 0.33,
 			VcpuWeight:                  0.33,

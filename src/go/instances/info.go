@@ -12,11 +12,11 @@ type RegionInfo struct {
 }
 
 type InstancesAndAggregates struct {
-	Instances  []Instance `json:"instances"`
-	Aggregates Aggregates `json:"aggregates"`
+	Instances  []*Instance `json:"instances"`
+	Aggregates Aggregates  `json:"aggregates"`
 }
 
-func CreateRegionInfo(permanentInstances []Instance, transientInstances []Instance) RegionInfo {
+func CreateRegionInfo(permanentInstances []*Instance, transientInstances []*Instance) RegionInfo {
 	allInstances := append(permanentInstances, transientInstances...)
 	onDemandAggs := CalculateAggregates(permanentInstances)
 	allInstancesAggs := CalculateAggregates(allInstances)

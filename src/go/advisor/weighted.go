@@ -22,11 +22,11 @@ func NewWeighted(focus api.ServiceFocus, focusWeight float64) Weighted {
 	}
 }
 
-func (advisor *Weighted) Advise(
+func (advisor Weighted) Advise(
 	regionInfoMap instPkg.RegionInfoMap,
 	services []api.Service,
 ) (
-	api.Advice,
+	*api.Advice,
 	error,
 ) {
 	advice := make(api.Advice)
@@ -37,25 +37,20 @@ func (advisor *Weighted) Advise(
 			return nil, err
 		}
 
-		advice[region.ToCodeString()] = regionAdvice
+		advice[region.ToCodeString()] = *regionAdvice
 	}
 
-	return advice, nil
+	return &advice, nil
 }
 
-func (advisor *Weighted) AdviseForRegion(
+func (advisor Weighted) AdviseForRegion(
 	info instPkg.RegionInfo,
 	services []api.Service,
 ) (
 	*api.RegionAdvice,
 	error,
 ) {
-
-	// TODO: Calc some form of score
-
 	advice := &api.RegionAdvice{}
-
-	// TODO: Some form of map / set to know which instances are in advice
 
 	for _, svc := range services {
 
@@ -72,11 +67,7 @@ func (advisor *Weighted) AdviseForRegion(
 			if err != nil {
 				return nil, err
 			}
-			selectedInstances = append(selectedInstances, selectedInstance)
-			instanceApplicationMap[selectedInstance.Name] = append(
-				instanceApplicationMap[selectedInstance.Name],
-				svc.Name,
-			)
+			advice.AddAssignment(svc.Name, selectedInstance)
 		}
 
 		transientInstances := svc.TotalInstances - svc.MinInstances
@@ -89,23 +80,20 @@ func (advisor *Weighted) AdviseForRegion(
 			if err != nil {
 				return nil, err
 			}
-			selectedInstances = append(selectedInstances, selectedInstance)
-			instanceApplicationMap[selectedInstance.Name] = append(
-				instanceApplicationMap[selectedInstance.Name],
-				svc.Name,
-			)
+			advice.AddAssignment(svc.Name, selectedInstance)
 		}
-
 	}
 
-	return selectedInstances, instanceApplicationMap, nil
+	// TODO: Calc some form of score
+
+	return advice, nil
 }
 
-func (advisor *Weighted) selectInstanceForService(
-	instances []instPkg.Instance,
+func (advisor Weighted) selectInstanceForService(
+	instances []*instPkg.Instance,
 	aggregates instPkg.Aggregates,
 	svc api.Service,
-) (*instPkg.Instance, error) {
+) (*api.Instance, error) {
 	searchStart, searchEnd := 0, len(instances)
 
 	// TODO: Different result when using --clear-cache as to when not
@@ -134,5 +122,5 @@ func (advisor *Weighted) selectInstanceForService(
 		svc.MaxVcpu,
 	)
 
-	return &instances[searchStart], nil
+	return instances[searchStart].ToApiInstance(), nil
 }

@@ -8,18 +8,18 @@ import (
 
 type Advisor interface {
 	Advise(
-		*instances.RegionInfoMap,
+		instances.RegionInfoMap,
 		[]api.Service,
 	) (
-		api.Advice,
+		*api.Advice,
 		error,
 	)
 
 	AdviseForRegion(
-		*instances.RegionInfo,
+		instances.RegionInfo,
 		*config.Constraints,
 	) (
-		api.RegionAdvice,
+		*api.RegionAdvice,
 		error,
 	)
 
