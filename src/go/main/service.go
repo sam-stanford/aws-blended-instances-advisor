@@ -12,6 +12,10 @@ import (
 	"go.uber.org/zap"
 )
 
+// TODO: Add multiple end points - one for each advisor
+// TODO: 		- Allows for advisor-specific info to be passed
+// TODO:		- Check provided advisor type against used path
+
 // TODO: Test & maybe move to API package
 
 // TODO: Calc response time & log

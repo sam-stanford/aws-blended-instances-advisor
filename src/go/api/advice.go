@@ -5,9 +5,9 @@ package api
 type Advice map[string]RegionAdvice
 
 type RegionAdvice struct {
-	Score       float64     `json:"score"`
-	Instances   []Instance  `json:"instances"`
-	Assignments Assignments `json:"assignments"`
+	Score       float64              `json:"score"`
+	Instances   map[string]*Instance `json:"instances"` // ID to instance
+	Assignments Assignments          `json:"assignments"`
 }
 
 type Assignments struct {
@@ -21,25 +21,25 @@ func (ra *RegionAdvice) GetAssignedInstancesForService(serviceName string) []*In
 	assignedIds := ra.Assignments.ServicesToInstances[serviceName]
 
 	for _, id := range assignedIds {
-		inst := getInstanceWithIdFromSlice(ra.Instances, id)
+		inst := ra.Instances[id]
 		instances = append(instances, inst)
 	}
 
 	return instances
 }
 
-func getInstanceWithIdFromSlice(instances []Instance, instanceId string) *Instance {
-	for _, inst := range instances {
-		if inst.Id == instanceId {
-			return &inst
-		}
-	}
-	return nil
-}
+// TODO: Use "NewAdvice" and "NewRegionAdvice" to instantiate maps rather than checking on each access
 
 // TODO: Doc & test
 func (ra *RegionAdvice) AddAssignment(serviceName string, instance *Instance) {
-	ra.Instances = appendInstanceIfNotInSlice(ra.Instances, instance)
+	if ra.Instances == nil {
+		ra.Instances = map[string]*Instance{
+			instance.Id: instance,
+		}
+	} else {
+		ra.Instances[instance.Id] = instance
+	}
+
 	ra.Assignments.add(serviceName, instance.Id)
 }
 
@@ -61,21 +61,7 @@ func (a *Assignments) add(serviceName string, instanceId string) {
 	}
 }
 
-func appendInstanceIfNotInSlice(slice []Instance, instance *Instance) []Instance {
-	inSlice := false
-	for i := range slice {
-		if slice[i].Id == instance.Id {
-			inSlice = true
-			break
-		}
-	}
-
-	if !inSlice {
-		return append(slice, *instance)
-	}
-	return slice
-}
-
+// TODO: Move to utils & test
 func appendStringIfNotInSlice(slice []string, s string) []string {
 	inSlice := false
 	for i := range slice {
