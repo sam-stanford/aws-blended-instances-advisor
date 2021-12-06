@@ -5,7 +5,6 @@ import (
 	types "ec2-test/aws/types"
 	"ec2-test/config"
 	instPkg "ec2-test/instances"
-	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/pricing"
@@ -54,7 +53,6 @@ func getRegionToOnDemandInstancesMap(
 	regionToInstancesMap := make(map[types.Region][]*instPkg.Instance)
 
 	for _, region := range regions {
-		fmt.Printf("\n\nPOKEMON: THIS REGION: %s\n\n", region.ToCodeString())
 		regionInstances := make([]*instPkg.Instance, 0)
 
 		nextToken := ""
