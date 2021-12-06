@@ -12,6 +12,8 @@ import (
 	"go.uber.org/zap"
 )
 
+// TODO: Own sub package
+
 const (
 	EC2_SERVICE_CODE       = "AmazonEC2"
 	LOCATION_FILTER_KEY    = "location"

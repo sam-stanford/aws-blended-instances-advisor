@@ -25,7 +25,7 @@ import (
 func StartAdviceService(
 	cfg *config.ApiConfig,
 	logger *zap.Logger,
-	advise func(services []api.Service) (*api.Advice, error),
+	advise func(advisor api.Advisor, services []api.Service) (*api.Advice, error),
 ) {
 	http.HandleFunc("/advise", getAdviseEndpointHandler(advise, logger))
 	logger.Info("registered API endpoint", zap.String("path", "/advise"))
@@ -37,11 +37,11 @@ func StartAdviceService(
 }
 
 func formatPort(port int) string {
-	return ":" + strconv.Itoa(port)
+	return "127.0.0.1:" + strconv.Itoa(port)
 }
 
 func getAdviseEndpointHandler(
-	advise func(services []api.Service) (*api.Advice, error),
+	advise func(advisor api.Advisor, services []api.Service) (*api.Advice, error),
 	logger *zap.Logger,
 ) func(http.ResponseWriter, *http.Request) {
 
@@ -53,7 +53,7 @@ func getAdviseEndpointHandler(
 			zap.String("requestId", reqId),
 		)
 
-		req, err := parseRequest(r, reqId, logger) // TODO: Use desired advisor from request - requires function overhaul
+		req, err := parseRequest(r, reqId, logger)
 		if err != nil {
 			writeErrorResponse(w, reqId, err, http.StatusBadRequest, logger)
 			return
@@ -64,7 +64,7 @@ func getAdviseEndpointHandler(
 			zap.Any("parsedServices", req.Services),
 		)
 
-		advice, err := advise(req.Services)
+		advice, err := advise(req.Advisor, req.Services)
 		if err != nil {
 			writeErrorResponse(w, reqId, err, http.StatusInternalServerError, logger)
 			return

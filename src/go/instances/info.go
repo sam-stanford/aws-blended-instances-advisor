@@ -4,6 +4,8 @@ import awsTypes "ec2-test/aws/types"
 
 // TODO: Docs
 
+// TODO: Is this used?
+
 type RegionInfoMap map[awsTypes.Region]RegionInfo
 
 type RegionInfo struct {

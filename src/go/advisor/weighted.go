@@ -15,7 +15,7 @@ type Weighted struct {
 	focusWeight float64
 }
 
-func NewWeighted(focus api.AdvisorFocus, focusWeight float64) Weighted {
+func NewWeightedAdvisor(focus api.AdvisorFocus, focusWeight float64) Weighted {
 	return Weighted{
 		focus:       focus,
 		focusWeight: focusWeight,

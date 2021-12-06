@@ -93,7 +93,7 @@ func (c *Constraints) GetRegions() []awsTypes.Region {
 	return regions
 }
 
-func (c *Config) String() string {
+func (c *Config) String() string { // TODO: Use in main logging
 	noCredsConfig := &Config{
 		Constraints: c.Constraints,
 		ApiConfig:   c.ApiConfig,

@@ -39,11 +39,14 @@ func main() {
 		logger.Error("Error fetching instances", zap.Error(err))
 	}
 
-	advisor := advisor.Weighted{}
-
-	StartAdviceService(&config.ApiConfig, logger, func(services []api.Service) (*api.Advice, error) {
-		return advisor.Advise(regionInstancesMap, services)
-	})
+	StartAdviceService(
+		&config.ApiConfig,
+		logger,
+		func(advisorInfo api.Advisor, services []api.Service) (*api.Advice, error) {
+			adv := advisor.New(advisorInfo)
+			return adv.Advise(regionInstancesMap, services)
+		},
+	)
 }
 
 func createLogger(debugMode bool) (logger *zap.Logger, syncLogger func() error) {
