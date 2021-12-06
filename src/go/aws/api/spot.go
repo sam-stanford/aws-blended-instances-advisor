@@ -279,6 +279,7 @@ func createInstanceFromSpotInstanceInfo(
 	}
 
 	return &instPkg.Instance{
+		Id:                    utils.GenerateUuid(),
 		Name:                  string(spotPrice.InstanceType),
 		MemoryGb:              specs.MemoryGb,
 		Vcpu:                  specs.Vcpu,

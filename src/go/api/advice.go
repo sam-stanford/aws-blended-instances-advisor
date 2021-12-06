@@ -16,6 +16,28 @@ type Assignments struct {
 }
 
 // TODO: Doc & test
+func (ra *RegionAdvice) GetAssignedInstancesForService(serviceName string) []*Instance {
+	instances := []*Instance{}
+	assignedIds := ra.Assignments.ServicesToInstances[serviceName]
+
+	for _, id := range assignedIds {
+		inst := getInstanceWithIdFromSlice(ra.Instances, id)
+		instances = append(instances, inst)
+	}
+
+	return instances
+}
+
+func getInstanceWithIdFromSlice(instances []Instance, instanceId string) *Instance {
+	for _, inst := range instances {
+		if inst.Id == instanceId {
+			return &inst
+		}
+	}
+	return nil
+}
+
+// TODO: Doc & test
 func (ra *RegionAdvice) AddAssignment(serviceName string, instance *Instance) {
 	ra.Instances = appendInstanceIfNotInSlice(ra.Instances, instance)
 	ra.Assignments.add(serviceName, instance.Id)

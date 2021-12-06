@@ -9,20 +9,23 @@ import (
 // TODO: Docs
 // TODO: Make all instance slices pointers
 // TODO: Rename to FocusAdvisor & create CustomAdvisor which takes specified weights
+// TODO: Use logger
 
-type Weighted struct {
+type WeightedAdvisor struct {
 	focus       api.AdvisorFocus
 	focusWeight float64
+	weights     instPkg.SortWeightings
 }
 
-func NewWeightedAdvisor(focus api.AdvisorFocus, focusWeight float64) Weighted {
-	return Weighted{
+func NewWeightedAdvisor(focus api.AdvisorFocus, focusWeight float64) WeightedAdvisor {
+	return WeightedAdvisor{
 		focus:       focus,
 		focusWeight: focusWeight,
+		weights:     instPkg.GetSortWeights(focus, focusWeight), // TODO: Rename this to be FocusAdvisor & have WeightedAdvisor be Custom
 	}
 }
 
-func (advisor Weighted) Advise(
+func (advisor WeightedAdvisor) Advise(
 	regionInfoMap instPkg.RegionInfoMap,
 	services []api.Service,
 ) (
@@ -30,6 +33,7 @@ func (advisor Weighted) Advise(
 	error,
 ) {
 	advice := make(api.Advice)
+	globalAggregates := getGlobalAggregatesFromRegionInfoMap(regionInfoMap)
 
 	for region, info := range regionInfoMap {
 		regionAdvice, err := advisor.AdviseForRegion(info, services)
@@ -37,13 +41,24 @@ func (advisor Weighted) Advise(
 			return nil, err
 		}
 
+		regionAdvice.Score = advisor.ScoreRegionAdvice(regionAdvice, globalAggregates, services)
+
 		advice[region.ToCodeString()] = *regionAdvice
 	}
 
 	return &advice, nil
 }
 
-func (advisor Weighted) AdviseForRegion(
+// TODO: Move to inst package?
+func getGlobalAggregatesFromRegionInfoMap(m instPkg.RegionInfoMap) instPkg.Aggregates {
+	aggs := []instPkg.Aggregates{}
+	for _, info := range m {
+		aggs = append(aggs, info.AllInstances.Aggregates)
+	}
+	return instPkg.CombineAggregates(aggs)
+}
+
+func (advisor WeightedAdvisor) AdviseForRegion(
 	info instPkg.RegionInfo,
 	services []api.Service,
 ) (
@@ -89,7 +104,7 @@ func (advisor Weighted) AdviseForRegion(
 	return advice, nil
 }
 
-func (advisor Weighted) selectInstanceForService(
+func (advisor WeightedAdvisor) selectInstanceForService(
 	instances []*instPkg.Instance,
 	aggregates instPkg.Aggregates,
 	svc api.Service,
@@ -111,16 +126,58 @@ func (advisor Weighted) selectInstanceForService(
 		return nil, utils.PrependToError(err, "could not find memory in instance slice")
 	}
 
-	// TODO: Allow for user to pick these - maybe a diff advisor
-	weights := instPkg.GetSortWeights(advisor.focus, advisor.focusWeight)
 	instPkg.SortInstancesWeightedWithVcpuLimiter(
 		instances,
 		aggregates,
 		searchStart,
 		searchEnd,
-		weights,
+		advisor.weights,
 		svc.MaxVcpu,
 	)
 
 	return instances[searchStart].ToApiInstance(), nil
+}
+
+// TODO: Test & Doc
+func (advisor WeightedAdvisor) ScoreRegionAdvice(
+	advice *api.RegionAdvice,
+	globalAgg instPkg.Aggregates,
+	services []api.Service,
+) float64 {
+	vcpuScore, revocationProbScore, priceScore := 0.0, 0.0, 0.0
+	totalInstances := 0
+
+	for _, svc := range services {
+		assignedInstances := advice.GetAssignedInstancesForService(svc.Name)
+		for _, inst := range assignedInstances {
+			vcpuScore += calculateVcpuScore(inst, svc)
+			revocationProbScore += calculateRevocationProbScore(inst, globalAgg)
+			priceScore += calculatePriceScore(inst, globalAgg)
+		}
+		totalInstances += len(assignedInstances)
+	}
+
+	return ((vcpuScore * advisor.weights.VcpuWeight) +
+		(revocationProbScore * advisor.weights.RevocationProbabilityWeight) +
+		(priceScore * advisor.weights.PriceWeight)) / float64(totalInstances)
+}
+
+func calculateVcpuScore(inst *api.Instance, svc api.Service) float64 {
+	// Percentage of MaxVcpu
+	if inst.Vcpu >= svc.MaxVcpu {
+		return 1.0
+	}
+	return float64(inst.Vcpu) / float64(svc.MaxVcpu)
+}
+
+func calculateRevocationProbScore(inst *api.Instance, agg instPkg.Aggregates) float64 {
+	// Min-max scale
+	return 1 - ((inst.RevocationProbability - agg.MinRevocationProbability) /
+		(agg.MaxRevocationProbability - agg.MinRevocationProbability))
+}
+
+func calculatePriceScore(inst *api.Instance, agg instPkg.Aggregates) float64 {
+	// Min-max scale
+	return 1 - ((inst.PricePerHour - agg.MinPricePerHour) /
+		(agg.MaxPricePerHour - agg.MinPricePerHour))
 }

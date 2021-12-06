@@ -5,6 +5,7 @@ import (
 	types "ec2-test/aws/types"
 	"ec2-test/config"
 	instPkg "ec2-test/instances"
+	"ec2-test/utils"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -132,6 +133,7 @@ func (info *onDemandInstanceInfo) toInstance() (*instPkg.Instance, error) {
 	}
 
 	return &instPkg.Instance{
+		Id:                    utils.GenerateUuid(),
 		Name:                  info.Specs.Attributes.InstanceType,
 		MemoryGb:              mem,
 		Vcpu:                  vcpu,

@@ -22,7 +22,11 @@ type Advisor interface {
 		error,
 	)
 
-	// TODO: ScoreRegionAdvice or something
+	ScoreRegionAdvice(
+		*api.RegionAdvice,
+		instances.Aggregates,
+		[]api.Service,
+	) float64
 }
 
 // TODO: Take logger in args & log stuff
@@ -32,10 +36,7 @@ type Advisor interface {
 func New(info api.Advisor) Advisor {
 	switch info.Type {
 	case api.Weighted:
-		return Weighted{
-			focus:       info.Focus,
-			focusWeight: info.FocusWeight,
-		}
+		return NewWeightedAdvisor(info.Focus, info.FocusWeight)
 
 		// TODO: Random, custom, etc.
 

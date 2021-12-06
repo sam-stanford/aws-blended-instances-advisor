@@ -144,6 +144,7 @@ func CalculateInstanceScoreFromWeightsWithVcpuLimiter(
 	weightings SortWeightings,
 	maxVcpu int,
 ) float64 {
+	// TODO: Can we not just use modulo here?
 	if instance.Vcpu >= maxVcpu {
 		return calculatedInstanceScoreFromWeightsWithFixedVcpu(
 			instance,
