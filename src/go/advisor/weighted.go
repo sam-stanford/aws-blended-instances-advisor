@@ -2,8 +2,10 @@ package advisor
 
 import (
 	"ec2-test/api"
+	awsTypes "ec2-test/aws/types"
 	instPkg "ec2-test/instances"
 	"ec2-test/utils"
+	"fmt"
 )
 
 // TODO: Docs
@@ -28,14 +30,20 @@ func NewWeightedAdvisor(focus api.AdvisorFocus, focusWeight float64) WeightedAdv
 func (advisor WeightedAdvisor) Advise(
 	regionInfoMap instPkg.RegionInfoMap,
 	services []api.Service,
+	regions []awsTypes.Region,
 ) (
 	*api.Advice,
 	error,
 ) {
-	advice := make(api.Advice)
+	advice := make(api.Advice) // TODO: Use NewAdvice here
 	globalAggregates := getGlobalAggregatesFromRegionInfoMap(regionInfoMap)
 
-	for region, info := range regionInfoMap {
+	for _, region := range regions {
+		info, ok := regionInfoMap[region]
+		if !ok {
+			return nil, fmt.Errorf("region not in map: %s", region.ToCodeString())
+		}
+
 		regionAdvice, err := advisor.AdviseForRegion(info, services)
 		if err != nil {
 			return nil, err

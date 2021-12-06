@@ -4,6 +4,7 @@ import (
 	"ec2-test/advisor"
 	"ec2-test/api"
 	awsApi "ec2-test/aws/api"
+	awsTypes "ec2-test/aws/types"
 	"ec2-test/cache"
 	"ec2-test/config"
 	"ec2-test/utils"
@@ -42,9 +43,13 @@ func main() {
 	StartAdviceService(
 		&config.ApiConfig,
 		logger,
-		func(advisorInfo api.Advisor, services []api.Service) (*api.Advice, error) {
-			adv := advisor.New(advisorInfo)
-			return adv.Advise(regionInstancesMap, services)
+		func(advisorInfo api.Advisor, services []api.Service, regions []api.Region) (*api.Advice, error) {
+			awsRegions, err := awsTypes.ManyRegionsFromApiRegions(regions)
+			if err != nil {
+				return nil, err
+			}
+
+			return advisor.New(advisorInfo).Advise(regionInstancesMap, services, awsRegions)
 		},
 	)
 }

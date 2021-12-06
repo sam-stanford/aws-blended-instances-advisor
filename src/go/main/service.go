@@ -29,7 +29,7 @@ import (
 func StartAdviceService(
 	cfg *config.ApiConfig,
 	logger *zap.Logger,
-	advise func(advisor api.Advisor, services []api.Service) (*api.Advice, error),
+	advise func(advisor api.Advisor, services []api.Service, regions []api.Region) (*api.Advice, error),
 ) {
 	http.HandleFunc("/advise", getAdviseEndpointHandler(advise, logger))
 	logger.Info("registered API endpoint", zap.String("path", "/advise"))
@@ -45,7 +45,7 @@ func formatPort(port int) string {
 }
 
 func getAdviseEndpointHandler(
-	advise func(advisor api.Advisor, services []api.Service) (*api.Advice, error),
+	advise func(advisor api.Advisor, services []api.Service, regions []api.Region) (*api.Advice, error),
 	logger *zap.Logger,
 ) func(http.ResponseWriter, *http.Request) {
 
@@ -68,7 +68,7 @@ func getAdviseEndpointHandler(
 			zap.Any("parsedServices", req.Services),
 		)
 
-		advice, err := advise(req.Advisor, req.Services)
+		advice, err := advise(req.Advisor, req.Services, req.Regions)
 		if err != nil {
 			writeErrorResponse(w, reqId, err, http.StatusInternalServerError, logger)
 			return
@@ -104,6 +104,9 @@ func parseRequest(r *http.Request, reqId string, logger *zap.Logger) (*api.Reque
 	if err != nil {
 		return nil, utils.PrependToError(err, "could not parse body JSON") // TODO: GOod for log, Unhelpful to client
 	}
+
+	// TODO: Validation (at least one region, etc.)
+
 	return &req, nil
 }
 

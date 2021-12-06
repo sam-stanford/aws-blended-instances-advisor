@@ -2,6 +2,7 @@ package advisor
 
 import (
 	"ec2-test/api"
+	awsTypes "ec2-test/aws/types"
 	"ec2-test/instances"
 )
 
@@ -9,6 +10,7 @@ type Advisor interface {
 	Advise(
 		instances.RegionInfoMap,
 		[]api.Service,
+		[]awsTypes.Region,
 	) (
 		*api.Advice,
 		error,

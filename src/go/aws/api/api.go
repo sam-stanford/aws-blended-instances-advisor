@@ -6,6 +6,7 @@ import (
 	"ec2-test/cache"
 	"ec2-test/config"
 	instPkg "ec2-test/instances"
+	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
@@ -33,6 +34,8 @@ func GetInstancesRegionInfoMap(
 	instPkg.RegionInfoMap,
 	error,
 ) {
+
+	fmt.Println("\n\nREGIONS:\n", regions)
 
 	regionInfoMap, err := getRegionInfoMapFromCache(INSTANCES_CACHE_FILENAME, cache)
 	if err != nil {

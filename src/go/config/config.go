@@ -83,7 +83,7 @@ type ServiceDescriptionInstances struct {
 // TODO: Doc comments
 
 func (c *Constraints) GetRegions() []awsTypes.Region {
-	regions := make([]awsTypes.Region, len(c.Regions))
+	regions := []awsTypes.Region{}
 	for _, regionStr := range c.Regions {
 		region, err := awsTypes.NewRegion(regionStr)
 		if err == nil {
