@@ -7,3 +7,5 @@ logs/*
 notes.txt
 assets/cache/*
 assets/downloads/*
+temp/*
+temp
