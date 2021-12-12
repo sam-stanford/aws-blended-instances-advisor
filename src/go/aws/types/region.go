@@ -1,6 +1,11 @@
 package types
 
-import "errors"
+import (
+	"ec2-test/api"
+	"errors"
+)
+
+// TODO: Rename ToCodeString to CodeString
 
 type Region int
 
@@ -173,4 +178,25 @@ func NewRegion(value string) (Region, error) {
 	}
 
 	return -1, errors.New("provided value does not match any region")
+}
+
+func (region Region) ToApiRegion() api.Region {
+	return api.Region(region.ToCodeString())
+}
+
+// TODO: Doc
+func RegionFromApiRegion(region api.Region) (Region, error) {
+	return NewRegion(string(region))
+}
+
+func ManyRegionsFromApiRegions(apiRegions []api.Region) ([]Region, error) {
+	regions := []Region{}
+	for _, apiReg := range apiRegions {
+		r, err := RegionFromApiRegion(apiReg)
+		if err != nil {
+			return nil, err
+		}
+		regions = append(regions, r)
+	}
+	return regions, nil
 }

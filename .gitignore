@@ -1,9 +1,11 @@
-config.json
-assets/downloads/*
 .VSCodeCounter
 .vscode
+assets/cache/*
+assets/downloads/*
+assets/downloads/*
+config.json
 logs
 logs/*
 notes.txt
-assets/cache/*
-assets/downloads/*
+temp
+temp/*

@@ -15,8 +15,8 @@ func TestGetOnDemandInstances(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to read config: %s", err.Error())
 	}
-	cfg.ApiConfig.MaxInstancesToFetch = MAX_INSTANCES
-	cfg.ApiConfig.DownloadsDir = CONFIG_API_DOWNLOADS_DIR
+	cfg.AwsApiConfig.MaxInstancesToFetch = MAX_INSTANCES
+	cfg.AwsApiConfig.DownloadsDir = CONFIG_API_DOWNLOADS_DIR
 
 	creds := createAwsCredentials(&cfg.Credentials.Test)
 
@@ -30,7 +30,7 @@ func TestGetOnDemandInstances(t *testing.T) {
 		t.Fatalf("Error occured when parsing test regions: %s", err.Error())
 	}
 
-	regionInstanceMap, err := GetOnDemandInstances(&cfg.ApiConfig, []types.Region{*region1, *region2}, creds, logger)
+	regionInstanceMap, err := GetOnDemandInstances(&cfg.AwsApiConfig, []types.Region{*region1, *region2}, creds, logger)
 	if err != nil {
 		t.Fatalf("Error thrown when fetching on-demand instances: %s", err.Error())
 	}
@@ -39,11 +39,11 @@ func TestGetOnDemandInstances(t *testing.T) {
 	if !ok || len(instances) == 0 {
 		t.Fatalf("Zero instances returned for region %s", REGION1)
 	}
-	if len(instances) > cfg.ApiConfig.MaxInstancesToFetch {
+	if len(instances) > cfg.AwsApiConfig.MaxInstancesToFetch {
 		t.Fatalf(
 			"More instances returned than config max for region %s. Wanted: <%d, got: %d",
 			REGION1,
-			config.DEFAULT_API_MAX_INSTANCES_TO_FETCH,
+			cfg.AwsApiConfig.MaxInstancesToFetch,
 			len(instances),
 		)
 	}
@@ -52,11 +52,11 @@ func TestGetOnDemandInstances(t *testing.T) {
 	if !ok || len(instances) == 0 {
 		t.Fatalf("Zero instances returned for region %s", REGION2)
 	}
-	if len(instances) > cfg.ApiConfig.MaxInstancesToFetch {
+	if len(instances) > cfg.AwsApiConfig.MaxInstancesToFetch {
 		t.Fatalf(
 			"More instances returned than config max for region %s. Wanted: <%d, got: %d",
 			REGION2,
-			config.DEFAULT_API_MAX_INSTANCES_TO_FETCH,
+			cfg.AwsApiConfig.MaxInstancesToFetch,
 			len(instances),
 		)
 	}

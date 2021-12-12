@@ -1,7 +1,7 @@
 package instances
 
 import (
-	"ec2-test/config"
+	"ec2-test/api"
 	"sort"
 	"strings"
 )
@@ -16,7 +16,7 @@ type SortWeightings struct {
 
 // Sorts a given slice of Instances in place from startIndex (inclusive) to endIndex (exclusive)
 // in increasing order of price.
-func SortInstancesByPrice(instances []Instance, startIndex, endIndex int) {
+func SortInstancesByPrice(instances []*Instance, startIndex, endIndex int) {
 	sort.Slice(instances[startIndex:endIndex], func(i, j int) bool {
 		return instances[startIndex+i].PricePerHour < instances[startIndex+j].PricePerHour
 	})
@@ -24,7 +24,7 @@ func SortInstancesByPrice(instances []Instance, startIndex, endIndex int) {
 
 // Sorts a given slice of Instances in place from startIndex (inclusive) to endIndex (exclusive)
 // in increasing order of memory.
-func SortInstancesByMemory(instances []Instance, startIndex, endIndex int) {
+func SortInstancesByMemory(instances []*Instance, startIndex, endIndex int) {
 	sort.Slice(instances[startIndex:endIndex], func(i, j int) bool {
 		return instances[startIndex+i].MemoryGb < instances[startIndex+j].MemoryGb
 	})
@@ -32,7 +32,7 @@ func SortInstancesByMemory(instances []Instance, startIndex, endIndex int) {
 
 // Sorts a given slice of Instances in place from startIndex (inclusive) to endIndex (exclusive)
 // in increasing order of their VCPU.
-func SortInstancesByVcpu(instances []Instance, startIndex, endIndex int) {
+func SortInstancesByVcpu(instances []*Instance, startIndex, endIndex int) {
 	sort.Slice(instances[startIndex:endIndex], func(i, j int) bool {
 		return instances[startIndex+i].Vcpu < instances[startIndex+j].Vcpu
 	})
@@ -40,7 +40,7 @@ func SortInstancesByVcpu(instances []Instance, startIndex, endIndex int) {
 
 // Sorts a given slice of Instances in place from startIndex (inclusive) to endIndex (exclusive)
 // in increasing order of their revocation probabilities.
-func SortInstancesByRevocationProbability(instances []Instance, startIndex, endIndex int) {
+func SortInstancesByRevocationProbability(instances []*Instance, startIndex, endIndex int) {
 	sort.Slice(instances[startIndex:endIndex], func(i, j int) bool {
 		return instances[startIndex+i].RevocationProbability < instances[startIndex+j].RevocationProbability
 	})
@@ -48,7 +48,7 @@ func SortInstancesByRevocationProbability(instances []Instance, startIndex, endI
 
 // Sorts a given slice of Instances in place from startIndex (inclusive) to endIndex (exclusive)
 // in increasing lexographcial order of their operating system.
-func SortInstancesByOperatingSystem(instances []Instance, startIndex, endIndex int) {
+func SortInstancesByOperatingSystem(instances []*Instance, startIndex, endIndex int) {
 	sort.Slice(instances[startIndex:endIndex], func(i, j int) bool {
 		return strings.Compare(
 			instances[startIndex+i].OperatingSystem.ToString(),
@@ -59,7 +59,7 @@ func SortInstancesByOperatingSystem(instances []Instance, startIndex, endIndex i
 
 // Sorts a given slice of Instances in place from startIndex (inclusive) to endIndex (exclusive)
 // in increasing lexographcial order of their Region code name.
-func SortInstancesByRegion(instances []Instance, startIndex, endIndex int) {
+func SortInstancesByRegion(instances []*Instance, startIndex, endIndex int) {
 	sort.Slice(instances[startIndex:endIndex], func(i, j int) bool {
 		return strings.Compare(
 			instances[startIndex+i].Region.ToCodeString(),
@@ -72,7 +72,7 @@ func SortInstancesByRegion(instances []Instance, startIndex, endIndex int) {
 // Sorts a given slice of Instances in place from startIndex (inclusive) to endIndex (exclusive)
 // in increasing order of their score calculated from the provided weightings and aggregates.
 func SortInstancesWeighted(
-	instances []Instance,
+	instances []*Instance,
 	aggregates Aggregates,
 	startIndex,
 	endIndex int,
@@ -97,7 +97,7 @@ func SortInstancesWeighted(
 // in increasing order of their score calculated from the provided weightings and aggregates, with
 // a limiter applied to instances' VCPUs after they exceed a maximum.
 func SortInstancesWeightedWithVcpuLimiter(
-	instances []Instance,
+	instances []*Instance,
 	aggregates Aggregates,
 	startIndex,
 	endIndex int,
@@ -123,7 +123,7 @@ func SortInstancesWeightedWithVcpuLimiter(
 
 // TODO: Doc & test / make private?
 func CalculateInstanceScoreFromWeights(
-	instance Instance,
+	instance *Instance,
 	aggregates Aggregates,
 	weightings SortWeightings, // TODO: Rename all "weightings" to "weights"
 ) float64 {
@@ -139,11 +139,12 @@ func CalculateInstanceScoreFromWeights(
 // TODO: Doc & test
 // TODO: Pointer to instance
 func CalculateInstanceScoreFromWeightsWithVcpuLimiter(
-	instance Instance,
+	instance *Instance,
 	aggregates Aggregates,
 	weightings SortWeightings,
 	maxVcpu int,
 ) float64 {
+	// TODO: Can we not just use modulo here?
 	if instance.Vcpu >= maxVcpu {
 		return calculatedInstanceScoreFromWeightsWithFixedVcpu(
 			instance,
@@ -160,7 +161,7 @@ func CalculateInstanceScoreFromWeightsWithVcpuLimiter(
 }
 
 func calculatedInstanceScoreFromWeightsWithFixedVcpu(
-	instance Instance,
+	instance *Instance,
 	aggregates Aggregates,
 	weights SortWeightings,
 	fixedVcpu int,
@@ -175,33 +176,33 @@ func calculatedInstanceScoreFromWeightsWithFixedVcpu(
 }
 
 // TODO: Doc & test
-func GetSortWeights(focus config.ServiceFocus, focusWeight float64) SortWeightings {
+func GetSortWeights(focus api.AdvisorFocus, focusWeight float64) SortWeightings {
 	primaryFocusWeight := 0.33 + 2.0*0.33*focusWeight
 	secondaryFocusWeight := 0.33 * (1.0 - focusWeight)
 
 	// TODO: Comment on negative weight for vcpu (want to max, while others are min)
 
 	switch focus {
-	case config.Availability:
+	case api.Availability:
 		return SortWeightings{
 			RevocationProbabilityWeight: primaryFocusWeight,
 			VcpuWeight:                  -1.0 * secondaryFocusWeight,
 			PriceWeight:                 secondaryFocusWeight,
 		}
-	case config.Cost:
+	case api.Cost:
 		return SortWeightings{
 			RevocationProbabilityWeight: secondaryFocusWeight,
 			VcpuWeight:                  -1.0 * secondaryFocusWeight,
 			PriceWeight:                 primaryFocusWeight,
 		}
 
-	case config.Performance:
+	case api.Performance:
 		return SortWeightings{
 			RevocationProbabilityWeight: secondaryFocusWeight,
 			VcpuWeight:                  -1.0 * primaryFocusWeight,
 			PriceWeight:                 secondaryFocusWeight,
 		}
-	default: // Implicitly includes config.Balanced
+	default: // Implicitly includes api.Balanced
 		return SortWeightings{
 			RevocationProbabilityWeight: 0.33,
 			VcpuWeight:                  0.33,

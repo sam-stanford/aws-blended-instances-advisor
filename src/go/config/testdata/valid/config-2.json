@@ -41,6 +41,9 @@
     ]
   },
   "api": {
+    "port": 54321
+  },
+  "awsApi": {
     "endpoints": {
       "awsSpotInstanceInfoUrl": "TEST_URL"
     },

@@ -5,6 +5,7 @@ import (
 	types "ec2-test/aws/types"
 	"ec2-test/config"
 	instPkg "ec2-test/instances"
+	"ec2-test/utils"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -132,6 +133,7 @@ func (info *onDemandInstanceInfo) toInstance() (*instPkg.Instance, error) {
 	}
 
 	return &instPkg.Instance{
+		Id:                    utils.GenerateUuid(),
 		Name:                  info.Specs.Attributes.InstanceType,
 		MemoryGb:              mem,
 		Vcpu:                  vcpu,
@@ -143,9 +145,13 @@ func (info *onDemandInstanceInfo) toInstance() (*instPkg.Instance, error) {
 	}, nil
 }
 
-func parseOnDemandApiResponseToInstances(cfg *config.ApiConfig, resp *pricing.GetProductsOutput, logger *zap.Logger) []instPkg.Instance {
+func parseOnDemandApiResponseToInstances(
+	cfg *config.AwsApiConfig,
+	resp *pricing.GetProductsOutput,
+	logger *zap.Logger,
+) []*instPkg.Instance {
 
-	instances := make([]instPkg.Instance, 0)
+	instances := make([]*instPkg.Instance, 0)
 
 	for _, instanceInfoJson := range resp.PriceList {
 		var info onDemandInstanceInfo
@@ -163,7 +169,7 @@ func parseOnDemandApiResponseToInstances(cfg *config.ApiConfig, resp *pricing.Ge
 			}
 
 			if cfg.ConsiderFreeInstances || instance.PricePerHour != 0 {
-				instances = append(instances, *instance)
+				instances = append(instances, instance)
 			}
 		}
 	}

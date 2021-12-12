@@ -3,43 +3,43 @@ package instances
 import "testing"
 
 type instanceFloatSearchTest struct {
-	instances  []Instance
+	instances  []*Instance
 	value      float64
 	start, end int
 	want       int
 }
 
 type instanceIntSearchTest struct {
-	instances  []Instance
+	instances  []*Instance
 	value      int
 	start, end int
 	want       int
 }
 
 func TestFindMemory(t *testing.T) {
-	i0 := Instance{Name: "0", MemoryGb: 4}
-	i1 := Instance{Name: "1", MemoryGb: 8}
-	i2 := Instance{Name: "2", MemoryGb: 16}
-	i3 := Instance{Name: "3", MemoryGb: 62.4}
+	i0 := &Instance{Name: "0", MemoryGb: 4}
+	i1 := &Instance{Name: "1", MemoryGb: 8}
+	i2 := &Instance{Name: "2", MemoryGb: 16}
+	i3 := &Instance{Name: "3", MemoryGb: 62.4}
 
 	tests := map[string]instanceFloatSearchTest{
-		"equals value, singleton slice": {instances: []Instance{i0}, value: 4, start: 0, end: 1, want: 0},
+		"equals value, singleton slice": {instances: []*Instance{i0}, value: 4, start: 0, end: 1, want: 0},
 
-		"equals value, sorted slice":                     {instances: []Instance{i0, i1, i2, i3}, value: 8, start: 0, end: 4, want: 1},
-		"between values, sorted slice":                   {instances: []Instance{i0, i1, i2, i3}, value: 10, start: 0, end: 4, want: 2},
-		"greater than all values, sorted subslice start": {instances: []Instance{i0, i1, i2, i3}, value: 100, start: 0, end: 2, want: 1},
-		"equals value, sorted slice, duplicates":         {instances: []Instance{i0, i0, i1, i1}, value: 8, start: 0, end: 4, want: 2},
+		"equals value, sorted slice":                     {instances: []*Instance{i0, i1, i2, i3}, value: 8, start: 0, end: 4, want: 1},
+		"between values, sorted slice":                   {instances: []*Instance{i0, i1, i2, i3}, value: 10, start: 0, end: 4, want: 2},
+		"greater than all values, sorted subslice start": {instances: []*Instance{i0, i1, i2, i3}, value: 100, start: 0, end: 2, want: 1},
+		"equals value, sorted slice, duplicates":         {instances: []*Instance{i0, i0, i1, i1}, value: 8, start: 0, end: 4, want: 2},
 
-		"equals, sorted subslice start":             {instances: []Instance{i0, i1, i2, i3}, value: 4, start: 0, end: 2, want: 0},
-		"less than all values, sorted subslice end": {instances: []Instance{i0, i1, i2, i3}, value: 1, start: 2, end: 4, want: 2},
-		"equals value, sorted subslice middle":      {instances: []Instance{i0, i1, i2, i3}, value: 16, start: 1, end: 3, want: 2},
+		"equals, sorted subslice start":             {instances: []*Instance{i0, i1, i2, i3}, value: 4, start: 0, end: 2, want: 0},
+		"less than all values, sorted subslice end": {instances: []*Instance{i0, i1, i2, i3}, value: 1, start: 2, end: 4, want: 2},
+		"equals value, sorted subslice middle":      {instances: []*Instance{i0, i1, i2, i3}, value: 16, start: 1, end: 3, want: 2},
 
-		"equals value, unsorted slice":                     {instances: []Instance{i1, i0, i3, i2}, value: 8, start: 0, end: 4, want: 0},
-		"between values, unsorted slice":                   {instances: []Instance{i0, i1, i3, i2}, value: 10, start: 0, end: 4, want: 3},
-		"greater than all values, unsorted subslice start": {instances: []Instance{i3, i2, i1, i0}, value: 100, start: 0, end: 2, want: 0},
-		"equals value, unsorted subslice start":            {instances: []Instance{i1, i0, i3, i2}, value: 4, start: 0, end: 2, want: 1},
-		"less than all values, unsorted subslice end":      {instances: []Instance{i1, i0, i3, i2}, value: 1, start: 2, end: 4, want: 3},
-		"equals value, unsorted subslice middle":           {instances: []Instance{i1, i0, i3, i2}, value: 16, start: 1, end: 3, want: 2},
+		"equals value, unsorted slice":                     {instances: []*Instance{i1, i0, i3, i2}, value: 8, start: 0, end: 4, want: 0},
+		"between values, unsorted slice":                   {instances: []*Instance{i0, i1, i3, i2}, value: 10, start: 0, end: 4, want: 3},
+		"greater than all values, unsorted subslice start": {instances: []*Instance{i3, i2, i1, i0}, value: 100, start: 0, end: 2, want: 0},
+		"equals value, unsorted subslice start":            {instances: []*Instance{i1, i0, i3, i2}, value: 4, start: 0, end: 2, want: 1},
+		"less than all values, unsorted subslice end":      {instances: []*Instance{i1, i0, i3, i2}, value: 1, start: 2, end: 4, want: 3},
+		"equals value, unsorted subslice middle":           {instances: []*Instance{i1, i0, i3, i2}, value: 16, start: 1, end: 3, want: 2},
 	}
 
 	for name, test := range tests {
@@ -63,11 +63,11 @@ func TestFindMemory(t *testing.T) {
 	}
 
 	errorThrowingTests := map[string]instanceFloatSearchTest{
-		"zero size slice":             {instances: []Instance{}, value: 0, start: 0, end: 1, want: -1},
-		"subslice of zero elements":   {instances: []Instance{i0, i0, i0, i1}, value: 0, start: 1, end: 1, want: -1},
-		"start less than 0":           {instances: []Instance{i0, i0, i0, i1}, value: 0, start: -1, end: 3, want: -1},
-		"end greater than slice size": {instances: []Instance{i0, i0, i0, i1}, value: 0, start: 1, end: 5, want: -1},
-		"start after end":             {instances: []Instance{i0, i0, i0, i1}, value: 0, start: 3, end: 1, want: -1},
+		"zero size slice":             {instances: []*Instance{}, value: 0, start: 0, end: 1, want: -1},
+		"subslice of zero elements":   {instances: []*Instance{i0, i0, i0, i1}, value: 0, start: 1, end: 1, want: -1},
+		"start less than 0":           {instances: []*Instance{i0, i0, i0, i1}, value: 0, start: -1, end: 3, want: -1},
+		"end greater than slice size": {instances: []*Instance{i0, i0, i0, i1}, value: 0, start: 1, end: 5, want: -1},
+		"start after end":             {instances: []*Instance{i0, i0, i0, i1}, value: 0, start: 3, end: 1, want: -1},
 	}
 
 	for name, test := range errorThrowingTests {
@@ -82,22 +82,22 @@ func TestFindMemory(t *testing.T) {
 }
 
 func TestFindMemorySorted(t *testing.T) {
-	i0 := Instance{Name: "0", MemoryGb: 4}
-	i1 := Instance{Name: "1", MemoryGb: 8}
-	i2 := Instance{Name: "2", MemoryGb: 16}
-	i3 := Instance{Name: "3", MemoryGb: 62.4}
+	i0 := &Instance{Name: "0", MemoryGb: 4}
+	i1 := &Instance{Name: "1", MemoryGb: 8}
+	i2 := &Instance{Name: "2", MemoryGb: 16}
+	i3 := &Instance{Name: "3", MemoryGb: 62.4}
 
-	sortedInstances := []Instance{i0, i1, i2, i3}
+	sortedInstances := []*Instance{i0, i1, i2, i3}
 
 	tests := map[string]instanceFloatSearchTest{
-		"equals value, singleton slice":                  {instances: []Instance{i0}, value: 4, start: 0, end: 1, want: 0},
+		"equals value, singleton slice":                  {instances: []*Instance{i0}, value: 4, start: 0, end: 1, want: 0},
 		"equals value, sorted slice":                     {instances: sortedInstances, value: 8, start: 0, end: 4, want: 1},
 		"between values, sorted slice":                   {instances: sortedInstances, value: 10, start: 0, end: 4, want: 2},
 		"greater than all values, sorted subslice start": {instances: sortedInstances, value: 100, start: 0, end: 2, want: 1},
 		"equals value, sorted subslice start":            {instances: sortedInstances, value: 4, start: 0, end: 2, want: 0},
 		"less than all values, sorted subslice end":      {instances: sortedInstances, value: 1, start: 2, end: 4, want: 2},
 		"equals value, sorted subslice middle":           {instances: sortedInstances, value: 16, start: 1, end: 3, want: 2},
-		"equals value, sorted slice, duplicates":         {instances: []Instance{i0, i0, i1, i1}, value: 8, start: 0, end: 4, want: 2},
+		"equals value, sorted slice, duplicates":         {instances: []*Instance{i0, i0, i1, i1}, value: 8, start: 0, end: 4, want: 2},
 	}
 
 	for name, test := range tests {
@@ -121,12 +121,12 @@ func TestFindMemorySorted(t *testing.T) {
 	}
 
 	errorThrowingTests := map[string]instanceFloatSearchTest{
-		"zero size slice":             {instances: []Instance{}, value: 0, start: 0, end: 1, want: -1},
-		"subslice of zero elements":   {instances: []Instance{i0, i0, i0, i1}, value: 0, start: 1, end: 1, want: -1},
-		"start less than 0":           {instances: []Instance{i0, i0, i0, i1}, value: 0, start: -1, end: 3, want: -1},
-		"end greater than slice size": {instances: []Instance{i0, i0, i0, i1}, value: 0, start: 1, end: 5, want: -1},
-		"start after end":             {instances: []Instance{i0, i0, i0, i1}, value: 0, start: 3, end: 1, want: -1},
-		"unsorted instances":          {instances: []Instance{i3, i2, i1, i0}, value: 0, start: 0, end: 4, want: -1},
+		"zero size slice":             {instances: []*Instance{}, value: 0, start: 0, end: 1, want: -1},
+		"subslice of zero elements":   {instances: []*Instance{i0, i0, i0, i1}, value: 0, start: 1, end: 1, want: -1},
+		"start less than 0":           {instances: []*Instance{i0, i0, i0, i1}, value: 0, start: -1, end: 3, want: -1},
+		"end greater than slice size": {instances: []*Instance{i0, i0, i0, i1}, value: 0, start: 1, end: 5, want: -1},
+		"start after end":             {instances: []*Instance{i0, i0, i0, i1}, value: 0, start: 3, end: 1, want: -1},
+		"unsorted instances":          {instances: []*Instance{i3, i2, i1, i0}, value: 0, start: 0, end: 4, want: -1},
 	}
 
 	for name, test := range errorThrowingTests {
@@ -141,29 +141,29 @@ func TestFindMemorySorted(t *testing.T) {
 }
 
 func TestFindPrice(t *testing.T) {
-	i0 := Instance{Name: "0", PricePerHour: 0.001}
-	i1 := Instance{Name: "1", PricePerHour: 0.005}
-	i2 := Instance{Name: "2", PricePerHour: 0.01}
-	i3 := Instance{Name: "3", PricePerHour: 0.05}
+	i0 := &Instance{Name: "0", PricePerHour: 0.001}
+	i1 := &Instance{Name: "1", PricePerHour: 0.005}
+	i2 := &Instance{Name: "2", PricePerHour: 0.01}
+	i3 := &Instance{Name: "3", PricePerHour: 0.05}
 
 	tests := map[string]instanceFloatSearchTest{
-		"equals value, singleton slice": {instances: []Instance{i0}, value: 0.001, start: 0, end: 1, want: 0},
+		"equals value, singleton slice": {instances: []*Instance{i0}, value: 0.001, start: 0, end: 1, want: 0},
 
-		"equals value, sorted slice":                     {instances: []Instance{i0, i1, i2, i3}, value: 0.005, start: 0, end: 4, want: 1},
-		"between values, sorted slice":                   {instances: []Instance{i0, i1, i2, i3}, value: 0.009, start: 0, end: 4, want: 2},
-		"greater than all values, sorted subslice start": {instances: []Instance{i0, i1, i2, i3}, value: 10.568, start: 0, end: 2, want: 1},
-		"equals value, sorted slice, duplicates":         {instances: []Instance{i0, i0, i1, i1}, value: 0.005, start: 0, end: 4, want: 2},
+		"equals value, sorted slice":                     {instances: []*Instance{i0, i1, i2, i3}, value: 0.005, start: 0, end: 4, want: 1},
+		"between values, sorted slice":                   {instances: []*Instance{i0, i1, i2, i3}, value: 0.009, start: 0, end: 4, want: 2},
+		"greater than all values, sorted subslice start": {instances: []*Instance{i0, i1, i2, i3}, value: 10.568, start: 0, end: 2, want: 1},
+		"equals value, sorted slice, duplicates":         {instances: []*Instance{i0, i0, i1, i1}, value: 0.005, start: 0, end: 4, want: 2},
 
-		"equals, sorted subslice start":             {instances: []Instance{i0, i1, i2, i3}, value: 0.001, start: 0, end: 2, want: 0},
-		"less than all values, sorted subslice end": {instances: []Instance{i0, i1, i2, i3}, value: 0, start: 2, end: 4, want: 2},
-		"equals value, sorted subslice middle":      {instances: []Instance{i0, i1, i2, i3}, value: 0.01, start: 1, end: 3, want: 2},
+		"equals, sorted subslice start":             {instances: []*Instance{i0, i1, i2, i3}, value: 0.001, start: 0, end: 2, want: 0},
+		"less than all values, sorted subslice end": {instances: []*Instance{i0, i1, i2, i3}, value: 0, start: 2, end: 4, want: 2},
+		"equals value, sorted subslice middle":      {instances: []*Instance{i0, i1, i2, i3}, value: 0.01, start: 1, end: 3, want: 2},
 
-		"equals value, unsorted slice":                     {instances: []Instance{i1, i0, i3, i2}, value: 0.005, start: 0, end: 4, want: 0},
-		"between values, unsorted slice":                   {instances: []Instance{i0, i1, i3, i2}, value: 0.009, start: 0, end: 4, want: 3},
-		"greater than all values, unsorted subslice start": {instances: []Instance{i3, i2, i1, i0}, value: 10.568, start: 0, end: 2, want: 0},
-		"equals value, unsorted subslice start":            {instances: []Instance{i1, i0, i3, i2}, value: 0.001, start: 0, end: 2, want: 1},
-		"less than all values, unsorted subslice end":      {instances: []Instance{i1, i0, i3, i2}, value: 0, start: 2, end: 4, want: 3},
-		"equals value, unsorted subslice middle":           {instances: []Instance{i1, i0, i3, i2}, value: 0.01, start: 1, end: 3, want: 2},
+		"equals value, unsorted slice":                     {instances: []*Instance{i1, i0, i3, i2}, value: 0.005, start: 0, end: 4, want: 0},
+		"between values, unsorted slice":                   {instances: []*Instance{i0, i1, i3, i2}, value: 0.009, start: 0, end: 4, want: 3},
+		"greater than all values, unsorted subslice start": {instances: []*Instance{i3, i2, i1, i0}, value: 10.568, start: 0, end: 2, want: 0},
+		"equals value, unsorted subslice start":            {instances: []*Instance{i1, i0, i3, i2}, value: 0.001, start: 0, end: 2, want: 1},
+		"less than all values, unsorted subslice end":      {instances: []*Instance{i1, i0, i3, i2}, value: 0, start: 2, end: 4, want: 3},
+		"equals value, unsorted subslice middle":           {instances: []*Instance{i1, i0, i3, i2}, value: 0.01, start: 1, end: 3, want: 2},
 	}
 
 	for name, test := range tests {
@@ -187,11 +187,11 @@ func TestFindPrice(t *testing.T) {
 	}
 
 	errorThrowingTests := map[string]instanceFloatSearchTest{
-		"zero size slice":             {instances: []Instance{}, value: 0, start: 0, end: 1, want: -1},
-		"subslice of zero elements":   {instances: []Instance{i0, i0, i0, i1}, value: 0, start: 1, end: 1, want: -1},
-		"start less than 0":           {instances: []Instance{i0, i0, i0, i1}, value: 0, start: -1, end: 3, want: -1},
-		"end greater than slice size": {instances: []Instance{i0, i0, i0, i1}, value: 0, start: 1, end: 5, want: -1},
-		"start after end":             {instances: []Instance{i0, i0, i0, i1}, value: 0, start: 3, end: 1, want: -1},
+		"zero size slice":             {instances: []*Instance{}, value: 0, start: 0, end: 1, want: -1},
+		"subslice of zero elements":   {instances: []*Instance{i0, i0, i0, i1}, value: 0, start: 1, end: 1, want: -1},
+		"start less than 0":           {instances: []*Instance{i0, i0, i0, i1}, value: 0, start: -1, end: 3, want: -1},
+		"end greater than slice size": {instances: []*Instance{i0, i0, i0, i1}, value: 0, start: 1, end: 5, want: -1},
+		"start after end":             {instances: []*Instance{i0, i0, i0, i1}, value: 0, start: 3, end: 1, want: -1},
 	}
 
 	for name, test := range errorThrowingTests {
@@ -206,22 +206,22 @@ func TestFindPrice(t *testing.T) {
 }
 
 func TestFindPriceSorted(t *testing.T) {
-	i0 := Instance{Name: "0", PricePerHour: 0.001}
-	i1 := Instance{Name: "1", PricePerHour: 0.005}
-	i2 := Instance{Name: "2", PricePerHour: 0.01}
-	i3 := Instance{Name: "3", PricePerHour: 0.05}
+	i0 := &Instance{Name: "0", PricePerHour: 0.001}
+	i1 := &Instance{Name: "1", PricePerHour: 0.005}
+	i2 := &Instance{Name: "2", PricePerHour: 0.01}
+	i3 := &Instance{Name: "3", PricePerHour: 0.05}
 
-	sortedInstances := []Instance{i0, i1, i2, i3}
+	sortedInstances := []*Instance{i0, i1, i2, i3}
 
 	tests := map[string]instanceFloatSearchTest{
-		"equals value, singleton slice":                  {instances: []Instance{i0}, value: 0.001, start: 0, end: 1, want: 0},
+		"equals value, singleton slice":                  {instances: []*Instance{i0}, value: 0.001, start: 0, end: 1, want: 0},
 		"equals value, sorted slice":                     {instances: sortedInstances, value: 0.005, start: 0, end: 4, want: 1},
 		"between values, sorted slice":                   {instances: sortedInstances, value: 0.009, start: 0, end: 4, want: 2},
 		"greater than all values, sorted subslice start": {instances: sortedInstances, value: 1000, start: 0, end: 2, want: 1},
 		"equals value, sorted subslice start":            {instances: sortedInstances, value: 0.001, start: 0, end: 2, want: 0},
 		"less than all values, sorted subslice end":      {instances: sortedInstances, value: 0.00001, start: 2, end: 4, want: 2},
 		"equals value, sorted subslice middle":           {instances: sortedInstances, value: 0.01, start: 1, end: 3, want: 2},
-		"equals value, sorted slice, duplicates":         {instances: []Instance{i0, i0, i1, i1}, value: 0.005, start: 0, end: 4, want: 2},
+		"equals value, sorted slice, duplicates":         {instances: []*Instance{i0, i0, i1, i1}, value: 0.005, start: 0, end: 4, want: 2},
 	}
 
 	for name, test := range tests {
@@ -245,12 +245,12 @@ func TestFindPriceSorted(t *testing.T) {
 	}
 
 	errorThrowingTests := map[string]instanceFloatSearchTest{
-		"zero size slice":             {instances: []Instance{}, value: 0, start: 0, end: 1, want: -1},
-		"subslice of zero elements":   {instances: []Instance{i0, i0, i0, i1}, value: 0, start: 1, end: 1, want: -1},
-		"start less than 0":           {instances: []Instance{i0, i0, i0, i1}, value: 0, start: -1, end: 3, want: -1},
-		"end greater than slice size": {instances: []Instance{i0, i0, i0, i1}, value: 0, start: 1, end: 5, want: -1},
-		"start after end":             {instances: []Instance{i0, i0, i0, i1}, value: 0, start: 3, end: 1, want: -1},
-		"unsorted instances":          {instances: []Instance{i3, i2, i1, i0}, value: 0, start: 0, end: 4, want: -1},
+		"zero size slice":             {instances: []*Instance{}, value: 0, start: 0, end: 1, want: -1},
+		"subslice of zero elements":   {instances: []*Instance{i0, i0, i0, i1}, value: 0, start: 1, end: 1, want: -1},
+		"start less than 0":           {instances: []*Instance{i0, i0, i0, i1}, value: 0, start: -1, end: 3, want: -1},
+		"end greater than slice size": {instances: []*Instance{i0, i0, i0, i1}, value: 0, start: 1, end: 5, want: -1},
+		"start after end":             {instances: []*Instance{i0, i0, i0, i1}, value: 0, start: 3, end: 1, want: -1},
+		"unsorted instances":          {instances: []*Instance{i3, i2, i1, i0}, value: 0, start: 0, end: 4, want: -1},
 	}
 
 	for name, test := range errorThrowingTests {
@@ -265,29 +265,29 @@ func TestFindPriceSorted(t *testing.T) {
 }
 
 func TestFindRevocationProbability(t *testing.T) {
-	i0 := Instance{Name: "0", RevocationProbability: 0.01}
-	i1 := Instance{Name: "1", RevocationProbability: 0.1}
-	i2 := Instance{Name: "2", RevocationProbability: 0.2}
-	i3 := Instance{Name: "3", RevocationProbability: 0.5}
+	i0 := &Instance{Name: "0", RevocationProbability: 0.01}
+	i1 := &Instance{Name: "1", RevocationProbability: 0.1}
+	i2 := &Instance{Name: "2", RevocationProbability: 0.2}
+	i3 := &Instance{Name: "3", RevocationProbability: 0.5}
 
 	tests := map[string]instanceFloatSearchTest{
-		"equals value, singleton slice": {instances: []Instance{i0}, value: 0.01, start: 0, end: 1, want: 0},
+		"equals value, singleton slice": {instances: []*Instance{i0}, value: 0.01, start: 0, end: 1, want: 0},
 
-		"equals value, sorted slice":                     {instances: []Instance{i0, i1, i2, i3}, value: 0.1, start: 0, end: 4, want: 1},
-		"between values, sorted slice":                   {instances: []Instance{i0, i1, i2, i3}, value: 0.15, start: 0, end: 4, want: 2},
-		"greater than all values, sorted subslice start": {instances: []Instance{i0, i1, i2, i3}, value: 1.1, start: 0, end: 2, want: 1},
-		"equals value, sorted slice, duplicates":         {instances: []Instance{i0, i0, i1, i1}, value: 0.1, start: 0, end: 4, want: 2},
+		"equals value, sorted slice":                     {instances: []*Instance{i0, i1, i2, i3}, value: 0.1, start: 0, end: 4, want: 1},
+		"between values, sorted slice":                   {instances: []*Instance{i0, i1, i2, i3}, value: 0.15, start: 0, end: 4, want: 2},
+		"greater than all values, sorted subslice start": {instances: []*Instance{i0, i1, i2, i3}, value: 1.1, start: 0, end: 2, want: 1},
+		"equals value, sorted slice, duplicates":         {instances: []*Instance{i0, i0, i1, i1}, value: 0.1, start: 0, end: 4, want: 2},
 
-		"equals, sorted subslice start":             {instances: []Instance{i0, i1, i2, i3}, value: 0.01, start: 0, end: 2, want: 0},
-		"less than all values, sorted subslice end": {instances: []Instance{i0, i1, i2, i3}, value: 0, start: 2, end: 4, want: 2},
-		"equals value, sorted subslice middle":      {instances: []Instance{i0, i1, i2, i3}, value: 0.2, start: 1, end: 3, want: 2},
+		"equals, sorted subslice start":             {instances: []*Instance{i0, i1, i2, i3}, value: 0.01, start: 0, end: 2, want: 0},
+		"less than all values, sorted subslice end": {instances: []*Instance{i0, i1, i2, i3}, value: 0, start: 2, end: 4, want: 2},
+		"equals value, sorted subslice middle":      {instances: []*Instance{i0, i1, i2, i3}, value: 0.2, start: 1, end: 3, want: 2},
 
-		"equals value, unsorted slice":                     {instances: []Instance{i1, i0, i3, i2}, value: 0.1, start: 0, end: 4, want: 0},
-		"between values, unsorted slice":                   {instances: []Instance{i0, i1, i3, i2}, value: 0.15, start: 0, end: 4, want: 3},
-		"greater than all values, unsorted subslice start": {instances: []Instance{i3, i2, i1, i0}, value: 1.1, start: 0, end: 2, want: 0},
-		"equals value, unsorted subslice start":            {instances: []Instance{i1, i0, i3, i2}, value: 0.01, start: 0, end: 2, want: 1},
-		"less than all values, unsorted subslice end":      {instances: []Instance{i1, i0, i3, i2}, value: 0, start: 2, end: 4, want: 3},
-		"equals value, unsorted subslice middle":           {instances: []Instance{i1, i0, i3, i2}, value: 0.2, start: 1, end: 3, want: 2},
+		"equals value, unsorted slice":                     {instances: []*Instance{i1, i0, i3, i2}, value: 0.1, start: 0, end: 4, want: 0},
+		"between values, unsorted slice":                   {instances: []*Instance{i0, i1, i3, i2}, value: 0.15, start: 0, end: 4, want: 3},
+		"greater than all values, unsorted subslice start": {instances: []*Instance{i3, i2, i1, i0}, value: 1.1, start: 0, end: 2, want: 0},
+		"equals value, unsorted subslice start":            {instances: []*Instance{i1, i0, i3, i2}, value: 0.01, start: 0, end: 2, want: 1},
+		"less than all values, unsorted subslice end":      {instances: []*Instance{i1, i0, i3, i2}, value: 0, start: 2, end: 4, want: 3},
+		"equals value, unsorted subslice middle":           {instances: []*Instance{i1, i0, i3, i2}, value: 0.2, start: 1, end: 3, want: 2},
 	}
 
 	for name, test := range tests {
@@ -311,11 +311,11 @@ func TestFindRevocationProbability(t *testing.T) {
 	}
 
 	errorThrowingTests := map[string]instanceFloatSearchTest{
-		"zero size slice":             {instances: []Instance{}, value: 0, start: 0, end: 1, want: -1},
-		"subslice of zero elements":   {instances: []Instance{i0, i0, i0, i1}, value: 0, start: 1, end: 1, want: -1},
-		"start less than 0":           {instances: []Instance{i0, i0, i0, i1}, value: 0, start: -1, end: 3, want: -1},
-		"end greater than slice size": {instances: []Instance{i0, i0, i0, i1}, value: 0, start: 1, end: 5, want: -1},
-		"start after end":             {instances: []Instance{i0, i0, i0, i1}, value: 0, start: 3, end: 1, want: -1},
+		"zero size slice":             {instances: []*Instance{}, value: 0, start: 0, end: 1, want: -1},
+		"subslice of zero elements":   {instances: []*Instance{i0, i0, i0, i1}, value: 0, start: 1, end: 1, want: -1},
+		"start less than 0":           {instances: []*Instance{i0, i0, i0, i1}, value: 0, start: -1, end: 3, want: -1},
+		"end greater than slice size": {instances: []*Instance{i0, i0, i0, i1}, value: 0, start: 1, end: 5, want: -1},
+		"start after end":             {instances: []*Instance{i0, i0, i0, i1}, value: 0, start: 3, end: 1, want: -1},
 	}
 
 	for name, test := range errorThrowingTests {
@@ -330,22 +330,22 @@ func TestFindRevocationProbability(t *testing.T) {
 }
 
 func TestFindRevocationProbabilitySorted(t *testing.T) {
-	i0 := Instance{Name: "0", RevocationProbability: 0}
-	i1 := Instance{Name: "1", RevocationProbability: 0.01}
-	i2 := Instance{Name: "2", RevocationProbability: 0.05}
-	i3 := Instance{Name: "3", RevocationProbability: 0.1}
+	i0 := &Instance{Name: "0", RevocationProbability: 0}
+	i1 := &Instance{Name: "1", RevocationProbability: 0.01}
+	i2 := &Instance{Name: "2", RevocationProbability: 0.05}
+	i3 := &Instance{Name: "3", RevocationProbability: 0.1}
 
-	sortedInstances := []Instance{i0, i1, i2, i3}
+	sortedInstances := []*Instance{i0, i1, i2, i3}
 
 	tests := map[string]instanceFloatSearchTest{
-		"equals value, singleton slice":                  {instances: []Instance{i0}, value: 0, start: 0, end: 1, want: 0},
+		"equals value, singleton slice":                  {instances: []*Instance{i0}, value: 0, start: 0, end: 1, want: 0},
 		"equals value, sorted slice":                     {instances: sortedInstances, value: 0.01, start: 0, end: 4, want: 1},
 		"between values, sorted slice":                   {instances: sortedInstances, value: 0.025, start: 0, end: 4, want: 2},
 		"greater than all values, sorted subslice start": {instances: sortedInstances, value: 1.1, start: 0, end: 2, want: 1},
 		"equals value, sorted subslice start":            {instances: sortedInstances, value: 0.0, start: 0, end: 2, want: 0},
 		"less than all values, sorted subslice end":      {instances: sortedInstances, value: 0.0, start: 2, end: 4, want: 2},
 		"equals value, sorted subslice middle":           {instances: sortedInstances, value: 0.05, start: 1, end: 3, want: 2},
-		"equals value, sorted slice, duplicates":         {instances: []Instance{i0, i0, i1, i1}, value: 0.01, start: 0, end: 4, want: 2},
+		"equals value, sorted slice, duplicates":         {instances: []*Instance{i0, i0, i1, i1}, value: 0.01, start: 0, end: 4, want: 2},
 	}
 
 	for name, test := range tests {
@@ -369,12 +369,12 @@ func TestFindRevocationProbabilitySorted(t *testing.T) {
 	}
 
 	errorThrowingTests := map[string]instanceFloatSearchTest{
-		"zero size slice":             {instances: []Instance{}, value: 0, start: 0, end: 1, want: -1},
-		"subslice of zero elements":   {instances: []Instance{i0, i0, i0, i1}, value: 0, start: 1, end: 1, want: -1},
-		"start less than 0":           {instances: []Instance{i0, i0, i0, i1}, value: 0, start: -1, end: 3, want: -1},
-		"end greater than slice size": {instances: []Instance{i0, i0, i0, i1}, value: 0, start: 1, end: 5, want: -1},
-		"start after end":             {instances: []Instance{i0, i0, i0, i1}, value: 0, start: 3, end: 1, want: -1},
-		"unsorted instances":          {instances: []Instance{i3, i2, i1, i0}, value: 0, start: 0, end: 4, want: -1},
+		"zero size slice":             {instances: []*Instance{}, value: 0, start: 0, end: 1, want: -1},
+		"subslice of zero elements":   {instances: []*Instance{i0, i0, i0, i1}, value: 0, start: 1, end: 1, want: -1},
+		"start less than 0":           {instances: []*Instance{i0, i0, i0, i1}, value: 0, start: -1, end: 3, want: -1},
+		"end greater than slice size": {instances: []*Instance{i0, i0, i0, i1}, value: 0, start: 1, end: 5, want: -1},
+		"start after end":             {instances: []*Instance{i0, i0, i0, i1}, value: 0, start: 3, end: 1, want: -1},
+		"unsorted instances":          {instances: []*Instance{i3, i2, i1, i0}, value: 0, start: 0, end: 4, want: -1},
 	}
 
 	for name, test := range errorThrowingTests {
@@ -389,29 +389,29 @@ func TestFindRevocationProbabilitySorted(t *testing.T) {
 }
 
 func TestFindVcpu(t *testing.T) {
-	i0 := Instance{Name: "0", Vcpu: 4}
-	i1 := Instance{Name: "1", Vcpu: 8}
-	i2 := Instance{Name: "2", Vcpu: 16}
-	i3 := Instance{Name: "3", Vcpu: 32}
+	i0 := &Instance{Name: "0", Vcpu: 4}
+	i1 := &Instance{Name: "1", Vcpu: 8}
+	i2 := &Instance{Name: "2", Vcpu: 16}
+	i3 := &Instance{Name: "3", Vcpu: 32}
 
 	tests := map[string]instanceIntSearchTest{
-		"equals value, singleton slice": {instances: []Instance{i0}, value: 4, start: 0, end: 1, want: 0},
+		"equals value, singleton slice": {instances: []*Instance{i0}, value: 4, start: 0, end: 1, want: 0},
 
-		"equals value, sorted slice":                     {instances: []Instance{i0, i1, i2, i3}, value: 8, start: 0, end: 4, want: 1},
-		"between values, sorted slice":                   {instances: []Instance{i0, i1, i2, i3}, value: 10, start: 0, end: 4, want: 2},
-		"greater than all values, sorted subslice start": {instances: []Instance{i0, i1, i2, i3}, value: 1000, start: 0, end: 2, want: 1},
-		"equals value, sorted slice, duplicates":         {instances: []Instance{i0, i0, i1, i1}, value: 8, start: 0, end: 4, want: 2},
+		"equals value, sorted slice":                     {instances: []*Instance{i0, i1, i2, i3}, value: 8, start: 0, end: 4, want: 1},
+		"between values, sorted slice":                   {instances: []*Instance{i0, i1, i2, i3}, value: 10, start: 0, end: 4, want: 2},
+		"greater than all values, sorted subslice start": {instances: []*Instance{i0, i1, i2, i3}, value: 1000, start: 0, end: 2, want: 1},
+		"equals value, sorted slice, duplicates":         {instances: []*Instance{i0, i0, i1, i1}, value: 8, start: 0, end: 4, want: 2},
 
-		"equals, sorted subslice start":             {instances: []Instance{i0, i1, i2, i3}, value: 4, start: 0, end: 2, want: 0},
-		"less than all values, sorted subslice end": {instances: []Instance{i0, i1, i2, i3}, value: 1, start: 2, end: 4, want: 2},
-		"equals value, sorted subslice middle":      {instances: []Instance{i0, i1, i2, i3}, value: 16, start: 1, end: 3, want: 2},
+		"equals, sorted subslice start":             {instances: []*Instance{i0, i1, i2, i3}, value: 4, start: 0, end: 2, want: 0},
+		"less than all values, sorted subslice end": {instances: []*Instance{i0, i1, i2, i3}, value: 1, start: 2, end: 4, want: 2},
+		"equals value, sorted subslice middle":      {instances: []*Instance{i0, i1, i2, i3}, value: 16, start: 1, end: 3, want: 2},
 
-		"equals value, unsorted slice":                     {instances: []Instance{i1, i0, i3, i2}, value: 8, start: 0, end: 4, want: 0},
-		"between values, unsorted slice":                   {instances: []Instance{i0, i1, i3, i2}, value: 10, start: 0, end: 4, want: 3},
-		"greater than all values, unsorted subslice start": {instances: []Instance{i3, i2, i1, i0}, value: 1000, start: 0, end: 2, want: 0},
-		"equals value, unsorted subslice start":            {instances: []Instance{i1, i0, i3, i2}, value: 4, start: 0, end: 2, want: 1},
-		"less than all values, unsorted subslice end":      {instances: []Instance{i1, i0, i3, i2}, value: 1, start: 2, end: 4, want: 3},
-		"equals value, unsorted subslice middle":           {instances: []Instance{i1, i0, i3, i2}, value: 16, start: 1, end: 3, want: 2},
+		"equals value, unsorted slice":                     {instances: []*Instance{i1, i0, i3, i2}, value: 8, start: 0, end: 4, want: 0},
+		"between values, unsorted slice":                   {instances: []*Instance{i0, i1, i3, i2}, value: 10, start: 0, end: 4, want: 3},
+		"greater than all values, unsorted subslice start": {instances: []*Instance{i3, i2, i1, i0}, value: 1000, start: 0, end: 2, want: 0},
+		"equals value, unsorted subslice start":            {instances: []*Instance{i1, i0, i3, i2}, value: 4, start: 0, end: 2, want: 1},
+		"less than all values, unsorted subslice end":      {instances: []*Instance{i1, i0, i3, i2}, value: 1, start: 2, end: 4, want: 3},
+		"equals value, unsorted subslice middle":           {instances: []*Instance{i1, i0, i3, i2}, value: 16, start: 1, end: 3, want: 2},
 	}
 
 	for name, test := range tests {
@@ -435,11 +435,11 @@ func TestFindVcpu(t *testing.T) {
 	}
 
 	errorThrowingTests := map[string]instanceIntSearchTest{
-		"zero size slice":             {instances: []Instance{}, value: 0, start: 0, end: 1, want: -1},
-		"subslice of zero elements":   {instances: []Instance{i0, i0, i0, i1}, value: 0, start: 1, end: 1, want: -1},
-		"start less than 0":           {instances: []Instance{i0, i0, i0, i1}, value: 0, start: -1, end: 3, want: -1},
-		"end greater than slice size": {instances: []Instance{i0, i0, i0, i1}, value: 0, start: 1, end: 5, want: -1},
-		"start after end":             {instances: []Instance{i0, i0, i0, i1}, value: 0, start: 3, end: 1, want: -1},
+		"zero size slice":             {instances: []*Instance{}, value: 0, start: 0, end: 1, want: -1},
+		"subslice of zero elements":   {instances: []*Instance{i0, i0, i0, i1}, value: 0, start: 1, end: 1, want: -1},
+		"start less than 0":           {instances: []*Instance{i0, i0, i0, i1}, value: 0, start: -1, end: 3, want: -1},
+		"end greater than slice size": {instances: []*Instance{i0, i0, i0, i1}, value: 0, start: 1, end: 5, want: -1},
+		"start after end":             {instances: []*Instance{i0, i0, i0, i1}, value: 0, start: 3, end: 1, want: -1},
 	}
 
 	for name, test := range errorThrowingTests {
@@ -454,22 +454,22 @@ func TestFindVcpu(t *testing.T) {
 }
 
 func TestFindVcpuSorted(t *testing.T) {
-	i0 := Instance{Name: "0", Vcpu: 4}
-	i1 := Instance{Name: "1", Vcpu: 8}
-	i2 := Instance{Name: "2", Vcpu: 16}
-	i3 := Instance{Name: "3", Vcpu: 32}
+	i0 := &Instance{Name: "0", Vcpu: 4}
+	i1 := &Instance{Name: "1", Vcpu: 8}
+	i2 := &Instance{Name: "2", Vcpu: 16}
+	i3 := &Instance{Name: "3", Vcpu: 32}
 
-	sortedInstances := []Instance{i0, i1, i2, i3}
+	sortedInstances := []*Instance{i0, i1, i2, i3}
 
 	tests := map[string]instanceIntSearchTest{
-		"equals value, singleton slice":                  {instances: []Instance{i0}, value: 4, start: 0, end: 1, want: 0},
+		"equals value, singleton slice":                  {instances: []*Instance{i0}, value: 4, start: 0, end: 1, want: 0},
 		"equals value, sorted slice":                     {instances: sortedInstances, value: 8, start: 0, end: 4, want: 1},
 		"between values, sorted slice":                   {instances: sortedInstances, value: 10, start: 0, end: 4, want: 2},
 		"greater than all values, sorted subslice start": {instances: sortedInstances, value: 100, start: 0, end: 2, want: 1},
 		"equals value, sorted subslice start":            {instances: sortedInstances, value: 4, start: 0, end: 2, want: 0},
 		"less than all values, sorted subslice end":      {instances: sortedInstances, value: 1, start: 2, end: 4, want: 2},
 		"equals value, sorted subslice middle":           {instances: sortedInstances, value: 16, start: 1, end: 3, want: 2},
-		"equals value, sorted slice, duplicates":         {instances: []Instance{i0, i0, i1, i1}, value: 8, start: 0, end: 4, want: 2},
+		"equals value, sorted slice, duplicates":         {instances: []*Instance{i0, i0, i1, i1}, value: 8, start: 0, end: 4, want: 2},
 	}
 
 	for name, test := range tests {
@@ -493,12 +493,12 @@ func TestFindVcpuSorted(t *testing.T) {
 	}
 
 	errorThrowingTests := map[string]instanceIntSearchTest{
-		"zero size slice":             {instances: []Instance{}, value: 0, start: 0, end: 1, want: -1},
-		"subslice of zero elements":   {instances: []Instance{i0, i0, i0, i1}, value: 0, start: 1, end: 1, want: -1},
-		"start less than 0":           {instances: []Instance{i0, i0, i0, i1}, value: 0, start: -1, end: 3, want: -1},
-		"end greater than slice size": {instances: []Instance{i0, i0, i0, i1}, value: 0, start: 1, end: 5, want: -1},
-		"start after end":             {instances: []Instance{i0, i0, i0, i1}, value: 0, start: 3, end: 1, want: -1},
-		"unsorted instances":          {instances: []Instance{i3, i2, i1, i0}, value: 0, start: 0, end: 4, want: -1},
+		"zero size slice":             {instances: []*Instance{}, value: 0, start: 0, end: 1, want: -1},
+		"subslice of zero elements":   {instances: []*Instance{i0, i0, i0, i1}, value: 0, start: 1, end: 1, want: -1},
+		"start less than 0":           {instances: []*Instance{i0, i0, i0, i1}, value: 0, start: -1, end: 3, want: -1},
+		"end greater than slice size": {instances: []*Instance{i0, i0, i0, i1}, value: 0, start: 1, end: 5, want: -1},
+		"start after end":             {instances: []*Instance{i0, i0, i0, i1}, value: 0, start: 3, end: 1, want: -1},
+		"unsorted instances":          {instances: []*Instance{i3, i2, i1, i0}, value: 0, start: 0, end: 4, want: -1},
 	}
 
 	for name, test := range errorThrowingTests {

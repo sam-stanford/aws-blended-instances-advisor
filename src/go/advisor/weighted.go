@@ -1,7 +1,8 @@
 package advisor
 
 import (
-	"ec2-test/config"
+	"ec2-test/api"
+	awsTypes "ec2-test/aws/types"
 	instPkg "ec2-test/instances"
 	"ec2-test/utils"
 	"fmt"
@@ -9,93 +10,113 @@ import (
 
 // TODO: Docs
 // TODO: Make all instance slices pointers
+// TODO: Rename to FocusAdvisor & create CustomAdvisor which takes specified weights
+// TODO: Use logger
 
-type Weighted struct {
+type WeightedAdvisor struct {
+	focus       api.AdvisorFocus
+	focusWeight float64
+	weights     instPkg.SortWeightings
 }
 
-func (advisor *Weighted) Advise(
-	regionInfoMap instPkg.RegionInfoMap,
-	services []config.ServiceDescription,
-) (
-	[]instPkg.Instance,
-	InstanceApplicationMap,
-	error,
-) {
-	for region, info := range regionInfoMap {
-		instances, instAppMap, err := advisor.AdviseForRegion(info, services) // TODO var names
-		if err != nil {
-			return nil, nil, err
-		}
-		fmt.Printf("\n\nRegion: %s, instances: %+v, instAppMap: %+v\n", region.ToCodeString(), instances, instAppMap) // TODO: Improve
-		for _, instance := range instances {
-			fmt.Printf("\tInstance: %+v\n\n", *instance)
-		}
-		// TODO: Calc some form of score
+func NewWeightedAdvisor(focus api.AdvisorFocus, focusWeight float64) WeightedAdvisor {
+	return WeightedAdvisor{
+		focus:       focus,
+		focusWeight: focusWeight,
+		weights:     instPkg.GetSortWeights(focus, focusWeight), // TODO: Rename this to be FocusAdvisor & have WeightedAdvisor be Custom
 	}
-	return nil, nil, nil
 }
 
-func (advisor *Weighted) AdviseForRegion(
-	info instPkg.RegionInfo,
-	services []config.ServiceDescription,
+func (advisor WeightedAdvisor) Advise(
+	regionInfoMap instPkg.RegionInfoMap,
+	services []api.Service,
+	regions []awsTypes.Region,
 ) (
-	[]*instPkg.Instance,
-	InstanceApplicationMap,
+	*api.Advice,
 	error,
 ) {
+	advice := make(api.Advice) // TODO: Use NewAdvice here
+	globalAggregates := getGlobalAggregatesFromRegionInfoMap(regionInfoMap)
 
-	selectedInstances := []*instPkg.Instance{}
-	instanceApplicationMap := make(InstanceApplicationMap)
+	for _, region := range regions {
+		info, ok := regionInfoMap[region]
+		if !ok {
+			return nil, fmt.Errorf("region not in map: %s", region.ToCodeString())
+		}
+
+		regionAdvice, err := advisor.AdviseForRegion(info, services)
+		if err != nil {
+			return nil, err
+		}
+
+		regionAdvice.Score = advisor.ScoreRegionAdvice(regionAdvice, globalAggregates, services)
+
+		advice[region.ToCodeString()] = *regionAdvice
+	}
+
+	return &advice, nil
+}
+
+// TODO: Move to inst package?
+func getGlobalAggregatesFromRegionInfoMap(m instPkg.RegionInfoMap) instPkg.Aggregates {
+	aggs := []instPkg.Aggregates{}
+	for _, info := range m {
+		aggs = append(aggs, info.AllInstances.Aggregates)
+	}
+	return instPkg.CombineAggregates(aggs)
+}
+
+func (advisor WeightedAdvisor) AdviseForRegion(
+	info instPkg.RegionInfo,
+	services []api.Service,
+) (
+	*api.RegionAdvice,
+	error,
+) {
+	advice := &api.RegionAdvice{}
 
 	for _, svc := range services {
 
 		// TODO: Need to avoid already used and re-use already suggested instances
 		// TODO: Do we need to re-calc aggregates...? Don't think so, but should justify
 
-		// TODO: Func
-		for i := 0; i < svc.Instances.MinimumCount; i += 1 {
+		// TODO: Func (repeated code)
+		for i := 0; i < svc.MinInstances; i += 1 {
 			selectedInstance, err := advisor.selectInstanceForService(
 				info.PermanentInstances.Instances,
 				info.PermanentInstances.Aggregates,
 				svc,
 			)
 			if err != nil {
-				return nil, nil, err
+				return nil, err
 			}
-			selectedInstances = append(selectedInstances, selectedInstance)
-			instanceApplicationMap[selectedInstance.Name] = append(
-				instanceApplicationMap[selectedInstance.Name],
-				svc.Name,
-			)
+			advice.AddAssignment(svc.Name, selectedInstance)
 		}
 
-		transientInstanceCount := svc.Instances.TotalCount - svc.Instances.MinimumCount
-		for i := 0; i < transientInstanceCount; i += 1 {
+		transientInstances := svc.TotalInstances - svc.MinInstances
+		for i := 0; i < transientInstances; i += 1 {
 			selectedInstance, err := advisor.selectInstanceForService(
 				info.AllInstances.Instances,
 				info.AllInstances.Aggregates,
 				svc,
 			)
 			if err != nil {
-				return nil, nil, err
+				return nil, err
 			}
-			selectedInstances = append(selectedInstances, selectedInstance)
-			instanceApplicationMap[selectedInstance.Name] = append(
-				instanceApplicationMap[selectedInstance.Name],
-				svc.Name,
-			)
+			advice.AddAssignment(svc.Name, selectedInstance)
 		}
-
 	}
 
-	return selectedInstances, instanceApplicationMap, nil
+	// TODO: Calc some form of score
+
+	return advice, nil
 }
 
-func (advisor *Weighted) selectInstanceForService(
-	instances []instPkg.Instance,
+func (advisor WeightedAdvisor) selectInstanceForService(
+	instances []*instPkg.Instance,
 	aggregates instPkg.Aggregates,
-	svc config.ServiceDescription,
-) (*instPkg.Instance, error) {
+	svc api.Service,
+) (*api.Instance, error) {
 	searchStart, searchEnd := 0, len(instances)
 
 	// TODO: Different result when using --clear-cache as to when not
@@ -113,15 +134,58 @@ func (advisor *Weighted) selectInstanceForService(
 		return nil, utils.PrependToError(err, "could not find memory in instance slice")
 	}
 
-	weights := instPkg.GetSortWeights(svc.GetFocus(), svc.FocusWeight)
 	instPkg.SortInstancesWeightedWithVcpuLimiter(
 		instances,
 		aggregates,
 		searchStart,
 		searchEnd,
-		weights,
+		advisor.weights,
 		svc.MaxVcpu,
 	)
 
-	return &instances[searchStart], nil
+	return instances[searchStart].ToApiInstance(), nil
+}
+
+// TODO: Test & Doc
+func (advisor WeightedAdvisor) ScoreRegionAdvice(
+	advice *api.RegionAdvice,
+	globalAgg instPkg.Aggregates,
+	services []api.Service,
+) float64 {
+	vcpuScore, revocationProbScore, priceScore := 0.0, 0.0, 0.0
+	totalInstances := 0
+
+	for _, svc := range services {
+		assignedInstances := advice.GetAssignedInstancesForService(svc.Name)
+		for _, inst := range assignedInstances {
+			vcpuScore += calculateVcpuScore(inst, svc)
+			revocationProbScore += calculateRevocationProbScore(inst, globalAgg)
+			priceScore += calculatePriceScore(inst, globalAgg)
+		}
+		totalInstances += len(assignedInstances)
+	}
+
+	return ((vcpuScore * advisor.weights.VcpuWeight) +
+		(revocationProbScore * advisor.weights.RevocationProbabilityWeight) +
+		(priceScore * advisor.weights.PriceWeight)) / float64(totalInstances)
+}
+
+func calculateVcpuScore(inst *api.Instance, svc api.Service) float64 {
+	// Percentage of MaxVcpu
+	if inst.Vcpu >= svc.MaxVcpu {
+		return 1.0
+	}
+	return float64(inst.Vcpu) / float64(svc.MaxVcpu)
+}
+
+func calculateRevocationProbScore(inst *api.Instance, agg instPkg.Aggregates) float64 {
+	// Min-max scale
+	return 1 - ((inst.RevocationProbability - agg.MinRevocationProbability) /
+		(agg.MaxRevocationProbability - agg.MinRevocationProbability))
+}
+
+func calculatePriceScore(inst *api.Instance, agg instPkg.Aggregates) float64 {
+	// Min-max scale
+	return 1 - ((inst.PricePerHour - agg.MinPricePerHour) /
+		(agg.MaxPricePerHour - agg.MinPricePerHour))
 }

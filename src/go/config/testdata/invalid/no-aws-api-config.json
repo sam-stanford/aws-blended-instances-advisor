@@ -29,6 +29,9 @@
       }
     ]
   },
+  "api": {
+    "port": 54321
+  },
   "cache": {
     "dirpath": "TEST_CACHE_DIRPATH",
     "defaultLifetime": 200

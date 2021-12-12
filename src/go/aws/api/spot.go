@@ -18,13 +18,13 @@ import (
 // TODO: Add log of how many not parsed (like on-demand.go line 66)
 
 func GetSpotInstances(
-	config *config.ApiConfig,
+	config *config.AwsApiConfig,
 	regions []types.Region,
 	creds credentials.StaticCredentialsProvider,
 	logger *zap.Logger,
-) (map[types.Region][]instPkg.Instance, error) {
+) (map[types.Region][]*instPkg.Instance, error) {
 
-	regionToInstanceMap := make(map[types.Region][]instPkg.Instance)
+	regionToInstanceMap := make(map[types.Region][]*instPkg.Instance)
 
 	regionRevocationInfoMap, instanceSpecMap, err := fetchSpotInstanceRevocationInfoAndSpecsMap(config, logger)
 	if err != nil {
@@ -77,7 +77,7 @@ func createInstancePriceMap(spotPrices []ec2Types.SpotPrice) map[string]ec2Types
 }
 
 func getSpotInstancePricesForRegion(
-	config *config.ApiConfig,
+	config *config.AwsApiConfig,
 	region types.Region,
 	creds credentials.StaticCredentialsProvider,
 	logger *zap.Logger,
@@ -145,7 +145,7 @@ func fetchSpotInstanceAvailabilityInfo(
 }
 
 func fetchSpotInstanceRevocationInfoAndSpecsMap(
-	config *config.ApiConfig,
+	config *config.AwsApiConfig,
 	logger *zap.Logger,
 ) (
 	map[string]regionSpotInstanceRevocationInfo,
@@ -187,17 +187,17 @@ func fetchSpotInstanceRevocationInfoAndSpecsMap(
 }
 
 func createRegionSpotInstances(
-	cfg *config.ApiConfig,
+	cfg *config.AwsApiConfig,
 	region types.Region,
 	regionRevocationInfo *regionSpotInstanceRevocationInfo,
 	regionInstancePriceMap map[string]ec2Types.SpotPrice,
 	instanceSpecMap map[string]spotInstanceSpecs,
 	logger *zap.Logger,
 ) (
-	[]instPkg.Instance,
+	[]*instPkg.Instance,
 	error,
 ) {
-	instances := make([]instPkg.Instance, 0)
+	instances := make([]*instPkg.Instance, 0)
 
 	// TODO: Wrap this in method to avoid repeated code for Windows
 
@@ -225,7 +225,7 @@ func createRegionSpotInstances(
 			logger.Debug("failed to create instance from given spot instance info", zap.Error(err))
 			continue
 		}
-		instances = append(instances, *instance)
+		instances = append(instances, instance)
 	}
 
 	for instanceType, revocationInfo := range regionRevocationInfo.WindowsInstances {
@@ -251,7 +251,7 @@ func createRegionSpotInstances(
 		}
 
 		if cfg.ConsiderFreeInstances || instance.PricePerHour != 0 {
-			instances = append(instances, *instance)
+			instances = append(instances, instance)
 		}
 	}
 
@@ -279,6 +279,7 @@ func createInstanceFromSpotInstanceInfo(
 	}
 
 	return &instPkg.Instance{
+		Id:                    utils.GenerateUuid(),
 		Name:                  string(spotPrice.InstanceType),
 		MemoryGb:              specs.MemoryGb,
 		Vcpu:                  specs.Vcpu,

@@ -8,6 +8,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.6.0
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.20.0
 	github.com/aws/aws-sdk-go-v2/service/pricing v1.8.0
+	github.com/google/uuid v1.3.0
 	go.uber.org/zap v1.19.1
 )
 

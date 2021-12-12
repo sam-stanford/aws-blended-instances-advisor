@@ -4,6 +4,8 @@ import (
 	"ec2-test/utils"
 )
 
+// TODO: Edit comments to contain name of func
+
 // Aggregates contains aggregate information for a given set of instances,
 // providing the ability to normalise/standardise properties of an instance.
 type Aggregates struct {
@@ -24,7 +26,7 @@ type Aggregates struct {
 
 // Calculates aggregates for a slice of instances, returning information in
 // an Aggregate struct.
-func CalculateAggregates(instances []Instance) Aggregates {
+func CalculateAggregates(instances []*Instance) Aggregates {
 	totalVcpu, minVcpu, maxVcpu := 0, instances[0].Vcpu, instances[0].Vcpu
 
 	totalPricePerHour := 0.0
@@ -91,4 +93,43 @@ func (agg Aggregates) NormalisePricePerHour(price float64) float64 {
 		return 1.0 / float64(agg.Count)
 	}
 	return (price - agg.MinPricePerHour) / (agg.MaxPricePerHour - agg.MinPricePerHour)
+}
+
+// TODO: Test
+// CombineAggregates combines mutliple Aggregate structs into a single Aggregate struct.
+func CombineAggregates(aggs []Aggregates) Aggregates {
+	if len(aggs) == 0 {
+		return Aggregates{}
+	}
+
+	combined := Aggregates{}
+	for _, agg := range aggs {
+		combinedCountRatio := float64(combined.Count) / (float64(combined.Count) + float64(agg.Count))
+		aggCountRatio := 1 - combinedCountRatio
+
+		combined.MaxVcpu = utils.MaxOfInts(combined.MaxVcpu, agg.MaxVcpu)
+		combined.MinVcpu = utils.MinOfInts(combined.MinVcpu, agg.MinVcpu)
+		combined.MeanVcpu = (combined.MeanVcpu * combinedCountRatio) +
+			(agg.MeanVcpu * aggCountRatio)
+
+		combined.MaxPricePerHour = utils.MaxOfFloats(combined.MaxPricePerHour, agg.MaxPricePerHour)
+		combined.MinPricePerHour = utils.MinOfFloats(combined.MinPricePerHour, agg.MinPricePerHour)
+		combined.MeanPricePerHour = (combined.MeanPricePerHour * combinedCountRatio) +
+			(agg.MeanPricePerHour * aggCountRatio)
+
+		combined.MaxRevocationProbability = utils.MaxOfFloats(
+			combined.MaxRevocationProbability,
+			agg.MaxRevocationProbability,
+		)
+		combined.MinRevocationProbability = utils.MinOfFloats(
+			combined.MinRevocationProbability,
+			agg.MinRevocationProbability,
+		)
+		combined.MeanRevocationProbability = (combined.MeanRevocationProbability * combinedCountRatio) +
+			(agg.MeanRevocationProbability * aggCountRatio)
+
+		combined.Count += agg.Count
+	}
+
+	return combined
 }

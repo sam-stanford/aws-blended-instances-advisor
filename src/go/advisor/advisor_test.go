@@ -2,6 +2,6 @@ package advisor
 
 import "testing"
 
-func TestNaiveReliabilityAdvisorIsAdvisor(t *testing.T) {
-	// var _ Advisor = NaiveReliabilityAdvisor{}
+func TestWeightedIsAdvisor(t *testing.T) {
+	var _ Advisor = WeightedAdvisor{}
 }

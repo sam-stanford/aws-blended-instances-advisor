@@ -2,7 +2,9 @@ package main
 
 import (
 	"ec2-test/advisor"
+	"ec2-test/api"
 	awsApi "ec2-test/aws/api"
+	awsTypes "ec2-test/aws/types"
 	"ec2-test/cache"
 	"ec2-test/config"
 	"ec2-test/utils"
@@ -28,7 +30,7 @@ func main() {
 	creds := getCredentialsForMode(clf.productionMode, config)
 
 	regionInstancesMap, err := awsApi.GetInstancesRegionInfoMap(
-		&config.ApiConfig,
+		&config.AwsApiConfig,
 		config.Constraints.GetRegions(),
 		&creds,
 		cache,
@@ -38,8 +40,18 @@ func main() {
 		logger.Error("Error fetching instances", zap.Error(err))
 	}
 
-	advisor := advisor.Weighted{}
-	advisor.Advise(regionInstancesMap, config.Constraints.Services)
+	StartAdviceService(
+		&config.ApiConfig,
+		logger,
+		func(advisorInfo api.Advisor, services []api.Service, regions []api.Region) (*api.Advice, error) {
+			awsRegions, err := awsTypes.ManyRegionsFromApiRegions(regions)
+			if err != nil {
+				return nil, err
+			}
+
+			return advisor.New(advisorInfo).Advise(regionInstancesMap, services, awsRegions)
+		},
+	)
 }
 
 func createLogger(debugMode bool) (logger *zap.Logger, syncLogger func() error) {

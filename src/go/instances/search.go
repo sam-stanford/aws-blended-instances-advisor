@@ -11,7 +11,7 @@ import (
 // Returns an error if there is a problem with the given indexes.
 //
 // FindMemorySorted should be called for improved performance on a sorted slice.
-func FindMemory(instances []Instance, wantedMemory float64, startIndex int, endIndex int) (int, error) {
+func FindMemory(instances []*Instance, wantedMemory float64, startIndex int, endIndex int) (int, error) {
 	err := utils.ValidateIndexes(len(instances), startIndex, endIndex)
 	if err != nil {
 		return -1, err
@@ -34,7 +34,7 @@ func FindMemory(instances []Instance, wantedMemory float64, startIndex int, endI
 // Undefined behaviour for a given slice of unsorted instances; however, an error will likely be returned.
 //
 // FindMemory should be used for unsorted slices.
-func FindMemorySorted(sortedInstances []Instance, wantedMemory float64, startIndex int, endIndex int) (int, error) {
+func FindMemorySorted(sortedInstances []*Instance, wantedMemory float64, startIndex int, endIndex int) (int, error) {
 	err := utils.ValidateIndexes(len(sortedInstances), startIndex, endIndex)
 	if err != nil {
 		return -1, err
@@ -54,13 +54,13 @@ func FindMemorySorted(sortedInstances []Instance, wantedMemory float64, startInd
 }
 
 // TODO: Doc
-func SortAndFindMemory(instances []Instance, wantedMemory float64, startIndex, endIndex int) (int, error) {
+func SortAndFindMemory(instances []*Instance, wantedMemory float64, startIndex, endIndex int) (int, error) {
 	SortInstancesByMemory(instances, startIndex, endIndex)
 	return FindMemorySorted(instances, wantedMemory, startIndex, endIndex)
 }
 
 // TODO: Doc
-func FindPrice(instances []Instance, wantedPrice float64, startIndex int, endIndex int) (int, error) {
+func FindPrice(instances []*Instance, wantedPrice float64, startIndex int, endIndex int) (int, error) {
 	err := utils.ValidateIndexes(len(instances), startIndex, endIndex)
 	if err != nil {
 		return -1, err
@@ -80,7 +80,7 @@ func FindPrice(instances []Instance, wantedPrice float64, startIndex int, endInd
 }
 
 // TODO: Doc
-func FindPriceSorted(sortedInstances []Instance, wantedPrice float64, startIndex int, endIndex int) (int, error) {
+func FindPriceSorted(sortedInstances []*Instance, wantedPrice float64, startIndex int, endIndex int) (int, error) {
 	err := utils.ValidateIndexes(len(sortedInstances), startIndex, endIndex)
 	if err != nil {
 		return -1, err
@@ -100,13 +100,13 @@ func FindPriceSorted(sortedInstances []Instance, wantedPrice float64, startIndex
 }
 
 // TODO: Doc & simple test
-func SortAndFindPrice(instances []Instance, wantedPrice float64, startIndex, endIndex int) (int, error) {
+func SortAndFindPrice(instances []*Instance, wantedPrice float64, startIndex, endIndex int) (int, error) {
 	SortInstancesByPrice(instances, startIndex, endIndex)
 	return FindPriceSorted(instances, wantedPrice, startIndex, endIndex)
 }
 
 // TODO: Doc
-func FindVcpu(instances []Instance, wantedVcpu int, startIndex int, endIndex int) (int, error) {
+func FindVcpu(instances []*Instance, wantedVcpu int, startIndex int, endIndex int) (int, error) {
 	err := utils.ValidateIndexes(len(instances), startIndex, endIndex)
 	if err != nil {
 		return -1, err
@@ -126,7 +126,7 @@ func FindVcpu(instances []Instance, wantedVcpu int, startIndex int, endIndex int
 }
 
 // TODO: Doc
-func FindVcpuSorted(sortedInstances []Instance, wantedVcpu int, startIndex int, endIndex int) (int, error) {
+func FindVcpuSorted(sortedInstances []*Instance, wantedVcpu int, startIndex int, endIndex int) (int, error) {
 	err := utils.ValidateIndexes(len(sortedInstances), startIndex, endIndex)
 	if err != nil {
 		return -1, err
@@ -146,13 +146,13 @@ func FindVcpuSorted(sortedInstances []Instance, wantedVcpu int, startIndex int, 
 }
 
 // TODO: Doc
-func SortAndFindVcpu(instances []Instance, wantedVcpu int, startIndex, endIndex int) (int, error) {
+func SortAndFindVcpu(instances []*Instance, wantedVcpu int, startIndex, endIndex int) (int, error) {
 	SortInstancesByVcpu(instances, startIndex, endIndex)
 	return FindVcpuSorted(instances, wantedVcpu, startIndex, endIndex)
 }
 
 // TODO: Doc
-func FindRevocationProbability(instances []Instance, wantedProbability float64, startIndex int, endIndex int) (int, error) {
+func FindRevocationProbability(instances []*Instance, wantedProbability float64, startIndex int, endIndex int) (int, error) {
 	err := utils.ValidateIndexes(len(instances), startIndex, endIndex)
 	if err != nil {
 		return -1, err
@@ -172,7 +172,7 @@ func FindRevocationProbability(instances []Instance, wantedProbability float64, 
 }
 
 // TODO: Doc
-func FindRevocationProbabilitySorted(sortedInstances []Instance, wantedProbability float64, startIndex int, endIndex int) (int, error) {
+func FindRevocationProbabilitySorted(sortedInstances []*Instance, wantedProbability float64, startIndex int, endIndex int) (int, error) {
 	err := utils.ValidateIndexes(len(sortedInstances), startIndex, endIndex)
 	if err != nil {
 		return -1, err
@@ -192,7 +192,7 @@ func FindRevocationProbabilitySorted(sortedInstances []Instance, wantedProbabili
 }
 
 // TODO: Doc
-func SortAndFindRevocationProbability(instances []Instance, wantedProbability float64, startIndex, endIndex int) (int, error) {
+func SortAndFindRevocationProbability(instances []*Instance, wantedProbability float64, startIndex, endIndex int) (int, error) {
 	SortInstancesByRevocationProbability(instances, startIndex, endIndex)
 	return FindRevocationProbabilitySorted(instances, wantedProbability, startIndex, endIndex)
 }

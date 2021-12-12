@@ -9,20 +9,45 @@ import (
 )
 
 const (
-	DEFAULT_API_SPOT_INSTANCE_INFO_URL = "https://spot-bid-advisor.s3.amazonaws.com/spot-advisor-data.json"
-	DEFAULT_API_MAX_INSTANCES_TO_FETCH = 0
-	DEFAULT_API_DOWNLOADS_DIR          = "../../assets/downloads"
-	DEFAULT_CACHE_DIR                  = "../../assets/cache"
-	DEFAULT_CACHE_DEFAULT_LIFETIME     = 96
+	DEFAULT_API_PORT                       = 12021
+	DEFAULT_AWS_API_SPOT_INSTANCE_INFO_URL = "https://spot-bid-advisor.s3.amazonaws.com/spot-advisor-data.json"
+	DEFAULT_AWS_API_MAX_INSTANCES_TO_FETCH = 0
+	DEFAULT_AWS_API_DOWNLOADS_DIR          = "../../assets/downloads"
+	DEFAULT_CACHE_DIR                      = "../../assets/cache"
+	DEFAULT_CACHE_DEFAULT_LIFETIME         = 96
 )
 
 // TODO: Doc
 
+// TODO: Update actual, example, and test configs
+
+// TODO: Remove servicess
+
 type Config struct {
-	Credentials CredentialsList `json:"credentials"`
-	Constraints Constraints     `json:"constraints"`
-	ApiConfig   ApiConfig       `json:"api"`
-	CacheConfig CacheConfig     `json:"cache"`
+	ApiConfig    ApiConfig       `json:"api"`
+	AwsApiConfig AwsApiConfig    `json:"awsApi"`
+	CacheConfig  CacheConfig     `json:"cache"`
+	Constraints  Constraints     `json:"constraints"` // TODO: Remove this (add max instances to AwsApiConfig)
+	Credentials  CredentialsList `json:"credentials"`
+}
+
+type ApiConfig struct {
+	Port int `json:"port"`
+}
+
+type AwsApiConfig struct { // TODO: Potentially rename to generic config
+	Endpoints             Endpoints `json:"endpoints"`
+	DownloadsDir          string    `json:"downloadsDir"`
+	MaxInstancesToFetch   int       `json:"maxInstancesToFetch"`
+	ConsiderFreeInstances bool      `json:"freeInstances"`
+}
+
+type Endpoints struct {
+	AwsSpotInstanceInfoUrl string `json:"awsSpotInstanceInfoUrl"`
+}
+
+type CacheConfig struct {
+	Dirpath string `json:"dirpath"`
 }
 
 type CredentialsList struct {
@@ -34,6 +59,11 @@ type CredentialsList struct {
 type Credentials struct {
 	AwsKeyId     string `json:"awsKeyId"`
 	AwsSecretKey string `json:"awsSecretKey"`
+}
+
+type Constraints struct {
+	Regions  []string             `json:"regions"` // TODO: Move to config
+	Services []ServiceDescription `json:"services"`
 }
 
 type ServiceDescription struct {
@@ -50,30 +80,10 @@ type ServiceDescriptionInstances struct {
 	TotalCount   int `json:"total"`
 }
 
-type Constraints struct {
-	Regions  []string             `json:"regions"`
-	Services []ServiceDescription `json:"services"`
-}
-
-type ApiConfig struct {
-	Endpoints             Endpoints `json:"endpoints"`
-	DownloadsDir          string    `json:"downloadsDir"`
-	MaxInstancesToFetch   int       `json:"maxInstancesToFetch"`
-	ConsiderFreeInstances bool      `json:"freeInstances"`
-}
-
-type Endpoints struct {
-	AwsSpotInstanceInfoUrl string `json:"awsSpotInstanceInfoUrl"`
-}
-
-type CacheConfig struct {
-	Dirpath string `json:"dirpath"`
-}
-
 // TODO: Doc comments
 
 func (c *Constraints) GetRegions() []awsTypes.Region {
-	regions := make([]awsTypes.Region, len(c.Regions))
+	regions := []awsTypes.Region{}
 	for _, regionStr := range c.Regions {
 		region, err := awsTypes.NewRegion(regionStr)
 		if err == nil {
@@ -83,11 +93,7 @@ func (c *Constraints) GetRegions() []awsTypes.Region {
 	return regions
 }
 
-func (svc *ServiceDescription) GetFocus() ServiceFocus {
-	return ServiceFocusFromString(svc.Focus)
-}
-
-func (c *Config) String() string {
+func (c *Config) String() string { // TODO: Use in main logging
 	noCredsConfig := &Config{
 		Constraints: c.Constraints,
 		ApiConfig:   c.ApiConfig,
@@ -107,11 +113,14 @@ func ParseConfig(filepath string) (*Config, error) {
 
 	cfg := Config{
 		ApiConfig: ApiConfig{
+			Port: DEFAULT_API_PORT,
+		},
+		AwsApiConfig: AwsApiConfig{
 			Endpoints: Endpoints{
-				AwsSpotInstanceInfoUrl: DEFAULT_API_SPOT_INSTANCE_INFO_URL,
+				AwsSpotInstanceInfoUrl: DEFAULT_AWS_API_SPOT_INSTANCE_INFO_URL,
 			},
-			DownloadsDir:        DEFAULT_API_DOWNLOADS_DIR,
-			MaxInstancesToFetch: DEFAULT_API_MAX_INSTANCES_TO_FETCH,
+			DownloadsDir:        DEFAULT_AWS_API_DOWNLOADS_DIR,
+			MaxInstancesToFetch: DEFAULT_AWS_API_MAX_INSTANCES_TO_FETCH,
 		},
 		CacheConfig: CacheConfig{
 			Dirpath: DEFAULT_CACHE_DIR,
@@ -202,17 +211,6 @@ func (c *Config) validateServiceDescriptions() error {
 func validateServiceDescription(svc ServiceDescription) error {
 	if svc.Name == "" {
 		return errors.New("service name is empty")
-	}
-	err := ValidateServiceFocus(svc.Focus)
-	if err != nil {
-		return err
-	}
-	if svc.FocusWeight < 0 || svc.FocusWeight > 1 {
-		return fmt.Errorf(
-			"svc (%s) has focusWeight value outside of range of [0,1]: %f",
-			svc.Name,
-			svc.FocusWeight,
-		)
 	}
 	return nil
 }

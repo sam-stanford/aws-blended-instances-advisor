@@ -12,6 +12,8 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/google/uuid"
+
 	"go.uber.org/zap"
 )
 
@@ -22,6 +24,10 @@ const (
 // TODO: Split into multiple files
 
 // TODO: Doc comments
+
+func GenerateUuid() string {
+	return uuid.NewString()
+}
 
 func FileToString(filepath string) (string, error) {
 	fileAsBytes, err := FileToBytes(filepath)

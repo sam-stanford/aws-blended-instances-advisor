@@ -41,6 +41,9 @@ func TestParseConfigValid(t *testing.T) {
 					},
 				},
 				ApiConfig: ApiConfig{
+					Port: 123456,
+				},
+				AwsApiConfig: AwsApiConfig{
 					Endpoints: Endpoints{
 						AwsSpotInstanceInfoUrl: "TEST_URL",
 					},
@@ -89,6 +92,9 @@ func TestParseConfigValid(t *testing.T) {
 					},
 				},
 				ApiConfig: ApiConfig{
+					Port: 54321,
+				},
+				AwsApiConfig: AwsApiConfig{
 					Endpoints: Endpoints{
 						AwsSpotInstanceInfoUrl: "TEST_URL",
 					},
@@ -125,7 +131,7 @@ func TestParseConfigInvalid(t *testing.T) {
 		"empty service names":     {filepath: "testdata/invalid/empty-service-names.json"},
 		"invalid focus":           {filepath: "testdata/invalid/invalid-focus.json"},
 		"invalid regions":         {filepath: "testdata/invalid/invalid-regions.json"},
-		"no API config":           {filepath: "testdata/invalid/no-api-config.json"},
+		"no API config":           {filepath: "testdata/invalid/no-aws-api-config.json"},
 		"no credentials":          {filepath: "testdata/invalid/no-credentials.json"},
 		"no regions":              {filepath: "testdata/invalid/no-regions.json"},
 	}

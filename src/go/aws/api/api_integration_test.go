@@ -41,8 +41,8 @@ func TestGetInstances(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to read config: %s", err.Error())
 	}
-	cfg.ApiConfig.MaxInstancesToFetch = MAX_INSTANCES
-	cfg.ApiConfig.DownloadsDir = CONFIG_API_DOWNLOADS_DIR
+	cfg.AwsApiConfig.MaxInstancesToFetch = MAX_INSTANCES
+	cfg.AwsApiConfig.DownloadsDir = CONFIG_API_DOWNLOADS_DIR
 
 	logger, err := utils.CreateMockLogger()
 	if err != nil {
@@ -62,7 +62,7 @@ func TestGetInstances(t *testing.T) {
 
 	noCacheStartTime := time.Now()
 	regionInfoMap, err := GetInstancesRegionInfoMap(
-		&cfg.ApiConfig,
+		&cfg.AwsApiConfig,
 		regions,
 		&cfg.Credentials.Test,
 		cache,
@@ -73,14 +73,14 @@ func TestGetInstances(t *testing.T) {
 	}
 	noCacheEndTime := time.Now()
 
-	err = validateRegionInfoMap(regionInfoMap, regions, 2*cfg.ApiConfig.MaxInstancesToFetch)
+	err = validateRegionInfoMap(regionInfoMap, regions, 2*cfg.AwsApiConfig.MaxInstancesToFetch)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
 	cachedStartTime := time.Now()
 	cachedRegionInstanceMap, err := GetInstancesRegionInfoMap(
-		&cfg.ApiConfig,
+		&cfg.AwsApiConfig,
 		regions,
 		&cfg.Credentials.Test,
 		cache,
@@ -95,7 +95,7 @@ func TestGetInstances(t *testing.T) {
 		regionInfoMap,
 		cachedRegionInstanceMap,
 		regions,
-		2*cfg.ApiConfig.MaxInstancesToFetch,
+		2*cfg.AwsApiConfig.MaxInstancesToFetch,
 	)
 
 	noCacheFetchTime := noCacheEndTime.Sub(noCacheStartTime)

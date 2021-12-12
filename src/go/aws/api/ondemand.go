@@ -12,6 +12,8 @@ import (
 	"go.uber.org/zap"
 )
 
+// TODO: Own sub package
+
 const (
 	EC2_SERVICE_CODE       = "AmazonEC2"
 	LOCATION_FILTER_KEY    = "location"
@@ -19,12 +21,12 @@ const (
 )
 
 func GetOnDemandInstances(
-	config *config.ApiConfig,
+	config *config.AwsApiConfig,
 	regions []types.Region,
 	creds credentials.StaticCredentialsProvider,
 	logger *zap.Logger,
 ) (
-	map[types.Region][]instPkg.Instance,
+	map[types.Region][]*instPkg.Instance,
 	error,
 ) {
 	pricingClient := createAwsPricingClient(creds)
@@ -38,20 +40,20 @@ func GetOnDemandInstances(
 }
 
 func getRegionToOnDemandInstancesMap(
-	cfg *config.ApiConfig,
+	cfg *config.AwsApiConfig,
 	pricingClient *pricing.Client,
 	regions []types.Region,
 	maxInstanceCount int,
 	logger *zap.Logger,
 ) (
-	map[types.Region][]instPkg.Instance,
+	map[types.Region][]*instPkg.Instance,
 	error,
 ) {
 
-	regionToInstancesMap := make(map[types.Region][]instPkg.Instance)
+	regionToInstancesMap := make(map[types.Region][]*instPkg.Instance)
 
 	for _, region := range regions {
-		regionInstances := make([]instPkg.Instance, 0)
+		regionInstances := make([]*instPkg.Instance, 0)
 
 		nextToken := ""
 		firstIter := true
