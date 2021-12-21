@@ -1,6 +1,9 @@
-package instances
+package search
 
-import "testing"
+import (
+	. "aws-blended-instances-advisor/instances"
+	"testing"
+)
 
 type instanceFloatSearchTest struct {
 	instances  []*Instance

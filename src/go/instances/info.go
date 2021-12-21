@@ -1,6 +1,6 @@
 package instances
 
-import awsTypes "ec2-test/aws/types"
+import awsTypes "aws-blended-instances-advisor/aws/types"
 
 // TODO: Docs
 

@@ -1,11 +1,11 @@
-package api
+package schema
 
 import (
+	types "aws-blended-instances-advisor/aws/types"
+	"aws-blended-instances-advisor/cache"
+	"aws-blended-instances-advisor/config"
+	instPkg "aws-blended-instances-advisor/instances"
 	"context"
-	types "ec2-test/aws/types"
-	"ec2-test/cache"
-	"ec2-test/config"
-	instPkg "ec2-test/instances"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -45,7 +45,7 @@ func GetInstancesRegionInfoMap(
 		for _, region := range regions {
 			logger.Info(
 				"instances fetched from cache",
-				zap.String("region", region.ToCodeString()),
+				zap.String("region", region.CodeString()),
 				zap.Int("allInstancesCount", len(regionInfoMap[region].AllInstances.Instances)),
 				zap.Int("permanentInstanceCount", len(regionInfoMap[region].PermanentInstances.Instances)),
 			)
@@ -77,7 +77,7 @@ func GetInstancesRegionInfoMap(
 	for _, region := range regions {
 		logger.Info(
 			"stored instances in cache",
-			zap.String("region", region.ToCodeString()),
+			zap.String("region", region.CodeString()),
 			zap.Int("allInstancesCount", len(regionInfoMap[region].AllInstances.Instances)),
 			zap.Int("permanentInstanceCount", len(regionInfoMap[region].PermanentInstances.Instances)),
 		)

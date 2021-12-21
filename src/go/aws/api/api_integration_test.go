@@ -1,14 +1,14 @@
 //go:build integration
 // +build integration
 
-package api
+package schema
 
 import (
-	"ec2-test/aws/types"
-	"ec2-test/cache"
-	"ec2-test/config"
-	instPkg "ec2-test/instances"
-	"ec2-test/utils"
+	"aws-blended-instances-advisor/aws/types"
+	"aws-blended-instances-advisor/cache"
+	"aws-blended-instances-advisor/config"
+	instPkg "aws-blended-instances-advisor/instances"
+	"aws-blended-instances-advisor/utils"
 	"fmt"
 	"testing"
 	"time"
@@ -139,7 +139,7 @@ func validateRegionInfoMap(
 			return fmt.Errorf(
 				"Aggregates count does not match number of instances for AllInstances in region %s. "+
 					"Number of instances: %d, Aggregates count: %d",
-				region.ToCodeString(),
+				region.CodeString(),
 				len(info.AllInstances.Instances),
 				info.AllInstances.Aggregates.Count,
 			)
@@ -148,7 +148,7 @@ func validateRegionInfoMap(
 			return fmt.Errorf(
 				"Aggregates count does not match number of instances for PermanentInstances in region %s. "+
 					"Number of instances: %d, Aggregates count: %d",
-				region.ToCodeString(),
+				region.CodeString(),
 				len(info.PermanentInstances.Instances),
 				info.PermanentInstances.Aggregates.Count,
 			)
@@ -157,7 +157,7 @@ func validateRegionInfoMap(
 		if len(info.AllInstances.Instances) > maxTotalInstances {
 			return fmt.Errorf(
 				"More instances returned than config max for region %s. Wanted: < %d, got: %d",
-				region.ToCodeString(),
+				region.CodeString(),
 				maxTotalInstances,
 				len(info.AllInstances.Instances),
 			)
@@ -184,7 +184,7 @@ func validateCachedRegionInfoMap(
 			return fmt.Errorf(
 				"Different number of instances (AllInstances) fetched from cache than stored. "+
 					"Region: %s, stored: %d, fetched: %d",
-				region.ToCodeString(),
+				region.CodeString(),
 				len(storedInfo.AllInstances.Instances),
 				len(fetchedInfo.AllInstances.Instances),
 			)
@@ -194,7 +194,7 @@ func validateCachedRegionInfoMap(
 			return fmt.Errorf(
 				"Different number of instances (PermanentInstances) fetched from cache than stored. "+
 					"Region: %s, stored: %d, fetched: %d",
-				region.ToCodeString(),
+				region.CodeString(),
 				len(storedInfo.PermanentInstances.Instances),
 				len(fetchedInfo.PermanentInstances.Instances),
 			)
@@ -203,7 +203,7 @@ func validateCachedRegionInfoMap(
 		if storedInfo.AllInstances.Aggregates.Count != fetchedInfo.PermanentInstances.Aggregates.Count {
 			return fmt.Errorf(
 				"Different aggregate values fetched from cache than stored. Region: %s, stored: %+v, fetched:%+v",
-				region.ToCodeString(),
+				region.CodeString(),
 				storedInfo.AllInstances.Aggregates.Count,
 				fetchedInfo.PermanentInstances.Aggregates.Count,
 			)

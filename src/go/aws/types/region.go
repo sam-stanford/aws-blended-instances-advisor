@@ -1,11 +1,6 @@
 package types
 
-import (
-	"ec2-test/api"
-	"errors"
-)
-
-// TODO: Rename ToCodeString to CodeString
+import "fmt"
 
 type Region int
 
@@ -33,7 +28,19 @@ const (
 	SaEast1
 )
 
-func (region Region) ToCodeString() string {
+// TODO: Test & Doc
+func GetAllRegions() []Region {
+	lastRegion := SaEast1
+
+	r := []Region{}
+	for i := 0; i <= int(lastRegion); i += 1 {
+		r = append(r, Region(i))
+	}
+	return r
+}
+
+// TODO: Test & doc
+func (region Region) CodeString() string {
 	switch region {
 	case UsEast1:
 		return "us-east-1"
@@ -82,7 +89,8 @@ func (region Region) ToCodeString() string {
 	}
 }
 
-func (region Region) ToNameString() string {
+// TODO: Test & doc
+func (region Region) NameString() string {
 	switch region {
 	case UsEast1:
 		return "US East (N. Virginia)"
@@ -131,6 +139,7 @@ func (region Region) ToNameString() string {
 	}
 }
 
+// TODO: Test & Doc
 func NewRegion(value string) (Region, error) {
 	switch value {
 	case "us-east-1", "US East (N. Virginia)":
@@ -177,22 +186,14 @@ func NewRegion(value string) (Region, error) {
 		return SaEast1, nil
 	}
 
-	return -1, errors.New("provided value does not match any region")
+	return -1, fmt.Errorf("provided value of \"%s\" does not match any region", value)
 }
 
-func (region Region) ToApiRegion() api.Region {
-	return api.Region(region.ToCodeString())
-}
-
-// TODO: Doc
-func RegionFromApiRegion(region api.Region) (Region, error) {
-	return NewRegion(string(region))
-}
-
-func ManyRegionsFromApiRegions(apiRegions []api.Region) ([]Region, error) {
+// TODO: Doc & test
+func NewRegions(values []string) ([]Region, error) {
 	regions := []Region{}
-	for _, apiReg := range apiRegions {
-		r, err := RegionFromApiRegion(apiReg)
+	for _, value := range values {
+		r, err := NewRegion(value)
 		if err != nil {
 			return nil, err
 		}

@@ -1,18 +1,10 @@
-package instances
+package sort
 
 import (
-	"ec2-test/api"
+	. "aws-blended-instances-advisor/instances"
 	"sort"
 	"strings"
 )
-
-// TODO: Own sub package?
-
-type SortWeightings struct {
-	VcpuWeight                  float64
-	RevocationProbabilityWeight float64 // TODO: Negative?
-	PriceWeight                 float64
-}
 
 // Sorts a given slice of Instances in place from startIndex (inclusive) to endIndex (exclusive)
 // in increasing order of price.
@@ -62,8 +54,8 @@ func SortInstancesByOperatingSystem(instances []*Instance, startIndex, endIndex 
 func SortInstancesByRegion(instances []*Instance, startIndex, endIndex int) {
 	sort.Slice(instances[startIndex:endIndex], func(i, j int) bool {
 		return strings.Compare(
-			instances[startIndex+i].Region.ToCodeString(),
-			instances[startIndex+j].Region.ToCodeString(),
+			instances[startIndex+i].Region.CodeString(),
+			instances[startIndex+j].Region.CodeString(),
 		) == -1
 	})
 }
@@ -76,7 +68,7 @@ func SortInstancesWeighted(
 	aggregates Aggregates,
 	startIndex,
 	endIndex int,
-	weights SortWeightings,
+	weights SortWeights,
 ) {
 	sort.Slice(instances[startIndex:endIndex], func(i, j int) bool {
 		iScore := CalculateInstanceScoreFromWeights(
@@ -101,7 +93,7 @@ func SortInstancesWeightedWithVcpuLimiter(
 	aggregates Aggregates,
 	startIndex,
 	endIndex int,
-	weights SortWeightings,
+	weights SortWeights,
 	maxVcpu int,
 ) {
 	sort.Slice(instances[startIndex:endIndex], func(i, j int) bool {
@@ -125,7 +117,7 @@ func SortInstancesWeightedWithVcpuLimiter(
 func CalculateInstanceScoreFromWeights(
 	instance *Instance,
 	aggregates Aggregates,
-	weightings SortWeightings, // TODO: Rename all "weightings" to "weights"
+	weightings SortWeights, // TODO: Rename all "weightings" to "weights"
 ) float64 {
 	normalisedVcpu := aggregates.NormaliseVcpu(instance.Vcpu)
 	normalisedRp := aggregates.NormaliseRevocationProbability(instance.RevocationProbability)
@@ -141,7 +133,7 @@ func CalculateInstanceScoreFromWeights(
 func CalculateInstanceScoreFromWeightsWithVcpuLimiter(
 	instance *Instance,
 	aggregates Aggregates,
-	weightings SortWeightings,
+	weightings SortWeights,
 	maxVcpu int,
 ) float64 {
 	// TODO: Can we not just use modulo here?
@@ -163,7 +155,7 @@ func CalculateInstanceScoreFromWeightsWithVcpuLimiter(
 func calculatedInstanceScoreFromWeightsWithFixedVcpu(
 	instance *Instance,
 	aggregates Aggregates,
-	weights SortWeightings,
+	weights SortWeights,
 	fixedVcpu int,
 ) float64 {
 	normalisedVcpu := aggregates.NormaliseVcpu(fixedVcpu)
@@ -173,40 +165,4 @@ func calculatedInstanceScoreFromWeightsWithFixedVcpu(
 	return weights.VcpuWeight*normalisedVcpu +
 		weights.RevocationProbabilityWeight*normalisedRp +
 		weights.PriceWeight*normalisedPrice
-}
-
-// TODO: Doc & test
-func GetSortWeights(focus api.AdvisorFocus, focusWeight float64) SortWeightings {
-	primaryFocusWeight := 0.33 + 2.0*0.33*focusWeight
-	secondaryFocusWeight := 0.33 * (1.0 - focusWeight)
-
-	// TODO: Comment on negative weight for vcpu (want to max, while others are min)
-
-	switch focus {
-	case api.Availability:
-		return SortWeightings{
-			RevocationProbabilityWeight: primaryFocusWeight,
-			VcpuWeight:                  -1.0 * secondaryFocusWeight,
-			PriceWeight:                 secondaryFocusWeight,
-		}
-	case api.Cost:
-		return SortWeightings{
-			RevocationProbabilityWeight: secondaryFocusWeight,
-			VcpuWeight:                  -1.0 * secondaryFocusWeight,
-			PriceWeight:                 primaryFocusWeight,
-		}
-
-	case api.Performance:
-		return SortWeightings{
-			RevocationProbabilityWeight: secondaryFocusWeight,
-			VcpuWeight:                  -1.0 * primaryFocusWeight,
-			PriceWeight:                 secondaryFocusWeight,
-		}
-	default: // Implicitly includes api.Balanced
-		return SortWeightings{
-			RevocationProbabilityWeight: 0.33,
-			VcpuWeight:                  0.33,
-			PriceWeight:                 0.33,
-		}
-	}
 }

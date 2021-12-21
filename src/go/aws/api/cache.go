@@ -1,8 +1,8 @@
-package api
+package schema
 
 import (
-	"ec2-test/cache"
-	instPkg "ec2-test/instances"
+	"aws-blended-instances-advisor/cache"
+	instPkg "aws-blended-instances-advisor/instances"
 	"encoding/json"
 	"errors"
 	"time"

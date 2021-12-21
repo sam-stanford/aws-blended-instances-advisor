@@ -1,7 +1,8 @@
-package instances
+package sort
 
 import (
-	awsTypes "ec2-test/aws/types"
+	awsTypes "aws-blended-instances-advisor/aws/types"
+	. "aws-blended-instances-advisor/instances"
 	"reflect"
 	"testing"
 )

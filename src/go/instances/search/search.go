@@ -1,7 +1,9 @@
-package instances
+package search
 
 import (
-	"ec2-test/utils"
+	. "aws-blended-instances-advisor/instances"
+	"aws-blended-instances-advisor/instances/sort"
+	"aws-blended-instances-advisor/utils"
 )
 
 // TODO: Own package
@@ -55,7 +57,7 @@ func FindMemorySorted(sortedInstances []*Instance, wantedMemory float64, startIn
 
 // TODO: Doc
 func SortAndFindMemory(instances []*Instance, wantedMemory float64, startIndex, endIndex int) (int, error) {
-	SortInstancesByMemory(instances, startIndex, endIndex)
+	sort.SortInstancesByMemory(instances, startIndex, endIndex)
 	return FindMemorySorted(instances, wantedMemory, startIndex, endIndex)
 }
 
@@ -101,7 +103,7 @@ func FindPriceSorted(sortedInstances []*Instance, wantedPrice float64, startInde
 
 // TODO: Doc & simple test
 func SortAndFindPrice(instances []*Instance, wantedPrice float64, startIndex, endIndex int) (int, error) {
-	SortInstancesByPrice(instances, startIndex, endIndex)
+	sort.SortInstancesByPrice(instances, startIndex, endIndex)
 	return FindPriceSorted(instances, wantedPrice, startIndex, endIndex)
 }
 
@@ -147,7 +149,7 @@ func FindVcpuSorted(sortedInstances []*Instance, wantedVcpu int, startIndex int,
 
 // TODO: Doc
 func SortAndFindVcpu(instances []*Instance, wantedVcpu int, startIndex, endIndex int) (int, error) {
-	SortInstancesByVcpu(instances, startIndex, endIndex)
+	sort.SortInstancesByVcpu(instances, startIndex, endIndex)
 	return FindVcpuSorted(instances, wantedVcpu, startIndex, endIndex)
 }
 
@@ -193,6 +195,6 @@ func FindRevocationProbabilitySorted(sortedInstances []*Instance, wantedProbabil
 
 // TODO: Doc
 func SortAndFindRevocationProbability(instances []*Instance, wantedProbability float64, startIndex, endIndex int) (int, error) {
-	SortInstancesByRevocationProbability(instances, startIndex, endIndex)
+	sort.SortInstancesByRevocationProbability(instances, startIndex, endIndex)
 	return FindRevocationProbabilitySorted(instances, wantedProbability, startIndex, endIndex)
 }

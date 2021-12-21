@@ -1,12 +1,12 @@
 //go:build integration
 // +build integration
 
-package api
+package schema
 
 import (
-	"ec2-test/aws/types"
-	"ec2-test/config"
-	"ec2-test/utils"
+	"aws-blended-instances-advisor/aws/types"
+	"aws-blended-instances-advisor/config"
+	"aws-blended-instances-advisor/utils"
 	"testing"
 )
 

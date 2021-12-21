@@ -1,4 +1,4 @@
-module ec2-test
+module aws-blended-instances-advisor
 
 go 1.17
 

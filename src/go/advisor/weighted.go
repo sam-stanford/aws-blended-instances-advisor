@@ -1,47 +1,48 @@
 package advisor
 
 import (
-	"ec2-test/api"
-	awsTypes "ec2-test/aws/types"
-	instPkg "ec2-test/instances"
-	"ec2-test/utils"
+	"aws-blended-instances-advisor/api/schema"
+	awsTypes "aws-blended-instances-advisor/aws/types"
+	instPkg "aws-blended-instances-advisor/instances"
+	instSearch "aws-blended-instances-advisor/instances/search"
+	instSort "aws-blended-instances-advisor/instances/sort"
+	"aws-blended-instances-advisor/utils"
 	"fmt"
 )
 
 // TODO: Docs
-// TODO: Make all instance slices pointers
-// TODO: Rename to FocusAdvisor & create CustomAdvisor which takes specified weights
 // TODO: Use logger
 
 type WeightedAdvisor struct {
-	focus       api.AdvisorFocus
-	focusWeight float64
-	weights     instPkg.SortWeightings
+	weights instSort.SortWeights
 }
 
-func NewWeightedAdvisor(focus api.AdvisorFocus, focusWeight float64) WeightedAdvisor {
+func NewWeightedAdvisor(weights schema.AdvisorWeights) Advisor {
 	return WeightedAdvisor{
-		focus:       focus,
-		focusWeight: focusWeight,
-		weights:     instPkg.GetSortWeights(focus, focusWeight), // TODO: Rename this to be FocusAdvisor & have WeightedAdvisor be Custom
+		weights: instSort.NewSortWeightsFromApiWeights(weights),
 	}
 }
 
 func (advisor WeightedAdvisor) Advise(
 	regionInfoMap instPkg.RegionInfoMap,
-	services []api.Service,
-	regions []awsTypes.Region,
+	services []schema.Service,
+	options schema.Options,
 ) (
-	*api.Advice,
+	*schema.Advice,
 	error,
 ) {
-	advice := make(api.Advice) // TODO: Use NewAdvice here
+	advice := make(schema.Advice) // TODO: Use NewAdvice here
 	globalAggregates := getGlobalAggregatesFromRegionInfoMap(regionInfoMap)
 
-	for _, region := range regions {
+	awsRegions, err := awsTypes.NewRegions(options.Regions)
+	if err != nil {
+		return nil, utils.PrependToError(err, "could not parse regions")
+	}
+
+	for _, region := range awsRegions {
 		info, ok := regionInfoMap[region]
 		if !ok {
-			return nil, fmt.Errorf("region not in map: %s", region.ToCodeString())
+			return nil, fmt.Errorf("region not in map: %s", region.CodeString())
 		}
 
 		regionAdvice, err := advisor.AdviseForRegion(info, services)
@@ -51,7 +52,7 @@ func (advisor WeightedAdvisor) Advise(
 
 		regionAdvice.Score = advisor.ScoreRegionAdvice(regionAdvice, globalAggregates, services)
 
-		advice[region.ToCodeString()] = *regionAdvice
+		advice[region.CodeString()] = *regionAdvice
 	}
 
 	return &advice, nil
@@ -68,12 +69,12 @@ func getGlobalAggregatesFromRegionInfoMap(m instPkg.RegionInfoMap) instPkg.Aggre
 
 func (advisor WeightedAdvisor) AdviseForRegion(
 	info instPkg.RegionInfo,
-	services []api.Service,
+	services []schema.Service,
 ) (
-	*api.RegionAdvice,
+	*schema.RegionAdvice,
 	error,
 ) {
-	advice := &api.RegionAdvice{}
+	advice := &schema.RegionAdvice{}
 
 	for _, svc := range services {
 
@@ -115,16 +116,16 @@ func (advisor WeightedAdvisor) AdviseForRegion(
 func (advisor WeightedAdvisor) selectInstanceForService(
 	instances []*instPkg.Instance,
 	aggregates instPkg.Aggregates,
-	svc api.Service,
-) (*api.Instance, error) {
+	svc schema.Service,
+) (*schema.Instance, error) {
 	searchStart, searchEnd := 0, len(instances)
 
 	// TODO: Different result when using --clear-cache as to when not
 
-	// TODO: Function appears non-determinate
+	// TODO: Function appears non-deterministic
 	// TODO: Function sometimes returns instance with less mem than min mem
 
-	searchStart, err := instPkg.SortAndFindMemory(
+	searchStart, err := instSearch.SortAndFindMemory(
 		instances,
 		svc.MinMemory,
 		searchStart,
@@ -134,7 +135,7 @@ func (advisor WeightedAdvisor) selectInstanceForService(
 		return nil, utils.PrependToError(err, "could not find memory in instance slice")
 	}
 
-	instPkg.SortInstancesWeightedWithVcpuLimiter(
+	instSort.SortInstancesWeightedWithVcpuLimiter(
 		instances,
 		aggregates,
 		searchStart,
@@ -143,14 +144,14 @@ func (advisor WeightedAdvisor) selectInstanceForService(
 		svc.MaxVcpu,
 	)
 
-	return instances[searchStart].ToApiInstance(), nil
+	return instances[searchStart].ToApiSchemaInstance(), nil
 }
 
 // TODO: Test & Doc
 func (advisor WeightedAdvisor) ScoreRegionAdvice(
-	advice *api.RegionAdvice,
+	advice *schema.RegionAdvice,
 	globalAgg instPkg.Aggregates,
-	services []api.Service,
+	services []schema.Service,
 ) float64 {
 	vcpuScore, revocationProbScore, priceScore := 0.0, 0.0, 0.0
 	totalInstances := 0
@@ -170,7 +171,7 @@ func (advisor WeightedAdvisor) ScoreRegionAdvice(
 		(priceScore * advisor.weights.PriceWeight)) / float64(totalInstances)
 }
 
-func calculateVcpuScore(inst *api.Instance, svc api.Service) float64 {
+func calculateVcpuScore(inst *schema.Instance, svc schema.Service) float64 {
 	// Percentage of MaxVcpu
 	if inst.Vcpu >= svc.MaxVcpu {
 		return 1.0
@@ -178,13 +179,13 @@ func calculateVcpuScore(inst *api.Instance, svc api.Service) float64 {
 	return float64(inst.Vcpu) / float64(svc.MaxVcpu)
 }
 
-func calculateRevocationProbScore(inst *api.Instance, agg instPkg.Aggregates) float64 {
+func calculateRevocationProbScore(inst *schema.Instance, agg instPkg.Aggregates) float64 {
 	// Min-max scale
 	return 1 - ((inst.RevocationProbability - agg.MinRevocationProbability) /
 		(agg.MaxRevocationProbability - agg.MinRevocationProbability))
 }
 
-func calculatePriceScore(inst *api.Instance, agg instPkg.Aggregates) float64 {
+func calculatePriceScore(inst *schema.Instance, agg instPkg.Aggregates) float64 {
 	// Min-max scale
 	return 1 - ((inst.PricePerHour - agg.MinPricePerHour) /
 		(agg.MaxPricePerHour - agg.MinPricePerHour))

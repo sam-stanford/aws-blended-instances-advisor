@@ -1,4 +1,4 @@
-package api
+package schema
 
 // TODO: Doc in README & point to README from here
 

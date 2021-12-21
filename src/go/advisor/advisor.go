@@ -1,33 +1,32 @@
 package advisor
 
 import (
-	"ec2-test/api"
-	awsTypes "ec2-test/aws/types"
-	"ec2-test/instances"
+	"aws-blended-instances-advisor/api/schema"
+	"aws-blended-instances-advisor/instances"
 )
 
 type Advisor interface {
 	Advise(
 		instances.RegionInfoMap,
-		[]api.Service,
-		[]awsTypes.Region,
+		[]schema.Service,
+		schema.Options,
 	) (
-		*api.Advice,
+		*schema.Advice,
 		error,
 	)
 
 	AdviseForRegion(
 		instances.RegionInfo,
-		[]api.Service,
+		[]schema.Service,
 	) (
-		*api.RegionAdvice,
+		*schema.RegionAdvice,
 		error,
 	)
 
 	ScoreRegionAdvice(
-		*api.RegionAdvice,
+		*schema.RegionAdvice,
 		instances.Aggregates,
-		[]api.Service,
+		[]schema.Service,
 	) float64
 }
 
@@ -35,15 +34,15 @@ type Advisor interface {
 
 // New creates an advisor, using the type provided in the info argument
 // to determine which advisor to use.
-func New(info api.Advisor) Advisor {
+func New(info schema.Advisor) Advisor {
 	switch info.Type {
-	case api.Weighted:
-		return NewWeightedAdvisor(info.Focus, info.FocusWeight)
+	case schema.Weighted:
+		return NewWeightedAdvisor(info.Weights)
 
-		// TODO: Random, custom, etc.
+	case schema.Random:
+		return NewRandomAdvisor()
 
 	default:
-		// TODO: Which default? Maybe naive or something
-		return NewWeightedAdvisor(info.Focus, info.FocusWeight)
+		return NewWeightedAdvisor(info.Weights)
 	}
 }
