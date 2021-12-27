@@ -1,5 +1,5 @@
 {
-  "credentials":{
+  "credentials": {
     "production": {
       "awsKeyId": "YOUR KEY ID HERE",
       "awsSecretKey": "YOUR SECRET KEY HERE"
@@ -13,46 +13,16 @@
       "awsSecretKey": "YOUR SECRET KEY HERE"
     }
   },
-  "constraints": {
-    "regions": [
-      "af-south-1",
-      "ap-east-1",
-      "ap-northeast-1",
-      "ap-northeast-2",
-      "ap-northeast-3",
-      "ap-south-1",
-      "ap-southeast-1",
-      "ap-southeast-2",
-      "ca-central-1",
-      "eu-central-1",
-      "eu-north-1",
-      "eu-south-1",
-      "eu-west-1",
-      "eu-west-2",
-      "eu-west-3",
-      "me-south-1",
-      "sa-east-1",
-      "us-east-1",
-      "us-east-2",
-      "us-west-1",
-      "us-west-2"
-    ],
-    "services": [{
-      "name": "Test Service 1",
-      "minMemory": 1,
-      "maxVcpu": 1,
-      "revocationSensitivity": 0.4
-    }]
-  },
   "awsApi": {
     "endpoints": {
       "awsSpotInstanceInfoUrl": "https://spot-bid-advisor.s3.amazonaws.com/spot-advisor-data.json"
     },
     "maxInstancesToFetch": 1000,
-    "downloadsDir": "../../assets/downloads"
+    "downloadsDir": "../../temp/downloads",
+    "freeInstances": false
   },
   "cache": {
-    "dirpath": "../../assets/cache",
+    "dirpath": "../../temp/cache",
     "defaultLifetime": 168
   }
 }

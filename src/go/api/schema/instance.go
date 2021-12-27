@@ -1,4 +1,4 @@
-package api
+package schema
 
 type Instance struct {
 	Id                    string  `json:"id"` // TODO: Add to instances pkg & generate on creation

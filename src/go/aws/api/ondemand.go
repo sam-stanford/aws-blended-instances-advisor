@@ -1,10 +1,10 @@
-package api
+package schema
 
 import (
+	types "aws-blended-instances-advisor/aws/types"
+	"aws-blended-instances-advisor/config"
+	instPkg "aws-blended-instances-advisor/instances"
 	"context"
-	types "ec2-test/aws/types"
-	"ec2-test/config"
-	instPkg "ec2-test/instances"
 
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/pricing"
@@ -71,6 +71,7 @@ func getRegionToOnDemandInstancesMap(
 
 			logger.Info(
 				"parsed on-demand instances",
+				zap.String("region", region.CodeString()),
 				zap.Int("parsedCount", len(parsedInstances)),
 				zap.Int("skippedCount", len(resp.PriceList)-len(parsedInstances)),
 			)
@@ -88,8 +89,8 @@ func getRegionToOnDemandInstancesMap(
 		}
 
 		logger.Info(
-			"fetched on-demand instances for region",
-			zap.String("region", region.ToCodeString()),
+			"finished fetching on-demand instances for region",
+			zap.String("region", region.CodeString()),
 			zap.Int("totalInstanceCount", total),
 			zap.Int("maxInstanceCount", total),
 		)
@@ -97,7 +98,7 @@ func getRegionToOnDemandInstancesMap(
 		if len(regionInstances) > maxInstanceCount {
 			logger.Info(
 				"removed excess instances to keep to max instance count",
-				zap.String("region", region.ToCodeString()),
+				zap.String("region", region.CodeString()),
 				zap.Int("removed", len(regionInstances)-maxInstanceCount),
 			)
 			regionInstances = regionInstances[:maxInstanceCount]
@@ -117,7 +118,7 @@ func getOnDemandInstancesFromApi(
 
 	serviceCode := EC2_SERVICE_CODE
 	locationFilterKey := LOCATION_FILTER_KEY
-	locationFilterValue := region.ToNameString()
+	locationFilterValue := region.NameString()
 
 	return pricingClient.GetProducts(context.TODO(), &pricing.GetProductsInput{
 		ServiceCode: &serviceCode,

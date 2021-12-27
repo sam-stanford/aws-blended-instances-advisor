@@ -1,10 +1,8 @@
 package config
 
 import (
-	awsTypes "ec2-test/aws/types"
-	"ec2-test/utils"
+	"aws-blended-instances-advisor/utils"
 	"encoding/json"
-	"errors"
 	"fmt"
 )
 
@@ -12,8 +10,8 @@ const (
 	DEFAULT_API_PORT                       = 12021
 	DEFAULT_AWS_API_SPOT_INSTANCE_INFO_URL = "https://spot-bid-advisor.s3.amazonaws.com/spot-advisor-data.json"
 	DEFAULT_AWS_API_MAX_INSTANCES_TO_FETCH = 0
-	DEFAULT_AWS_API_DOWNLOADS_DIR          = "../../assets/downloads"
-	DEFAULT_CACHE_DIR                      = "../../assets/cache"
+	DEFAULT_AWS_API_DOWNLOADS_DIR          = "../../temp/downloads"
+	DEFAULT_CACHE_DIR                      = "../../temp/cache"
 	DEFAULT_CACHE_DEFAULT_LIFETIME         = 96
 )
 
@@ -27,7 +25,6 @@ type Config struct {
 	ApiConfig    ApiConfig       `json:"api"`
 	AwsApiConfig AwsApiConfig    `json:"awsApi"`
 	CacheConfig  CacheConfig     `json:"cache"`
-	Constraints  Constraints     `json:"constraints"` // TODO: Remove this (add max instances to AwsApiConfig)
 	Credentials  CredentialsList `json:"credentials"`
 }
 
@@ -36,10 +33,9 @@ type ApiConfig struct {
 }
 
 type AwsApiConfig struct { // TODO: Potentially rename to generic config
-	Endpoints             Endpoints `json:"endpoints"`
-	DownloadsDir          string    `json:"downloadsDir"`
-	MaxInstancesToFetch   int       `json:"maxInstancesToFetch"`
-	ConsiderFreeInstances bool      `json:"freeInstances"`
+	Endpoints           Endpoints `json:"endpoints"`
+	DownloadsDir        string    `json:"downloadsDir"`
+	MaxInstancesToFetch int       `json:"maxInstancesToFetch"`
 }
 
 type Endpoints struct {
@@ -61,11 +57,6 @@ type Credentials struct {
 	AwsSecretKey string `json:"awsSecretKey"`
 }
 
-type Constraints struct {
-	Regions  []string             `json:"regions"` // TODO: Move to config
-	Services []ServiceDescription `json:"services"`
-}
-
 type ServiceDescription struct {
 	Name        string                      `json:"name"`
 	MinMemory   float64                     `json:"minMemory"`
@@ -80,25 +71,12 @@ type ServiceDescriptionInstances struct {
 	TotalCount   int `json:"total"`
 }
 
-// TODO: Doc comments
-
-func (c *Constraints) GetRegions() []awsTypes.Region {
-	regions := []awsTypes.Region{}
-	for _, regionStr := range c.Regions {
-		region, err := awsTypes.NewRegion(regionStr)
-		if err == nil {
-			regions = append(regions, region)
-		}
-	}
-	return regions
-}
+// TODO: Doc & test (? maybe test)
 
 func (c *Config) String() string { // TODO: Use in main logging
 	noCredsConfig := &Config{
-		Constraints: c.Constraints,
 		ApiConfig:   c.ApiConfig,
 		CacheConfig: c.CacheConfig,
-		Credentials: c.Credentials,
 	}
 
 	jsonBytes, _ := json.Marshal(noCredsConfig)
@@ -146,95 +124,7 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("config field is empty: %s", fieldName)
 	}
 
-	err := c.validateConstraints()
-	if err != nil {
-		return err
-	}
-	err = c.validateCredentials()
-	if err != nil {
-		return err
-	}
-	err = c.validateApiConfig()
-	if err != nil {
-		return err
-	}
+	// TODO: Add more validation
 
-	return nil
-}
-
-func (c *Config) validateConstraints() error {
-	err := c.validateRegions()
-	if err != nil {
-		return err
-	}
-	err = c.validateServiceDescriptions()
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (c *Config) validateRegions() error {
-	regions := c.Constraints.Regions
-	if len(regions) == 0 {
-		return errors.New("invalid config: zero regions provided")
-	}
-	for _, r := range regions {
-		_, err := awsTypes.NewRegion(r)
-		if err != nil {
-			return utils.PrependToError(err, "invalid config")
-		}
-	}
-	return nil
-}
-
-func (c *Config) validateServiceDescriptions() error {
-	services := c.Constraints.Services
-	if len(services) == 0 {
-		return errors.New("invalid config: zero service descriptions provided")
-	}
-	dupeName := findFirstDuplicateServiceName(services)
-	if dupeName != "" {
-		return fmt.Errorf("invalid config: duplicate service name: %s", dupeName)
-	}
-
-	for _, s := range services {
-		err := validateServiceDescription(s)
-		if err != nil {
-			return utils.PrependToError(err, "invalid config")
-		}
-	}
-
-	return nil
-}
-
-func validateServiceDescription(svc ServiceDescription) error {
-	if svc.Name == "" {
-		return errors.New("service name is empty")
-	}
-	return nil
-}
-
-func findFirstDuplicateServiceName(services []ServiceDescription) string {
-	names := make(map[string]bool)
-
-	for _, s := range services {
-		_, exists := names[s.Name]
-		if exists {
-			return s.Name
-		}
-		names[s.Name] = true
-	}
-
-	return ""
-}
-
-func (c *Config) validateCredentials() error {
-	// No validation required
-	return nil
-}
-
-func (c *Config) validateApiConfig() error {
-	// No validation required
 	return nil
 }

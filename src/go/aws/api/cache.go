@@ -1,36 +1,38 @@
-package api
+package schema
 
 import (
-	"ec2-test/cache"
-	instPkg "ec2-test/instances"
+	"aws-blended-instances-advisor/cache"
+	instPkg "aws-blended-instances-advisor/instances"
 	"encoding/json"
 	"errors"
 	"time"
 )
 
-func getRegionInfoMapFromCache(instancesCacheFilename string, c *cache.Cache) (instPkg.RegionInfoMap, error) {
+// TODO: test
+
+func getGlobalInstanceInfoFromCache(instancesCacheFilename string, c *cache.Cache) (*instPkg.GlobalInfo, error) {
 	isValid := c.IsValid(instancesCacheFilename)
 	if isValid {
 		instancesFileContent, err := c.Get(instancesCacheFilename)
 		if err != nil {
 			return nil, err
 		}
-		var regionInfoMap instPkg.RegionInfoMap
-		err = json.Unmarshal([]byte(instancesFileContent), &regionInfoMap)
+		var globalInfo instPkg.GlobalInfo
+		err = json.Unmarshal([]byte(instancesFileContent), &globalInfo)
 		if err != nil {
 			return nil, err
 		}
-		return regionInfoMap, nil
+		return &globalInfo, nil
 	}
 	return nil, errors.New("instances not in cache")
 }
 
-func storeRegionInfoMapInCache(
-	regionInfoMap instPkg.RegionInfoMap,
+func storeGlobalInstanceInfoInCache(
+	globalInstanceInfo instPkg.GlobalInfo,
 	instancesCacheFilename string,
 	c *cache.Cache,
 ) error {
-	instancesFileContent, err := json.Marshal(regionInfoMap)
+	instancesFileContent, err := json.Marshal(globalInstanceInfo)
 	if err != nil {
 		return err
 	}

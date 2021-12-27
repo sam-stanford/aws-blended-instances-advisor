@@ -1,16 +1,10 @@
 package utils
 
 import (
-	"errors"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"math"
-	"net/http"
 	"os"
-	"path/filepath"
 	"reflect"
-	"time"
 
 	"github.com/google/uuid"
 
@@ -27,98 +21,6 @@ const (
 
 func GenerateUuid() string {
 	return uuid.NewString()
-}
-
-func FileToString(filepath string) (string, error) {
-	fileAsBytes, err := FileToBytes(filepath)
-	return string(fileAsBytes), err
-}
-
-func FileToBytes(filepath string) ([]byte, error) {
-	return ioutil.ReadFile(filepath)
-}
-
-func WriteBytesToFile(data []byte, filepath string) error {
-	return os.WriteFile(filepath, data, WRITE_PERMISSION_CODE)
-}
-
-// TODO: Test
-func WriteStringToFile(data string, filepath string) error {
-	return WriteBytesToFile([]byte(data), filepath)
-}
-
-// TODO: Test
-func DeleteFile(filepath string) error {
-	return os.Remove(filepath)
-}
-
-// TODO: Test
-func FileExists(filepath string) (bool, error) {
-	_, err := os.Stat(filepath)
-	if err == nil {
-		return true, nil
-	}
-	if errors.Is(err, os.ErrNotExist) {
-		return false, nil
-	}
-	return false, err
-}
-
-func GetCallerPath() (string, error) {
-	return os.Getwd()
-}
-
-// TODO: Rename
-func CreateFilepath(pathComponents ...string) (string, error) {
-	path := ""
-	for idx, component := range pathComponents {
-		path += component
-		if idx != len(pathComponents)-1 {
-			path += string(os.PathSeparator)
-		}
-	}
-	return AbsoluteFilepath(path)
-}
-
-// TODO: Test
-func AbsoluteFilepath(path string) (string, error) {
-	return filepath.Abs(path)
-}
-
-func DownloadFile(url string, filepath string) error {
-	// TODO: Check if file has changed using HEAD & checking for Last-Modified field
-
-	out, err := os.Create(filepath)
-	if err != nil {
-		return err
-	}
-
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	_, err = io.Copy(out, resp.Body)
-	return err
-}
-
-func GetHttpLastModified(url string) (time.Time, error) {
-	header, err := GetHttpHeader(url)
-	if err != nil {
-		return time.Now(), err
-	}
-
-	lastModifiedString := header.Get("Last-Modified")
-	return time.Parse(time.RFC1123, lastModifiedString)
-}
-
-func GetHttpHeader(url string) (http.Header, error) {
-	head, err := http.Head(url)
-	if err != nil {
-		return nil, err
-	}
-	return head.Header, nil
 }
 
 func StopProgramExecution(err error, exitCode int) {
@@ -221,4 +123,13 @@ func MinOfFloats(a, b float64) float64 {
 
 func MaxOfFloats(a, b float64) float64 {
 	return math.Max(a, b)
+}
+
+func StringSliceContains(slice []string, value string) bool {
+	for _, val := range slice {
+		if val == value {
+			return true
+		}
+	}
+	return false
 }

@@ -1,11 +1,11 @@
-package api
+package schema
 
 import (
+	types "aws-blended-instances-advisor/aws/types"
+	"aws-blended-instances-advisor/config"
+	instPkg "aws-blended-instances-advisor/instances"
+	"aws-blended-instances-advisor/utils"
 	"context"
-	types "ec2-test/aws/types"
-	"ec2-test/config"
-	instPkg "ec2-test/instances"
-	"ec2-test/utils"
 	"encoding/json"
 	"strconv"
 
@@ -33,12 +33,12 @@ func GetSpotInstances(
 	}
 
 	for _, region := range regions {
-		logger.Info("creating spot instances for region", zap.String("region", region.ToCodeString()))
+		logger.Info("creating spot instances for region", zap.String("region", region.CodeString()))
 
-		regionRevocationInfo, ok := regionRevocationInfoMap[region.ToCodeString()]
+		regionRevocationInfo, ok := regionRevocationInfoMap[region.CodeString()]
 		if !ok {
 			// TODO: Handle more gracefully
-			logger.Error("could not find region revocation info", zap.String("region", region.ToCodeString()))
+			logger.Error("could not find region revocation info", zap.String("region", region.CodeString()))
 			continue
 		}
 		logger.Debug("fetched revocation info")
@@ -48,7 +48,7 @@ func GetSpotInstances(
 			// TODO: Handle more gracefully
 			logger.Error(
 				"could not fetch region spot prices",
-				zap.String("region", region.ToCodeString()),
+				zap.String("region", region.CodeString()),
 				zap.Error(err),
 			)
 			return nil, err
@@ -82,7 +82,7 @@ func getSpotInstancePricesForRegion(
 	creds credentials.StaticCredentialsProvider,
 	logger *zap.Logger,
 ) ([]ec2Types.SpotPrice, error) {
-	awsConfig, err := createAwsConfig(region.ToCodeString(), creds)
+	awsConfig, err := createAwsConfig(region.CodeString(), creds)
 	if err != nil {
 		return nil, err
 	}
@@ -250,9 +250,7 @@ func createRegionSpotInstances(
 			continue
 		}
 
-		if cfg.ConsiderFreeInstances || instance.PricePerHour != 0 {
-			instances = append(instances, instance)
-		}
+		instances = append(instances, instance)
 	}
 
 	return instances, nil

@@ -1,130 +1,191 @@
 package advisor
 
 import (
-	"ec2-test/api"
-	awsTypes "ec2-test/aws/types"
-	instPkg "ec2-test/instances"
-	"ec2-test/utils"
+	"aws-blended-instances-advisor/api/schema"
+	awsTypes "aws-blended-instances-advisor/aws/types"
+	instPkg "aws-blended-instances-advisor/instances"
+	instSearch "aws-blended-instances-advisor/instances/search"
+	instSort "aws-blended-instances-advisor/instances/sort"
+	"aws-blended-instances-advisor/utils"
 	"fmt"
 )
 
 // TODO: Docs
-// TODO: Make all instance slices pointers
-// TODO: Rename to FocusAdvisor & create CustomAdvisor which takes specified weights
 // TODO: Use logger
 
 type WeightedAdvisor struct {
-	focus       api.AdvisorFocus
-	focusWeight float64
-	weights     instPkg.SortWeightings
+	weights instSort.SortWeights
 }
 
-func NewWeightedAdvisor(focus api.AdvisorFocus, focusWeight float64) WeightedAdvisor {
+func NewWeightedAdvisor(weights schema.AdvisorWeights) Advisor {
 	return WeightedAdvisor{
-		focus:       focus,
-		focusWeight: focusWeight,
-		weights:     instPkg.GetSortWeights(focus, focusWeight), // TODO: Rename this to be FocusAdvisor & have WeightedAdvisor be Custom
+		weights: instSort.NewSortWeightsFromApiWeights(weights),
 	}
 }
 
 func (advisor WeightedAdvisor) Advise(
-	regionInfoMap instPkg.RegionInfoMap,
-	services []api.Service,
-	regions []awsTypes.Region,
+	instancesInfo instPkg.GlobalInfo,
+	services []schema.Service,
+	options schema.Options,
 ) (
-	*api.Advice,
+	*schema.Advice,
 	error,
 ) {
-	advice := make(api.Advice) // TODO: Use NewAdvice here
-	globalAggregates := getGlobalAggregatesFromRegionInfoMap(regionInfoMap)
+	advice := make(schema.Advice)
 
-	for _, region := range regions {
-		info, ok := regionInfoMap[region]
+	awsRegions, err := awsTypes.NewRegions(options.Regions)
+	if err != nil {
+		return nil, utils.PrependToError(err, "could not parse regions")
+	}
+
+	for _, region := range awsRegions {
+		info, ok := instancesInfo.RegionInfoMap[region]
 		if !ok {
-			return nil, fmt.Errorf("region not in map: %s", region.ToCodeString())
+			return nil, fmt.Errorf("region not in map: %s", region.CodeString())
 		}
 
-		regionAdvice, err := advisor.AdviseForRegion(info, services)
+		regionAdvice, err := advisor.AdviseForRegion(info, services, options)
 		if err != nil {
 			return nil, err
 		}
 
-		regionAdvice.Score = advisor.ScoreRegionAdvice(regionAdvice, globalAggregates, services)
+		regionAdvice.Score = advisor.ScoreRegionAdvice(regionAdvice, instancesInfo.GlobalAggregates, services)
 
-		advice[region.ToCodeString()] = *regionAdvice
+		advice[region.CodeString()] = *regionAdvice
 	}
 
 	return &advice, nil
 }
 
-// TODO: Move to inst package?
-func getGlobalAggregatesFromRegionInfoMap(m instPkg.RegionInfoMap) instPkg.Aggregates {
-	aggs := []instPkg.Aggregates{}
-	for _, info := range m {
-		aggs = append(aggs, info.AllInstances.Aggregates)
-	}
-	return instPkg.CombineAggregates(aggs)
-}
-
+// TODO: Test
 func (advisor WeightedAdvisor) AdviseForRegion(
 	info instPkg.RegionInfo,
-	services []api.Service,
+	services []schema.Service,
+	options schema.Options,
 ) (
-	*api.RegionAdvice,
+	*schema.RegionAdvice,
 	error,
 ) {
-	advice := &api.RegionAdvice{}
+
+	permanentInstances := copyInstances(info.PermanentInstances)
+	transientInstances := copyInstances(info.TransientInstances)
+
+	if !options.ConsiderFreeInstances {
+		permanentInstances = removeFreeInstances(permanentInstances)
+		transientInstances = removeFreeInstances(transientInstances)
+	}
+
+	allInstances := append(permanentInstances, transientInstances...)
+
+	advice := &schema.RegionAdvice{}
 
 	for _, svc := range services {
 
-		// TODO: Need to avoid already used and re-use already suggested instances
-		// TODO: Do we need to re-calc aggregates...? Don't think so, but should justify
-
-		// TODO: Func (repeated code)
 		for i := 0; i < svc.MinInstances; i += 1 {
 			selectedInstance, err := advisor.selectInstanceForService(
-				info.PermanentInstances.Instances,
-				info.PermanentInstances.Aggregates,
+				permanentInstances,
+				info.PermanentAggregates,
 				svc,
+				options,
 			)
 			if err != nil {
 				return nil, err
 			}
-			advice.AddAssignment(svc.Name, selectedInstance)
+
+			advice.AddAssignment(svc.Name, selectedInstance.ToApiSchemaInstance())
+
+			// TODO: Don't seem to be sharing :(
+			if options.AvoidRepeatedInstanceTypes {
+				permanentInstances = removeInstanceFromSlice(permanentInstances, selectedInstance.Id)
+			}
+			if options.ShareInstancesBetweenServices {
+				permanentInstances = append(permanentInstances, createSharedInstance(selectedInstance, svc))
+			}
 		}
 
-		transientInstances := svc.TotalInstances - svc.MinInstances
-		for i := 0; i < transientInstances; i += 1 {
+		remainingInstanceCount := svc.TotalInstances - svc.MinInstances
+		for i := 0; i < remainingInstanceCount; i += 1 {
 			selectedInstance, err := advisor.selectInstanceForService(
-				info.AllInstances.Instances,
-				info.AllInstances.Aggregates,
+				allInstances,
+				info.RegionAggregates,
 				svc,
+				options,
 			)
 			if err != nil {
 				return nil, err
 			}
-			advice.AddAssignment(svc.Name, selectedInstance)
+
+			advice.AddAssignment(svc.Name, selectedInstance.ToApiSchemaInstance())
+
+			if options.AvoidRepeatedInstanceTypes {
+				allInstances = removeInstanceFromSlice(allInstances, selectedInstance.Id)
+				if isPermanentInstance(selectedInstance) {
+					permanentInstances = removeInstanceFromSlice(permanentInstances, selectedInstance.Id)
+				}
+			}
+			if options.ShareInstancesBetweenServices {
+				allInstances = append(allInstances, createSharedInstance(selectedInstance, svc))
+				if isPermanentInstance(selectedInstance) {
+					permanentInstances = append(permanentInstances, createSharedInstance(selectedInstance, svc))
+				}
+			}
 		}
 	}
 
-	// TODO: Calc some form of score
-
 	return advice, nil
+}
+
+func copyInstances(instances []*instPkg.Instance) []*instPkg.Instance {
+	new := []*instPkg.Instance{}
+	return append(new, instances...)
+}
+
+func removeFreeInstances(instances []*instPkg.Instance) []*instPkg.Instance {
+	filtered := []*instPkg.Instance{}
+	for _, inst := range instances {
+		if inst.PricePerHour > 0.0 {
+			filtered = append(filtered, inst)
+		}
+	}
+	return filtered
+}
+
+func removeInstanceFromSlice(slice []*instPkg.Instance, idToRemove string) []*instPkg.Instance {
+	new := []*instPkg.Instance{}
+	for _, inst := range slice {
+		if inst.Id != idToRemove {
+			new = append(new, inst)
+		}
+	}
+	return new
+}
+
+func isPermanentInstance(inst *instPkg.Instance) bool {
+	return inst.PricePerHour == 0
+}
+
+func createSharedInstance(inst *instPkg.Instance, assignedService schema.Service) *instPkg.Instance {
+	instanceToShare := inst.MakeCopy()
+	instanceToShare.MemoryGb = inst.MemoryGb - assignedService.MinMemory
+	instanceToShare.PricePerHour = 0 // Already purchased, so no cost
+	return instanceToShare
 }
 
 func (advisor WeightedAdvisor) selectInstanceForService(
 	instances []*instPkg.Instance,
 	aggregates instPkg.Aggregates,
-	svc api.Service,
-) (*api.Instance, error) {
+	svc schema.Service,
+	options schema.Options,
+) (*instPkg.Instance, error) {
 	searchStart, searchEnd := 0, len(instances)
+	var err error
 
 	// TODO: Different result when using --clear-cache as to when not
 
-	// TODO: Function appears non-determinate
+	// TODO: Function appears non-deterministic
 	// TODO: Function sometimes returns instance with less mem than min mem
 
-	searchStart, err := instPkg.SortAndFindMemory(
+	searchStart, err = instSearch.SortAndFindMemory(
 		instances,
 		svc.MinMemory,
 		searchStart,
@@ -134,7 +195,7 @@ func (advisor WeightedAdvisor) selectInstanceForService(
 		return nil, utils.PrependToError(err, "could not find memory in instance slice")
 	}
 
-	instPkg.SortInstancesWeightedWithVcpuLimiter(
+	instSort.SortInstancesWeightedWithVcpuLimiter(
 		instances,
 		aggregates,
 		searchStart,
@@ -143,14 +204,14 @@ func (advisor WeightedAdvisor) selectInstanceForService(
 		svc.MaxVcpu,
 	)
 
-	return instances[searchStart].ToApiInstance(), nil
+	return instances[searchStart], nil
 }
 
 // TODO: Test & Doc
 func (advisor WeightedAdvisor) ScoreRegionAdvice(
-	advice *api.RegionAdvice,
+	advice *schema.RegionAdvice,
 	globalAgg instPkg.Aggregates,
-	services []api.Service,
+	services []schema.Service,
 ) float64 {
 	vcpuScore, revocationProbScore, priceScore := 0.0, 0.0, 0.0
 	totalInstances := 0
@@ -159,7 +220,7 @@ func (advisor WeightedAdvisor) ScoreRegionAdvice(
 		assignedInstances := advice.GetAssignedInstancesForService(svc.Name)
 		for _, inst := range assignedInstances {
 			vcpuScore += calculateVcpuScore(inst, svc)
-			revocationProbScore += calculateRevocationProbScore(inst, globalAgg)
+			revocationProbScore += calculateRevocationProbScore(inst, svc, globalAgg)
 			priceScore += calculatePriceScore(inst, globalAgg)
 		}
 		totalInstances += len(assignedInstances)
@@ -170,7 +231,7 @@ func (advisor WeightedAdvisor) ScoreRegionAdvice(
 		(priceScore * advisor.weights.PriceWeight)) / float64(totalInstances)
 }
 
-func calculateVcpuScore(inst *api.Instance, svc api.Service) float64 {
+func calculateVcpuScore(inst *schema.Instance, svc schema.Service) float64 {
 	// Percentage of MaxVcpu
 	if inst.Vcpu >= svc.MaxVcpu {
 		return 1.0
@@ -178,13 +239,13 @@ func calculateVcpuScore(inst *api.Instance, svc api.Service) float64 {
 	return float64(inst.Vcpu) / float64(svc.MaxVcpu)
 }
 
-func calculateRevocationProbScore(inst *api.Instance, agg instPkg.Aggregates) float64 {
+func calculateRevocationProbScore(inst *schema.Instance, svc schema.Service, agg instPkg.Aggregates) float64 {
 	// Min-max scale
 	return 1 - ((inst.RevocationProbability - agg.MinRevocationProbability) /
 		(agg.MaxRevocationProbability - agg.MinRevocationProbability))
 }
 
-func calculatePriceScore(inst *api.Instance, agg instPkg.Aggregates) float64 {
+func calculatePriceScore(inst *schema.Instance, agg instPkg.Aggregates) float64 {
 	// Min-max scale
 	return 1 - ((inst.PricePerHour - agg.MinPricePerHour) /
 		(agg.MaxPricePerHour - agg.MinPricePerHour))

@@ -1,7 +1,7 @@
 package instances
 
 import (
-	"ec2-test/utils"
+	"aws-blended-instances-advisor/utils"
 	"testing"
 )
 

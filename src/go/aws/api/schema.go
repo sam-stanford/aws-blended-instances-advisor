@@ -1,11 +1,11 @@
-package api
+package schema
 
 // TODO: Rename these
 import (
-	types "ec2-test/aws/types"
-	"ec2-test/config"
-	instPkg "ec2-test/instances"
-	"ec2-test/utils"
+	types "aws-blended-instances-advisor/aws/types"
+	"aws-blended-instances-advisor/config"
+	instPkg "aws-blended-instances-advisor/instances"
+	"aws-blended-instances-advisor/utils"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -168,9 +168,7 @@ func parseOnDemandApiResponseToInstances(
 				continue
 			}
 
-			if cfg.ConsiderFreeInstances || instance.PricePerHour != 0 {
-				instances = append(instances, instance)
-			}
+			instances = append(instances, instance)
 		}
 	}
 

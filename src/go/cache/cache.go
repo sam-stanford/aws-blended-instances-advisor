@@ -1,7 +1,7 @@
 package cache
 
 import (
-	"ec2-test/utils"
+	"aws-blended-instances-advisor/utils"
 	"encoding/json"
 	"errors"
 	"fmt"

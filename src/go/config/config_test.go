@@ -24,22 +24,6 @@ func TestParseConfigValid(t *testing.T) {
 					Development: Credentials{AwsKeyId: "DEV_KEY_ID", AwsSecretKey: "DEV_SECRET_KEY"},
 					Test:        Credentials{AwsKeyId: "TEST_KEY_ID", AwsSecretKey: "TEST_SECRET_KEY"},
 				},
-				Constraints: Constraints{
-					Regions: []string{"eu-west-2", "ca-central-1"},
-					Services: []ServiceDescription{
-						{
-							Name:        "Test Service 1",
-							MinMemory:   16,
-							MaxVcpu:     4,
-							Focus:       "performance",
-							FocusWeight: 0.9,
-							Instances: ServiceDescriptionInstances{
-								MinimumCount: 0,
-								TotalCount:   2,
-							},
-						},
-					},
-				},
 				ApiConfig: ApiConfig{
 					Port: 123456,
 				},
@@ -47,9 +31,8 @@ func TestParseConfigValid(t *testing.T) {
 					Endpoints: Endpoints{
 						AwsSpotInstanceInfoUrl: "TEST_URL",
 					},
-					MaxInstancesToFetch:   1000,
-					DownloadsDir:          "TEST_DOWNLOADS_DIR",
-					ConsiderFreeInstances: true,
+					MaxInstancesToFetch: 1000,
+					DownloadsDir:        "TEST_DOWNLOADS_DIR",
 				},
 				CacheConfig: CacheConfig{
 					Dirpath: "TEST_CACHE_DIRPATH",
@@ -64,33 +47,6 @@ func TestParseConfigValid(t *testing.T) {
 					Development: Credentials{AwsKeyId: "DEV_KEY_ID", AwsSecretKey: "DEV_SECRET_KEY"},
 					Test:        Credentials{AwsKeyId: "TEST_KEY_ID", AwsSecretKey: "TEST_SECRET_KEY"},
 				},
-				Constraints: Constraints{
-					Regions: []string{"us-west-1"},
-					Services: []ServiceDescription{
-						{
-							Name:        "Test Service 1",
-							MinMemory:   4,
-							MaxVcpu:     1,
-							Focus:       "cost",
-							FocusWeight: 0.4,
-							Instances: ServiceDescriptionInstances{
-								MinimumCount: 1,
-								TotalCount:   3,
-							},
-						},
-						{
-							Name:        "Test Service 2",
-							MinMemory:   16,
-							MaxVcpu:     4,
-							Focus:       "balanced",
-							FocusWeight: 0.9,
-							Instances: ServiceDescriptionInstances{
-								MinimumCount: 0,
-								TotalCount:   2,
-							},
-						},
-					},
-				},
 				ApiConfig: ApiConfig{
 					Port: 54321,
 				},
@@ -98,9 +54,8 @@ func TestParseConfigValid(t *testing.T) {
 					Endpoints: Endpoints{
 						AwsSpotInstanceInfoUrl: "TEST_URL",
 					},
-					DownloadsDir:          "TEST_DOWNLOADS_DIR",
-					MaxInstancesToFetch:   1000,
-					ConsiderFreeInstances: false,
+					DownloadsDir:        "TEST_DOWNLOADS_DIR",
+					MaxInstancesToFetch: 1000,
 				},
 				CacheConfig: CacheConfig{
 					Dirpath: "TEST_CACHE_DIRPATH",
@@ -126,6 +81,9 @@ func TestParseConfigValid(t *testing.T) {
 }
 
 func TestParseConfigInvalid(t *testing.T) {
+
+	// TODO: Update tests
+
 	errorTests := map[string]invalidConfigTest{
 		"duplicate service names": {filepath: "testdata/invalid/duplicate-service-names.json"},
 		"empty service names":     {filepath: "testdata/invalid/empty-service-names.json"},

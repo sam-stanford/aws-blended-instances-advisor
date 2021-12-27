@@ -1,4 +1,4 @@
-package api
+package schema
 
 // TODO: Doc in README & point to README from here
 
@@ -27,8 +27,6 @@ func (ra *RegionAdvice) GetAssignedInstancesForService(serviceName string) []*In
 
 	return instances
 }
-
-// TODO: Use "NewAdvice" and "NewRegionAdvice" to instantiate maps rather than checking on each access
 
 // TODO: Doc & test
 func (ra *RegionAdvice) AddAssignment(serviceName string, instance *Instance) {

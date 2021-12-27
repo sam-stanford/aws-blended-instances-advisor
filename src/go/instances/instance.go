@@ -1,8 +1,8 @@
 package instances
 
 import (
-	"ec2-test/api"
-	awsTypes "ec2-test/aws/types"
+	"aws-blended-instances-advisor/api/schema"
+	awsTypes "aws-blended-instances-advisor/aws/types"
 )
 
 // TODO: Doc
@@ -19,16 +19,31 @@ type Instance struct {
 }
 
 // TODO: Doc
-func (inst *Instance) ToApiInstance() *api.Instance {
-	return &api.Instance{
+func (inst *Instance) ToApiSchemaInstance() *schema.Instance {
+	return &schema.Instance{
 		Id:                    inst.Id,
 		Name:                  inst.Name,
 		MemoryGb:              inst.MemoryGb,
 		Vcpu:                  inst.Vcpu,
-		Region:                inst.Region.ToCodeString(), // TODO: Rename to CodeString
+		Region:                inst.Region.CodeString(), // TODO: Rename to CodeString
 		AvailabilityZone:      inst.AvailabilityZone,
 		OperatingSystem:       inst.OperatingSystem.ToString(), // TODO: Rename to String
 		PricePerHour:          inst.PricePerHour,
 		RevocationProbability: inst.RevocationProbability,
+	}
+}
+
+// TODO: Doc
+func (inst *Instance) MakeCopy() *Instance {
+	return &Instance{
+		Id:                    inst.Id,
+		Name:                  inst.Name,
+		MemoryGb:              inst.MemoryGb,
+		Vcpu:                  inst.Vcpu,
+		Region:                inst.Region,
+		AvailabilityZone:      inst.AvailabilityZone,
+		OperatingSystem:       inst.OperatingSystem,
+		PricePerHour:          inst.PricePerHour,
+		RevocationProbability: inst.PricePerHour,
 	}
 }
