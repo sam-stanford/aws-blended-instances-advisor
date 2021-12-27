@@ -7,12 +7,11 @@ import (
 )
 
 type Service struct {
-	Name                  string  `json:"name"`
-	MinMemory             float64 `json:"minMemory"`
-	MaxVcpu               int     `json:"maxVcpu"`
-	RevocationSensitivity float64 `json:"revocationSensitivity"` // TODO: use
-	MinInstances          int     `json:"minInstances"`
-	TotalInstances        int     `json:"totalInstances"`
+	Name           string  `json:"name"`
+	MinMemory      float64 `json:"minMemory"`
+	MaxVcpu        int     `json:"maxVcpu"`
+	MinInstances   int     `json:"minInstances"`
+	TotalInstances int     `json:"totalInstances"`
 }
 
 // TODO: Doc, test
@@ -31,9 +30,6 @@ func (s *Service) Validate() error {
 	}
 	if s.MinInstances > s.TotalInstances {
 		return errors.New("minInstances is greater than totalInstances")
-	}
-	if s.RevocationSensitivity <= 0 {
-		return errors.New("revocationSensitivity is not positive")
 	}
 	return nil
 }

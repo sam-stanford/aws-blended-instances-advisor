@@ -159,7 +159,7 @@ func TestSortInstancesByOperatingSystem(t *testing.T) {
 }
 
 func TestSortInstancesByRegion(t *testing.T) {
-	i0 := &Instance{Name: "0", Region: awsTypes.ApEast1}
+	i0 := &Instance{Name: "0", Region: awsTypes.ApNorthEast1}
 	i1 := &Instance{Name: "1", Region: awsTypes.EuNorth1}
 	i2 := &Instance{Name: "2", Region: awsTypes.UsEast1}
 	i3 := &Instance{Name: "3", Region: awsTypes.UsWest2}

@@ -6,7 +6,6 @@ import (
 	"aws-blended-instances-advisor/config"
 	instPkg "aws-blended-instances-advisor/instances"
 	"context"
-	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
@@ -24,34 +23,31 @@ const (
 
 // TODO: Doc comment & use go routines to parallelise fetches
 
-func GetInstancesRegionInfoMap(
+func GetInstancesAndInfo(
 	apiConfig *config.AwsApiConfig,
-	regions []types.Region,
 	creds *config.Credentials,
 	cache *cache.Cache,
 	logger *zap.Logger,
 ) (
-	instPkg.RegionInfoMap,
+	*instPkg.GlobalInfo,
 	error,
 ) {
 
-	fmt.Println("\n\nREGIONS:\n", regions)
+	regions := types.GetAllRegions()
 
-	regionInfoMap, err := getRegionInfoMapFromCache(INSTANCES_CACHE_FILENAME, cache)
+	globalInstanceInfo, err := getGlobalInstanceInfoFromCache(INSTANCES_CACHE_FILENAME, cache)
 	if err != nil {
 		logger.Info("no instances found in cache", zap.String("reason", err.Error()))
 	} else {
-		// TODO: Func wrapper for count log & validate fetched instances (or maybe do this in a test )
-		for _, region := range regions {
-			logger.Info(
-				"instances fetched from cache",
-				zap.String("region", region.CodeString()),
-				zap.Int("allInstancesCount", len(regionInfoMap[region].AllInstances.Instances)),
-				zap.Int("permanentInstanceCount", len(regionInfoMap[region].PermanentInstances.Instances)),
-			)
+		err = globalInstanceInfo.Validate()
+		if err == nil {
+			globalInstanceInfo.Log("instances and info fetched from cache", logger)
+			return globalInstanceInfo, nil
 		}
-		return regionInfoMap, nil
+		logger.Warn("invalid instances cache", zap.Error(err))
 	}
+
+	logger.Info("fetching instances from AWS API")
 
 	awsCreds := createAwsCredentials(creds)
 
@@ -66,24 +62,17 @@ func GetInstancesRegionInfoMap(
 		return nil, err
 	}
 
-	regionInfoMap = createRegionInfoMap(onDemandInstances, spotInstances, regions)
-	err = storeRegionInfoMapInCache(regionInfoMap, INSTANCES_CACHE_FILENAME, cache)
+	globalInfo := instPkg.CreateGlobalInfo(onDemandInstances, spotInstances, regions)
+
+	err = storeGlobalInstanceInfoInCache(globalInfo, INSTANCES_CACHE_FILENAME, cache)
 	if err != nil {
 		logger.Error("failed to store instances in cache", zap.Error(err))
 		return nil, err
 	}
 
-	// TODO: Func wrapper for count log
-	for _, region := range regions {
-		logger.Info(
-			"stored instances in cache",
-			zap.String("region", region.CodeString()),
-			zap.Int("allInstancesCount", len(regionInfoMap[region].AllInstances.Instances)),
-			zap.Int("permanentInstanceCount", len(regionInfoMap[region].PermanentInstances.Instances)),
-		)
-	}
+	globalInfo.Log("stored instances in cache", logger)
 
-	return regionInfoMap, nil
+	return &globalInfo, nil
 }
 
 func createAwsCredentials(creds *config.Credentials) credentials.StaticCredentialsProvider {
@@ -107,19 +96,4 @@ func createAwsPricingClient(awsCredentials credentials.StaticCredentialsProvider
 		Region:      AWS_PRICING_API_REGION,
 		Credentials: awsCredentials,
 	})
-}
-
-func createRegionInfoMap(
-	onDemandInstances map[types.Region][]*instPkg.Instance,
-	spotInstances map[types.Region][]*instPkg.Instance,
-	regions []types.Region,
-) instPkg.RegionInfoMap {
-
-	regionInfoMap := make(instPkg.RegionInfoMap)
-	for _, region := range regions {
-
-		thisRegionInfo := instPkg.CreateRegionInfo(onDemandInstances[region], spotInstances[region])
-		regionInfoMap[region] = thisRegionInfo
-	}
-	return regionInfoMap
 }

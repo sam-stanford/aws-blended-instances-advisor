@@ -2,31 +2,32 @@ package advisor
 
 import (
 	"aws-blended-instances-advisor/api/schema"
-	"aws-blended-instances-advisor/instances"
+	instPkg "aws-blended-instances-advisor/instances"
 )
 
 type Advisor interface {
 	Advise(
-		instances.RegionInfoMap,
-		[]schema.Service,
-		schema.Options,
+		instancesInfo instPkg.GlobalInfo,
+		services []schema.Service,
+		options schema.Options,
 	) (
 		*schema.Advice,
 		error,
 	)
 
 	AdviseForRegion(
-		instances.RegionInfo,
-		[]schema.Service,
+		info instPkg.RegionInfo,
+		services []schema.Service,
+		options schema.Options,
 	) (
 		*schema.RegionAdvice,
 		error,
 	)
 
 	ScoreRegionAdvice(
-		*schema.RegionAdvice,
-		instances.Aggregates,
-		[]schema.Service,
+		advice *schema.RegionAdvice,
+		globalAgg instPkg.Aggregates,
+		services []schema.Service,
 	) float64
 }
 

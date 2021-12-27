@@ -62,7 +62,7 @@ func SortInstancesByRegion(instances []*Instance, startIndex, endIndex int) {
 
 // TODO: Test / remove ?
 // Sorts a given slice of Instances in place from startIndex (inclusive) to endIndex (exclusive)
-// in increasing order of their score calculated from the provided weightings and aggregates.
+// in increasing order of their score calculated from the provided weights and aggregates.
 func SortInstancesWeighted(
 	instances []*Instance,
 	aggregates Aggregates,
@@ -86,7 +86,7 @@ func SortInstancesWeighted(
 }
 
 // Sorts a given slice of Instances in place from startIndex (inclusive) to endIndex (exclusive)
-// in increasing order of their score calculated from the provided weightings and aggregates, with
+// in increasing order of their score calculated from the provided weights and aggregates, with
 // a limiter applied to instances' VCPUs after they exceed a maximum.
 func SortInstancesWeightedWithVcpuLimiter(
 	instances []*Instance,
@@ -117,15 +117,15 @@ func SortInstancesWeightedWithVcpuLimiter(
 func CalculateInstanceScoreFromWeights(
 	instance *Instance,
 	aggregates Aggregates,
-	weightings SortWeights, // TODO: Rename all "weightings" to "weights"
+	weights SortWeights,
 ) float64 {
 	normalisedVcpu := aggregates.NormaliseVcpu(instance.Vcpu)
 	normalisedRp := aggregates.NormaliseRevocationProbability(instance.RevocationProbability)
 	normalisedPrice := aggregates.NormalisePricePerHour(instance.PricePerHour)
 
-	return weightings.VcpuWeight*normalisedVcpu +
-		weightings.RevocationProbabilityWeight*normalisedRp +
-		weightings.PriceWeight*normalisedPrice
+	return weights.VcpuWeight*normalisedVcpu +
+		weights.RevocationProbabilityWeight*normalisedRp +
+		weights.PriceWeight*normalisedPrice
 }
 
 // TODO: Doc & test
@@ -133,7 +133,7 @@ func CalculateInstanceScoreFromWeights(
 func CalculateInstanceScoreFromWeightsWithVcpuLimiter(
 	instance *Instance,
 	aggregates Aggregates,
-	weightings SortWeights,
+	weights SortWeights,
 	maxVcpu int,
 ) float64 {
 	// TODO: Can we not just use modulo here?
@@ -141,14 +141,14 @@ func CalculateInstanceScoreFromWeightsWithVcpuLimiter(
 		return calculatedInstanceScoreFromWeightsWithFixedVcpu(
 			instance,
 			aggregates,
-			weightings,
+			weights,
 			maxVcpu,
 		)
 	}
 	return CalculateInstanceScoreFromWeights(
 		instance,
 		aggregates,
-		weightings,
+		weights,
 	)
 }
 

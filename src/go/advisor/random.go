@@ -12,7 +12,7 @@ func NewRandomAdvisor() Advisor {
 }
 
 func (a RandomAdvisor) Advise(
-	instances instPkg.RegionInfoMap,
+	instancesInfo instPkg.GlobalInfo,
 	services []schema.Service,
 	options schema.Options,
 ) (
@@ -24,8 +24,9 @@ func (a RandomAdvisor) Advise(
 }
 
 func (a RandomAdvisor) AdviseForRegion(
-	regionInfo instPkg.RegionInfo,
+	info instPkg.RegionInfo,
 	services []schema.Service,
+	options schema.Options,
 ) (
 	*schema.RegionAdvice,
 	error,
@@ -36,7 +37,7 @@ func (a RandomAdvisor) AdviseForRegion(
 
 func (a RandomAdvisor) ScoreRegionAdvice(
 	advice *schema.RegionAdvice,
-	globalAggregates instPkg.Aggregates,
+	globalAgg instPkg.Aggregates,
 	services []schema.Service,
 ) float64 {
 	// TODO

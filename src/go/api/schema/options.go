@@ -5,10 +5,11 @@ import (
 )
 
 type Options struct {
-	AvoidRepeatedInstanceTypes    bool     `json:"avoidRepeatedInstanceTypes"`
-	ShareInstancesBetweenServices bool     `json:"shareInstancesBetweenServices"`
-	ConsiderFreeInstances         bool     `json:"considerFreeInstances"`
-	Regions                       []string `json:"regions"`
+	AvoidRepeatedInstanceTypes       bool     `json:"avoidRepeatedInstanceTypes"`
+	ShareInstancesBetweenServices    bool     `json:"shareInstancesBetweenServices"`
+	ConsiderFreeInstances            bool     `json:"considerFreeInstances"`
+	ShareInstancesBetweenSameService bool     `json:"shareInstancesBetweenSameService"` // TODO: Implement
+	Regions                          []string `json:"regions"`
 }
 
 // TODO: Test & doc

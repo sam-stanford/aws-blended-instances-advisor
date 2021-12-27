@@ -27,9 +27,8 @@ func main() {
 	cache := createCache(config.CacheConfig.Dirpath, clf.clearCache, logger)
 	creds := getCredentialsForMode(clf.productionMode, config)
 
-	regionInstancesMap, err := awsApi.GetInstancesRegionInfoMap(
+	instancesInfo, err := awsApi.GetInstancesAndInfo(
 		&config.AwsApiConfig,
-		config.Constraints.GetRegions(),
 		&creds,
 		cache,
 		logger,
@@ -42,7 +41,7 @@ func main() {
 		&config.ApiConfig,
 		logger,
 		func(advisorInfo schema.Advisor, services []schema.Service, options schema.Options) (*schema.Advice, error) {
-			return advisor.New(advisorInfo).Advise(regionInstancesMap, services, options)
+			return advisor.New(advisorInfo).Advise(*instancesInfo, services, options)
 		},
 	)
 }

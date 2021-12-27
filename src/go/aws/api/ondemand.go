@@ -71,6 +71,7 @@ func getRegionToOnDemandInstancesMap(
 
 			logger.Info(
 				"parsed on-demand instances",
+				zap.String("region", region.CodeString()),
 				zap.Int("parsedCount", len(parsedInstances)),
 				zap.Int("skippedCount", len(resp.PriceList)-len(parsedInstances)),
 			)
@@ -88,7 +89,7 @@ func getRegionToOnDemandInstancesMap(
 		}
 
 		logger.Info(
-			"fetched on-demand instances for region",
+			"finished fetching on-demand instances for region",
 			zap.String("region", region.CodeString()),
 			zap.Int("totalInstanceCount", total),
 			zap.Int("maxInstanceCount", total),

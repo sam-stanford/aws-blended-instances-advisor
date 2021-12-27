@@ -9,8 +9,6 @@ const (
 	UsEast2
 	UsWest1
 	UsWest2
-	AfSouth1
-	ApEast1
 	ApSouth1
 	ApNorthEast3
 	ApNorthEast2
@@ -21,10 +19,8 @@ const (
 	EuCentral1
 	EuWest1
 	EuWest2
-	EuSouth1
 	EuWest3
 	EuNorth1
-	MeSouth1
 	SaEast1
 )
 
@@ -50,10 +46,6 @@ func (region Region) CodeString() string {
 		return "us-west-1"
 	case UsWest2:
 		return "us-west-2"
-	case AfSouth1:
-		return "af-south-1"
-	case ApEast1:
-		return "ap-east-1"
 	case ApSouth1:
 		return "ap-south-1"
 	case ApNorthEast3:
@@ -76,12 +68,8 @@ func (region Region) CodeString() string {
 		return "eu-west-2"
 	case EuWest3:
 		return "eu-west-3"
-	case EuSouth1:
-		return "eu-south-1"
 	case EuNorth1:
 		return "eu-north-1"
-	case MeSouth1:
-		return "me-south-1"
 	case SaEast1:
 		return "sa-east-1"
 	default:
@@ -100,10 +88,6 @@ func (region Region) NameString() string {
 		return "US West (N. California)"
 	case UsWest2:
 		return "US West (Oregon)"
-	case AfSouth1:
-		return "Africa (Cape Town)"
-	case ApEast1:
-		return "Asia Pacific (Hong Kong)"
 	case ApSouth1:
 		return "Asia Pacific (Mumbai)"
 	case ApNorthEast3:
@@ -119,21 +103,17 @@ func (region Region) NameString() string {
 	case CaCentral1:
 		return "Canada (Central)"
 	case EuCentral1:
-		return "Europe (Frankfurt)"
+		return "EU (Frankfurt)"
 	case EuWest1:
-		return "Europe (Ireland)"
+		return "EU (Ireland)"
 	case EuWest2:
-		return "Europe (London)"
+		return "EU (London)"
 	case EuWest3:
-		return "Europe (Paris)"
-	case EuSouth1:
-		return "Europe (Milan)"
+		return "EU (Paris)"
 	case EuNorth1:
-		return "Europe (Stockholm)"
-	case MeSouth1:
-		return "Middle East (Bahrain)"
+		return "EU (Stockholm)"
 	case SaEast1:
-		return "South America (São Paulo)"
+		return "South America (Sao Paulo)"
 	default:
 		return "NO_REGION"
 	}
@@ -150,10 +130,6 @@ func NewRegion(value string) (Region, error) {
 		return UsWest1, nil
 	case "us-west-2", "US West (Oregon)":
 		return UsWest2, nil
-	case "af-south-1", "Africa (Cape Town)":
-		return AfSouth1, nil
-	case "ap-east-1", "Asia Pacific (Hong Kong)":
-		return ApEast1, nil
 	case "ap-south-1", "Asia Pacific (Mumbai)":
 		return ApSouth1, nil
 	case "ap-northeast-3", "Asia Pacific (Osaka)":
@@ -168,21 +144,17 @@ func NewRegion(value string) (Region, error) {
 		return ApSouthEast1, nil
 	case "ca-central-1", "Canada (Central)":
 		return CaCentral1, nil
-	case "eu-central-1", "Europe (Frankfurt)":
+	case "eu-central-1", "Europe (Frankfurt)", "EU (Frankfurt)":
 		return EuCentral1, nil
-	case "eu-west-1", "Europe (Ireland)":
+	case "eu-west-1", "Europe (Ireland)", "EU (Ireland)":
 		return EuWest1, nil
-	case "eu-west-2", "Europe (London)":
+	case "eu-west-2", "Europe (London)", "EU (London)":
 		return EuWest2, nil
-	case "eu-west-3", "Europe (Paris)":
+	case "eu-west-3", "Europe (Paris)", "EU (Paris)":
 		return EuWest3, nil
-	case "eu-south-1", "Europe (Milan)":
-		return EuSouth1, nil
-	case "eu-north-1", "Europe (Stockholm)":
+	case "eu-north-1", "Europe (Stockholm)", "EU (Stockholm)":
 		return EuNorth1, nil
-	case "me-south-1", "Middle East (Bahrain)":
-		return MeSouth1, nil
-	case "sa-east-1", "South America (São Paulo)":
+	case "sa-east-1", "South America (Sao Paulo)":
 		return SaEast1, nil
 	}
 

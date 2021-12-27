@@ -43,6 +43,7 @@ func writeRegionsResponse(
 	resp schema.RegionsResponse,
 	logger *zap.Logger,
 ) error {
+
 	respBody, err := json.Marshal(resp)
 	if err != nil {
 		return utils.PrependToError(err, "could not marshal advice into JSON")

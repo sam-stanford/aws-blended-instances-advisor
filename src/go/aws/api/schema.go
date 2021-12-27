@@ -168,9 +168,7 @@ func parseOnDemandApiResponseToInstances(
 				continue
 			}
 
-			if cfg.ConsiderFreeInstances || instance.PricePerHour != 0 {
-				instances = append(instances, instance)
-			}
+			instances = append(instances, instance)
 		}
 	}
 

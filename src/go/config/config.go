@@ -77,7 +77,6 @@ func (c *Config) String() string { // TODO: Use in main logging
 	noCredsConfig := &Config{
 		ApiConfig:   c.ApiConfig,
 		CacheConfig: c.CacheConfig,
-		Credentials: c.Credentials,
 	}
 
 	jsonBytes, _ := json.Marshal(noCredsConfig)

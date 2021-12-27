@@ -32,3 +32,18 @@ func (inst *Instance) ToApiSchemaInstance() *schema.Instance {
 		RevocationProbability: inst.RevocationProbability,
 	}
 }
+
+// TODO: Doc
+func (inst *Instance) MakeCopy() *Instance {
+	return &Instance{
+		Id:                    inst.Id,
+		Name:                  inst.Name,
+		MemoryGb:              inst.MemoryGb,
+		Vcpu:                  inst.Vcpu,
+		Region:                inst.Region,
+		AvailabilityZone:      inst.AvailabilityZone,
+		OperatingSystem:       inst.OperatingSystem,
+		PricePerHour:          inst.PricePerHour,
+		RevocationProbability: inst.PricePerHour,
+	}
+}
