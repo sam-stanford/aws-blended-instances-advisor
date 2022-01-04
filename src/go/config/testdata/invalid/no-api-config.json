@@ -3,9 +3,12 @@
     "awsKeyId": "KEY_ID",
     "awsSecretKey": "SECRET_KEY"
   },
-  "api": {
-    "port": 123456,
-    "allowedDomains": ["https://test.com:3000"]
+  "awsApi": {
+    "endpoints": {
+      "awsSpotInstanceInfoUrl": "TEST_URL"
+    },
+    "maxInstancesToFetch": 1000,
+    "downloadsDir": "TEST_DOWNLOADS_DIR"
   },
   "cache": {
     "dirpath": "TEST_CACHE_DIRPATH",

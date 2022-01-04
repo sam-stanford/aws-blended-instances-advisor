@@ -1,6 +1,6 @@
 package schema
 
-// TODO: Doc in README & point to README from here
+import "aws-blended-instances-advisor/utils"
 
 type Advice map[string]RegionAdvice
 
@@ -15,7 +15,8 @@ type Assignments struct {
 	InstancesToServices map[string][]string `json:"instancesToServices"`
 }
 
-// TODO: Doc & test
+// GetAssignedInstancesForService returns the list of Instance IDs which are assigned to a Service
+// in a RegionAdvice.
 func (ra *RegionAdvice) GetAssignedInstancesForService(serviceName string) []*Instance {
 	instances := []*Instance{}
 	assignedIds := ra.Assignments.ServicesToInstances[serviceName]
@@ -28,7 +29,8 @@ func (ra *RegionAdvice) GetAssignedInstancesForService(serviceName string) []*In
 	return instances
 }
 
-// TODO: Doc & test
+// AddAssignment adds the required information to a RegionAdvicce for a Service to be
+// considered "assigned" to an Instance and vice versa.
 func (ra *RegionAdvice) AddAssignment(serviceName string, instance *Instance) {
 	if ra.Instances == nil {
 		ra.Instances = map[string]*Instance{
@@ -47,7 +49,7 @@ func (a *Assignments) add(serviceName string, instanceId string) {
 			instanceId: {serviceName},
 		}
 	} else {
-		a.InstancesToServices[instanceId] = appendStringIfNotInSlice(a.InstancesToServices[instanceId], serviceName)
+		a.InstancesToServices[instanceId] = utils.AppendStringIfNotInSlice(a.InstancesToServices[instanceId], serviceName)
 	}
 
 	if a.ServicesToInstances == nil {
@@ -55,22 +57,6 @@ func (a *Assignments) add(serviceName string, instanceId string) {
 			serviceName: {instanceId},
 		}
 	} else {
-		a.ServicesToInstances[serviceName] = appendStringIfNotInSlice(a.ServicesToInstances[serviceName], instanceId)
+		a.ServicesToInstances[serviceName] = utils.AppendStringIfNotInSlice(a.ServicesToInstances[serviceName], instanceId)
 	}
-}
-
-// TODO: Move to utils & test
-func appendStringIfNotInSlice(slice []string, s string) []string {
-	inSlice := false
-	for i := range slice {
-		if slice[i] == s {
-			inSlice = true
-			break
-		}
-	}
-
-	if !inSlice {
-		return append(slice, s)
-	}
-	return slice
 }

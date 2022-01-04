@@ -134,30 +134,6 @@ func TestSortInstancesByRevocationProbability(t *testing.T) {
 	}
 }
 
-func TestSortInstancesByOperatingSystem(t *testing.T) {
-	i0 := &Instance{Name: "0", OperatingSystem: awsTypes.Linux}
-	i1 := &Instance{Name: "1", OperatingSystem: awsTypes.Windows}
-
-	sortedSlice := []*Instance{i0, i1}
-
-	tests := []instanceSortTest{
-		{instances: []*Instance{i0, i1}, start: 0, end: 2, expected: sortedSlice},
-		{instances: []*Instance{i1, i0}, start: 0, end: 2, expected: sortedSlice},
-	}
-
-	for index, test := range tests {
-		SortInstancesByOperatingSystem(test.instances, test.start, test.end)
-		if !reflect.DeepEqual(test.instances, test.expected) {
-			t.Fatalf(
-				"Instances are not sorted correctly for test %d. Wanted: %+v, got: %+v",
-				index,
-				test.instances,
-				test.expected,
-			)
-		}
-	}
-}
-
 func TestSortInstancesByRegion(t *testing.T) {
 	i0 := &Instance{Name: "0", Region: awsTypes.ApNorthEast1}
 	i1 := &Instance{Name: "1", Region: awsTypes.EuNorth1}

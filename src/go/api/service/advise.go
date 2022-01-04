@@ -40,20 +40,7 @@ func getAdviseEndpointHandler(
 
 		switch r.Method {
 		case "OPTIONS":
-			allowedMethods := "OPTIONS, POST"
-			allowedHeaders := getAllowedHeaders()
-			w.Header().Set("Access-Control-Allow-Methods", allowedMethods)
-			w.Header().Set("Access-Control-Allow-Headers", allowedHeaders)
-
-			logger.Info(
-				"added headers to response",
-				zap.String("requestId", reqId),
-				zap.String("Access-Control-Allow-Methods", allowedMethods),
-				zap.String("Access-Control-Allow-Headers", allowedHeaders),
-			)
-
-			w.WriteHeader(http.StatusOK)
-			logger.Info("responded to request", zap.String("requestId", reqId))
+			adviseEndpointOptionsHandler(w, r, reqId, logger)
 			return
 
 		case "POST":
@@ -65,6 +52,28 @@ func getAdviseEndpointHandler(
 			return
 		}
 	}
+}
+
+func adviseEndpointOptionsHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+	reqId string,
+	logger *zap.Logger,
+) {
+	allowedMethods := "OPTIONS, POST"
+	allowedHeaders := getAllowedHeaders()
+	w.Header().Set("Access-Control-Allow-Methods", allowedMethods)
+	w.Header().Set("Access-Control-Allow-Headers", allowedHeaders)
+
+	logger.Info(
+		"added headers to response",
+		zap.String("requestId", reqId),
+		zap.String("Access-Control-Allow-Methods", allowedMethods),
+		zap.String("Access-Control-Allow-Headers", allowedHeaders),
+	)
+
+	w.WriteHeader(http.StatusOK)
+	logger.Info("responded to request", zap.String("requestId", reqId))
 }
 
 func adviseEndpointPostHandler(
@@ -117,7 +126,7 @@ func adviseEndpointPostHandler(
 func parseRequest(r *http.Request, reqId string, logger *zap.Logger) (*schema.AdviseRequest, error) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		return nil, utils.PrependToError(err, "could not read request body") // TODO: Good for log, unhelpful to client
+		return nil, utils.PrependToError(err, "could not read request body")
 	}
 
 	logger.Info(
@@ -129,10 +138,13 @@ func parseRequest(r *http.Request, reqId string, logger *zap.Logger) (*schema.Ad
 	var req schema.AdviseRequest
 	err = json.Unmarshal(body, &req)
 	if err != nil {
-		return nil, utils.PrependToError(err, "could not parse body JSON") // TODO: GOod for log, Unhelpful to client
+		return nil, utils.PrependToError(err, "could not parse body JSON")
 	}
 
-	err = req.Validate() // TODO
+	err = req.Validate()
+	if err != nil {
+		return nil, utils.PrependToError(err, "invalid request")
+	}
 
 	return &req, nil
 }

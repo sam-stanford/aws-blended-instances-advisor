@@ -1,4 +1,4 @@
-package schema
+package api
 
 import (
 	"aws-blended-instances-advisor/cache"

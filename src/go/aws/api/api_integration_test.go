@@ -1,7 +1,7 @@
 //go:build integration
 // +build integration
 
-package schema
+package api
 
 import (
 	"aws-blended-instances-advisor/aws/types"
@@ -14,14 +14,12 @@ import (
 	"time"
 )
 
-// TODO: Move to testdata directory
 const (
 	CONFIG_FILEPATH          = "../../../../config.json"
-	CONFIG_API_DOWNLOADS_DIR = "../../../../assets/downloads/"
-	CACHE_FILEPATH           = "../../../../assets/test/test-api-cache"
-	MAX_INSTANCES            = 100
+	CONFIG_API_DOWNLOADS_DIR = "testdata/downloads"
+	CACHE_FILEPATH           = "testdata/cache"
 	REGION1                  = "us-west-1"
-	REGION2                  = "ca-central-1" // TODO: Why no on-demand for "eu-west-2"
+	REGION2                  = "ca-central-1"
 )
 
 func getTestRegions() (*types.Region, *types.Region, error) {

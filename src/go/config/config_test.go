@@ -19,13 +19,10 @@ func TestParseConfigValid(t *testing.T) {
 		{
 			filepath: "testdata/valid/config-1.json",
 			expected: Config{
-				Credentials: CredentialsList{
-					Production:  Credentials{AwsKeyId: "PROD_KEY_ID", AwsSecretKey: "PROD_SECRET_KEY"},
-					Development: Credentials{AwsKeyId: "DEV_KEY_ID", AwsSecretKey: "DEV_SECRET_KEY"},
-					Test:        Credentials{AwsKeyId: "TEST_KEY_ID", AwsSecretKey: "TEST_SECRET_KEY"},
-				},
+				Credentials: Credentials{AwsKeyId: "KEY_ID", AwsSecretKey: "SECRET_KEY"},
 				ApiConfig: ApiConfig{
-					Port: 123456,
+					AllowedDomains: []string{"https://test.com:3000"},
+					Port:           123456,
 				},
 				AwsApiConfig: AwsApiConfig{
 					Endpoints: Endpoints{
@@ -35,20 +32,18 @@ func TestParseConfigValid(t *testing.T) {
 					DownloadsDir:        "TEST_DOWNLOADS_DIR",
 				},
 				CacheConfig: CacheConfig{
-					Dirpath: "TEST_CACHE_DIRPATH",
+					Dirpath:         "TEST_CACHE_DIRPATH",
+					DefaultLifetime: 100,
 				},
 			},
 		},
 		{
 			filepath: "testdata/valid/config-2.json",
 			expected: Config{
-				Credentials: CredentialsList{
-					Production:  Credentials{AwsKeyId: "PROD_KEY_ID", AwsSecretKey: "PROD_SECRET_KEY"},
-					Development: Credentials{AwsKeyId: "DEV_KEY_ID", AwsSecretKey: "DEV_SECRET_KEY"},
-					Test:        Credentials{AwsKeyId: "TEST_KEY_ID", AwsSecretKey: "TEST_SECRET_KEY"},
-				},
+				Credentials: Credentials{AwsKeyId: "KEY_ID_2", AwsSecretKey: "SECRET_KEY_2"},
 				ApiConfig: ApiConfig{
-					Port: 54321,
+					Port:           54321,
+					AllowedDomains: []string{"http://some.domain.com"},
 				},
 				AwsApiConfig: AwsApiConfig{
 					Endpoints: Endpoints{
@@ -58,7 +53,8 @@ func TestParseConfigValid(t *testing.T) {
 					MaxInstancesToFetch: 1000,
 				},
 				CacheConfig: CacheConfig{
-					Dirpath: "TEST_CACHE_DIRPATH",
+					Dirpath:         "TEST_CACHE_DIRPATH",
+					DefaultLifetime: 200,
 				},
 			},
 		},
@@ -85,13 +81,10 @@ func TestParseConfigInvalid(t *testing.T) {
 	// TODO: Update tests
 
 	errorTests := map[string]invalidConfigTest{
-		"duplicate service names": {filepath: "testdata/invalid/duplicate-service-names.json"},
-		"empty service names":     {filepath: "testdata/invalid/empty-service-names.json"},
-		"invalid focus":           {filepath: "testdata/invalid/invalid-focus.json"},
-		"invalid regions":         {filepath: "testdata/invalid/invalid-regions.json"},
-		"no API config":           {filepath: "testdata/invalid/no-aws-api-config.json"},
-		"no credentials":          {filepath: "testdata/invalid/no-credentials.json"},
-		"no regions":              {filepath: "testdata/invalid/no-regions.json"},
+		"no AWS API config": {filepath: "testdata/invalid/no-aws-api-config.json"},
+		"no credentials":    {filepath: "testdata/invalid/no-credentials.json"},
+		"no API config":     {filepath: "testdata/invalid/no-api-config.json"},
+		"no cache config":   {filepath: "testdata/invalid/no-cache-config.json"},
 	}
 
 	for name, test := range errorTests {

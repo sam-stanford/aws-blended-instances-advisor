@@ -25,4 +25,251 @@ func TestCreateMockLogger(t *testing.T) {
 	logger.Info("") // Should not throw error
 }
 
-// TODO: Test empty field checker
+type validateIndexesTest struct {
+	sliceLength, start, end int
+	shouldError             bool
+}
+
+func TestValidateIndexes(t *testing.T) {
+	tests := map[string]validateIndexesTest{
+		"valid": {
+			sliceLength: 4,
+			start:       0,
+			end:         2,
+			shouldError: false,
+		},
+		"valid, full slice": {
+			sliceLength: 2,
+			start:       0,
+			end:         2,
+			shouldError: false,
+		},
+		"subslice length 0": {
+			sliceLength: 1,
+			start:       1,
+			end:         1,
+			shouldError: true,
+		},
+		"start after end": {
+			sliceLength: 4,
+			start:       3,
+			end:         2,
+			shouldError: true,
+		},
+	}
+
+	for name, test := range tests {
+		err := ValidateIndexes(test.sliceLength, test.start, test.end)
+		isError := err != nil
+		if isError != test.shouldError {
+			if test.shouldError {
+				t.Fatalf("Test \"%s\" did not error when it should have", name)
+			} else {
+				t.Fatalf("Test \"%s\" errored when it should not have", name)
+			}
+		}
+	}
+}
+
+type anyFieldsAreEmptyTestType struct {
+	testInt    int
+	testFloat  float64
+	testString string
+	testBytes  []byte
+}
+
+type anyFieldsAreEmptyTest struct {
+	value        anyFieldsAreEmptyTestType
+	wantedResult bool
+	wantedField  string
+}
+
+func TestAnyFieldsAreEmpty(t *testing.T) {
+	tests := map[string]anyFieldsAreEmptyTest{
+		"0 int not considered empty": {
+			value: anyFieldsAreEmptyTestType{
+				testInt:    0,
+				testFloat:  10,
+				testString: "test",
+				testBytes:  []byte("test"),
+			}, wantedResult: false,
+			wantedField: "",
+		},
+		"0 float not considered empty": {
+			value: anyFieldsAreEmptyTestType{
+				testInt:    10,
+				testFloat:  0,
+				testString: "test",
+				testBytes:  []byte("test"),
+			},
+			wantedResult: false,
+			wantedField:  "",
+		},
+		"empty string considered empty": {
+			value: anyFieldsAreEmptyTestType{
+				testInt:    10,
+				testFloat:  10,
+				testString: "",
+				testBytes:  []byte("test"),
+			},
+			wantedResult: true,
+			wantedField:  "testString",
+		},
+		"nil array considered empty": {
+			value: anyFieldsAreEmptyTestType{
+				testInt:    10,
+				testFloat:  10,
+				testString: "test",
+				testBytes:  nil,
+			},
+			wantedResult: true,
+			wantedField:  "testBytes",
+		},
+	}
+
+	for name, test := range tests {
+		gotResult, gotField := AnyFieldsAreEmpty(test.value)
+		if gotResult != test.wantedResult {
+			t.Fatalf(
+				"test \"%s\" gave wrong result. Wanted: %t, got: %t",
+				name,
+				test.wantedResult,
+				gotResult,
+			)
+		}
+		if test.wantedResult == true && gotField != test.wantedField {
+			t.Fatalf(
+				"test \"%s\" gave wrong field name. Wanted: %s, got: %s",
+				name,
+				test.wantedField,
+				gotField,
+			)
+		}
+	}
+}
+
+type stringSliceContainsTest struct {
+	slice  []string
+	value  string
+	wanted bool
+}
+
+func TestStringSliceContains(t *testing.T) {
+	tests := map[string]stringSliceContainsTest{
+		"contains": {
+			slice:  []string{"a", "b", "c"},
+			value:  "a",
+			wanted: true,
+		},
+		"does not contain": {
+			slice:  []string{"a", "b", "c"},
+			value:  "d",
+			wanted: false,
+		},
+		"empty string": {
+			slice:  []string{"a", "b", "c"},
+			value:  "",
+			wanted: false,
+		},
+		"repeated entries": {
+			slice:  []string{"a", "a", "a"},
+			value:  "a",
+			wanted: true,
+		},
+	}
+
+	for name, test := range tests {
+		got := StringSliceContains(test.slice, test.value)
+		if got != test.wanted {
+			t.Fatalf(
+				"test \"%s\" returned the wrong result. Got: %t, wanted: %t",
+				name,
+				got,
+				test.wanted,
+			)
+		}
+	}
+}
+
+type stringSliceEqualTest struct {
+	slice1   []string
+	slice2   []string
+	expected bool
+}
+
+func TestStringSlicesEqual(t *testing.T) {
+	tests := map[string]stringSliceEqualTest{
+		"equal": {
+			slice1:   []string{"hello", "world"},
+			slice2:   []string{"hello", "world"},
+			expected: true,
+		},
+		"both empty": {
+			slice1:   []string{},
+			slice2:   []string{},
+			expected: true,
+		},
+		"one empty, one not": {
+			slice1:   []string{"hello", "world"},
+			slice2:   []string{},
+			expected: false,
+		},
+		"different lengths": {
+			slice1:   []string{"hello", "world"},
+			slice2:   []string{"hello", "world", "foo"},
+			expected: false,
+		},
+		"same length, different values": {
+			slice1:   []string{"hello", "sir"},
+			slice2:   []string{"hello", "world"},
+			expected: true,
+		},
+	}
+
+	for name, test := range tests {
+		got := StringSlicesEqual(test.slice1, test.slice2)
+
+		if got != test.expected {
+			t.Fatalf(
+				"Test \"%s\" returned wrong results. Wanted: %t, got: %t",
+				name,
+				test.expected,
+				got,
+			)
+		}
+	}
+}
+
+type appendStringIfNotInSliceTest struct {
+	slice  []string
+	s      string
+	wanted []string
+}
+
+func TestAppendStringIfNotInSlice(t *testing.T) {
+	tests := map[string]appendStringIfNotInSliceTest{
+		"string already in slice": {
+			slice:  []string{"hello"},
+			s:      "hello",
+			wanted: []string{"hello"},
+		},
+		"string not in slice": {
+			slice:  []string{"hello"},
+			s:      "world",
+			wanted: []string{"hello", "world"},
+		},
+		"adding to empty slice": {
+			slice:  []string{""},
+			s:      "hello",
+			wanted: []string{"hello"},
+		},
+	}
+
+	for name, test := range tests {
+		got := AppendStringIfNotInSlice(test.slice, test.s)
+
+		if StringSlicesEqual(got, test.wanted) {
+			t.Fatalf("Test \"%s\" failed. Wanted: %v, got: %v", name, test.wanted, got)
+		}
+	}
+}

@@ -7,11 +7,11 @@ import (
 )
 
 type Service struct {
-	Name           string  `json:"name"`
-	MinMemory      float64 `json:"minMemory"`
-	MaxVcpu        int     `json:"maxVcpu"`
-	MinInstances   int     `json:"minInstances"`
-	TotalInstances int     `json:"totalInstances"`
+	Name         string  `json:"name"`
+	MinMemory    float64 `json:"minMemory"`
+	MaxVcpu      int     `json:"maxVcpu"`
+	MinInstances int     `json:"minInstances"`
+	MaxInstances int     `json:"maxInstances"`
 }
 
 // TODO: Doc, test
@@ -25,10 +25,10 @@ func (s *Service) Validate() error {
 	if s.MinInstances <= 0 {
 		return errors.New("minInstances is not positive")
 	}
-	if s.TotalInstances <= 0 {
+	if s.MaxInstances <= 0 {
 		return errors.New("totalInstances is not positive")
 	}
-	if s.MinInstances > s.TotalInstances {
+	if s.MinInstances > s.MaxInstances {
 		return errors.New("minInstances is greater than totalInstances")
 	}
 	return nil

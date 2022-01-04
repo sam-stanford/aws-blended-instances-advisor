@@ -10,19 +10,23 @@ import (
 	"fmt"
 )
 
-// TODO: Docs
-// TODO: Use logger
-
+// WeightedAdvisor is an Advisor which uses a given set of SortWeights to
+// select and score Instances.
 type WeightedAdvisor struct {
 	weights instSort.SortWeights
 }
 
+// NewWeightedAdvisor creates a WeightedAdvisor, converting API schema
+// AdvisorWeights into the required format.
 func NewWeightedAdvisor(weights schema.AdvisorWeights) Advisor {
 	return WeightedAdvisor{
 		weights: instSort.NewSortWeightsFromApiWeights(weights),
 	}
 }
 
+// Advicse selects and scores Instances from a group of available
+// Instances for all Regions, returning the selection and information as an
+// Advice.
 func (advisor WeightedAdvisor) Advise(
 	instancesInfo instPkg.GlobalInfo,
 	services []schema.Service,
@@ -57,7 +61,9 @@ func (advisor WeightedAdvisor) Advise(
 	return &advice, nil
 }
 
-// TODO: Test
+// AdviseForRegion selects and scores Instances from a group of available
+// Instances for one Region, returning the selection and information as a
+// RegionAdvice.
 func (advisor WeightedAdvisor) AdviseForRegion(
 	info instPkg.RegionInfo,
 	services []schema.Service,
@@ -103,7 +109,7 @@ func (advisor WeightedAdvisor) AdviseForRegion(
 			}
 		}
 
-		remainingInstanceCount := svc.TotalInstances - svc.MinInstances
+		remainingInstanceCount := svc.MaxInstances - svc.MinInstances
 		for i := 0; i < remainingInstanceCount; i += 1 {
 			selectedInstance, err := advisor.selectInstanceForService(
 				allInstances,
@@ -207,7 +213,11 @@ func (advisor WeightedAdvisor) selectInstanceForService(
 	return instances[searchStart], nil
 }
 
-// TODO: Test & Doc
+// ScoreRegionAdvice scores a selection of Instances (as a RegionAdvice),
+// returning an arbitrary score.
+//
+// The returned score can be used to compare RegionAdvices, with higher scores
+// meaning a better selection.
 func (advisor WeightedAdvisor) ScoreRegionAdvice(
 	advice *schema.RegionAdvice,
 	globalAgg instPkg.Aggregates,

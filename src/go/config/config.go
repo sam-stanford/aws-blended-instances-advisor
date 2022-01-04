@@ -15,12 +15,10 @@ const (
 	DEFAULT_CACHE_DEFAULT_LIFETIME         = 96
 )
 
-// TODO: Doc
-
-// TODO: Update actual, example, and test configs
-
-// TODO: Remove servicess
-
+// Config contains information on how the application should run.
+//
+// A Config object should be parsed using ParseConfig and should be
+// injected into packages as appropriate.
 type Config struct {
 	ApiConfig    ApiConfig    `json:"api"`
 	AwsApiConfig AwsApiConfig `json:"awsApi"`
@@ -28,32 +26,55 @@ type Config struct {
 	Credentials  Credentials  `json:"credentials"`
 }
 
+// ApiConfig contains details on how the API should be configured.
 type ApiConfig struct {
-	Port           int      `json:"port"`
+	// The port on which the API should be run
+	Port int `json:"port"`
+
+	// The domains which are allowed to access the API
 	AllowedDomains []string `json:"allowedDomains"`
 }
 
-type AwsApiConfig struct { // TODO: Potentially rename to generic config
-	Endpoints           Endpoints `json:"endpoints"`
-	DownloadsDir        string    `json:"downloadsDir"`
-	MaxInstancesToFetch int       `json:"maxInstancesToFetch"`
+// AwsApiConfig contains information on how the AWS API/SDK
+// should be set up and used.
+type AwsApiConfig struct {
+	// The endpoints which are used by the API
+	Endpoints Endpoints `json:"endpoints"`
+
+	// The directory path where downloaded files should be saved
+	DownloadsDir string `json:"downloadsDir"`
+
+	// The maximum number of instances to fetch with each API call
+	MaxInstancesToFetch int `json:"maxInstancesToFetch"`
 }
 
+// Endpoints contains the endpoints used in the AWS package.
 type Endpoints struct {
-	AwsSpotInstanceInfoUrl string `json:"awsSpotInstanceInfoUrl"` // TODO: Remove indirection layer
+	// The URL which spot instance info should be fetched fromd
+	AwsSpotInstanceInfoUrl string `json:"awsSpotInstanceInfoUrl"`
 }
 
+// CacheConfig contains information for use in the Cache package.
 type CacheConfig struct {
-	Dirpath         string `json:"dirpath"`
-	DefaultLifetime int32  `json:"defaultLifetime"` // TODO: Use
+	// The directory path where cache files should be stored
+	Dirpath string `json:"dirpath"`
+
+	// The default lifetime for cache entries
+	DefaultLifetime int32 `json:"defaultLifetime"`
 }
 
+// Credentials contains AWS API/SDK credentials.
 type Credentials struct {
-	AwsKeyId     string `json:"awsKeyId"`
+	// The key ID to be used for AWS API authentication
+	AwsKeyId string `json:"awsKeyId"`
+
+	// The secret key to be used for AWS APU authentication
 	AwsSecretKey string `json:"awsSecretKey"`
 }
 
-func (c *Config) String() string { // TODO: Use in main logging
+// String converts a Config into a printable string, suitable for
+// logging.
+func (c *Config) String() string {
 	noCredsConfig := &Config{
 		ApiConfig:   c.ApiConfig,
 		CacheConfig: c.CacheConfig,
@@ -63,6 +84,11 @@ func (c *Config) String() string { // TODO: Use in main logging
 	return string(jsonBytes)
 }
 
+// ParseConfig parses a Config from a file at the given filepath, filling in
+// missing fields with defaults where applicable.
+//
+// Returns an error if an error is encountered when working with the filesystem,
+// or critical fields are missing.
 func ParseConfig(filepath string) (*Config, error) {
 	configBytes, err := utils.FileToBytes(filepath)
 	if err != nil {
@@ -98,14 +124,14 @@ func ParseConfig(filepath string) (*Config, error) {
 	return &cfg, nil
 }
 
+// Validate checks that a Config is valid, returning an error describing
+// the problem if the Config is considered invalid.
 func (c *Config) Validate() error {
 
 	empty, fieldName := utils.AnyFieldsAreEmpty(c)
 	if empty {
 		return fmt.Errorf("config field is empty: %s", fieldName)
 	}
-
-	// TODO: Add more validation
 
 	return nil
 }

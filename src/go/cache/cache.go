@@ -8,25 +8,28 @@ import (
 	"time"
 )
 
-// TODO: Doc comments for types
 const (
 	CACHE_FILENAME = "cache.json"
 )
 
+// A Cache is an in-memory representation of cached files.
 type Cache struct {
 	Dirpath string                `json:"-"`
 	Entries map[string]CacheEntry `json:"entries"`
 }
 
+// A CacheEntry is a representation of a single cached file.
 type CacheEntry struct {
 	SetDate          time.Time `json:"setAt"`
 	InvalidationDate time.Time `json:"invalidFrom"`
 	Filename         string    `json:"file"`
 }
 
-// Creates and returns a new cache.
+// New creates and returns a new cache.
+//
 // The given cacheDirpath is used as the directory to store cached files and cache metadata.
-// Previous caches using cacheDirpath are overwritten.
+// Previous caches using the same cacheDirpath are overwritten.
+//
 // Returns an error if an error occurred when writing to the given filepath.
 func New(cacheDirpath string) (*Cache, error) {
 	cacheFilepath, err := getCacheFileFilepath(cacheDirpath)
@@ -44,7 +47,8 @@ func New(cacheDirpath string) (*Cache, error) {
 	}, nil
 }
 
-// Parses and returns a cache created at the given cacheDirpath.
+// ParseCache parses and returns a cache created at the given cacheDirpath.
+//
 // Returns an error if no cache exists at cacheDirpath or if there was an issue reading files.
 func ParseCache(cacheDirpath string) (*Cache, error) {
 	cacheFilepath, err := getCacheFileFilepath(cacheDirpath)
@@ -70,8 +74,9 @@ func ParseCache(cacheDirpath string) (*Cache, error) {
 	return &c, nil
 }
 
-// Parses and returns a cache if one exists at the given cacheDirpath.
+// ParseIfExistsElseNew [arses and returns a cache if one exists at the given cacheDirpath.
 // Creates and returns a new cache otherwise.
+//
 // Returns an error if an error occurs during the checking or creation process.
 func ParseIfExistsElseNew(cacheDirpath string) (*Cache, error) {
 	cacheFilepath, err := getCacheFileFilepath(cacheDirpath)
@@ -90,15 +95,14 @@ func ParseIfExistsElseNew(cacheDirpath string) (*Cache, error) {
 	return ParseCache(cacheDirpath)
 }
 
-// TODO: Test
-// Returns true if the given file is in the cache.
-// Returns false otherwise.
+// Contains returns true if the given file is in the cache,
+// returning false otherwise.
 func (cache Cache) Contains(file string) bool {
 	_, exists := cache.Entries[file]
 	return exists
 }
 
-// Returns the CacheEntry for the file if it's in the cache.
+// GetEntry returns the CacheEntry for the file if it's in the cache.
 // Returns an error otherwise.
 func (cache Cache) GetEntry(file string) (*CacheEntry, error) {
 	if !cache.Contains(file) {
@@ -108,8 +112,7 @@ func (cache Cache) GetEntry(file string) (*CacheEntry, error) {
 	return &entry, nil
 }
 
-// TODO: Test
-// Returns true if the given file is in the cache and is valid.
+// IsValid returns true if the given file is in the cache and is valid.
 // Returns false otherwise.
 func (cache Cache) IsValid(file string) bool {
 	if !cache.Contains(file) {
@@ -122,8 +125,7 @@ func (cache Cache) IsValid(file string) bool {
 	return entry.InvalidationDate.After(time.Now())
 }
 
-// TODO: Test & convert return to stream
-// Returns the cached file's contents if the given file is in the cache and is valid.
+// Get returns the cached file's contents if the given file is in the cache and is valid.
 // Returns an error otherwise or if an error occurs during the file reading process.
 func (cache Cache) Get(file string) (string, error) {
 	if !cache.IsValid(file) {
@@ -136,8 +138,8 @@ func (cache Cache) Get(file string) (string, error) {
 	return contents, nil
 }
 
-// TODO: Test
-// Returns the cached file's contents if the given file is in the cache, regardless of its validity.
+// GetIgnoringValidity returns the cached file's contents if the given file
+// is in the cache, regardless of its validity.
 // Returns an error otherwise or if an error occurs during the file reading process.
 func (cache Cache) GetIgnoringValidity(file string) (string, error) {
 	if !cache.Contains(file) {
@@ -152,8 +154,7 @@ func (cache Cache) GetIgnoringValidity(file string) (string, error) {
 	return utils.FileToString(path)
 }
 
-// TODO: Use stream, not string
-// Writes fileContent to a file named filename in the cache directory and creates a
+// Set writes fileContent to a file named filename in the cache directory and creates a
 // representative entry in the cache, which is valid for a duration of lifetime.
 // Returns an error if the file could not be written or value could not be set.
 func (cache Cache) Set(filename string, fileContent string, lifetime time.Duration) error {
@@ -192,22 +193,18 @@ func (cache Cache) Set(filename string, fileContent string, lifetime time.Durati
 	return nil
 }
 
-// TODO: Doc
 func (cache Cache) getFileFilepath(file string) (string, error) {
 	return utils.CreateFilepath(cache.Dirpath, file)
 }
 
-// TODO: Doc
 func getCacheFileFilepath(cacheDirpath string) (string, error) {
 	return utils.CreateFilepath(cacheDirpath, CACHE_FILENAME)
 }
 
-// TODO: Doc
 func (cache Cache) getCacheFileFilepath() (string, error) {
 	return getCacheFileFilepath(cache.Dirpath)
 }
 
-// Writes cache to its given filepath in JSON format.
 func (cache Cache) writeToFile() error {
 	cacheFilepath, err := cache.getCacheFileFilepath()
 	if err != nil {

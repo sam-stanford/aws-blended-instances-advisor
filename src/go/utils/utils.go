@@ -2,7 +2,6 @@ package utils
 
 import (
 	"fmt"
-	"math"
 	"os"
 	"reflect"
 
@@ -15,26 +14,26 @@ const (
 	WRITE_PERMISSION_CODE = 0755
 )
 
-// TODO: Split into multiple files
-
-// TODO: Doc comments
-
+// GenerateUuid generates a universally unique identifier (UUID),
+// returned as a string.
 func GenerateUuid() string {
 	return uuid.NewString()
 }
 
+// StopProgramExecution ends the program's execution, printing the provided error
+// and returning the provided error code.
 func StopProgramExecution(err error, exitCode int) {
 	fmt.Fprintf(os.Stderr, "Stopping program execution: %s\n", err.Error())
 	os.Exit(exitCode)
 }
 
+// PrependToError formats and adds a string in front of a given error.
 func PrependToError(err error, message string) error {
 	return fmt.Errorf("%s: %s", message, err.Error())
 }
 
 // Checks whether start (inclusive) and end (exclusive) are valid indexes for
 // the given lenght of a slice.
-// TODO: Test
 func ValidateIndexes(sliceLength, start, end int) error {
 	if start >= end {
 		return fmt.Errorf("provided indexes of %d and %d provide a subslice of 0 elements", start, end)
@@ -48,13 +47,18 @@ func ValidateIndexes(sliceLength, start, end int) error {
 	return nil
 }
 
+// CreateMockLogger creates a mock logger which can be
+// passed as a zap.Logger during testing.
 func CreateMockLogger() (*zap.Logger, error) {
 	cfg := zap.NewProductionConfig()
 	cfg.OutputPaths = []string{}
 	return cfg.Build()
 }
 
-// TODO: Doc
+// AnyFieldsAreEmpty checks if any fields of a given interface are empty.
+//
+// If at least one field is considered empty, the first empty field is
+// also returned.
 func AnyFieldsAreEmpty(i interface{}) (bool, string) {
 	elem := reflect.ValueOf(i).Elem()
 	return anyFieldsAreEmptyHelper(elem)
@@ -94,37 +98,11 @@ func isNumericOrBoolType(k reflect.Kind) bool {
 			return true
 		}
 	}
-
 	return false
 }
 
-// TODO: Test & Doc
-func FloatsEqual(a, b float64) bool {
-	return math.Abs(a-b) < 0.001 // TODO: Make epsilon const
-}
-
-func MinOfInts(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-func MaxOfInts(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
-func MinOfFloats(a, b float64) float64 {
-	return math.Min(a, b)
-}
-
-func MaxOfFloats(a, b float64) float64 {
-	return math.Max(a, b)
-}
-
+// StringSliceContains returns true if the given slice contains the given
+// value, and false otherewise.
 func StringSliceContains(slice []string, value string) bool {
 	for _, val := range slice {
 		if val == value {
@@ -132,4 +110,36 @@ func StringSliceContains(slice []string, value string) bool {
 		}
 	}
 	return false
+}
+
+// StringSlicesEqual returns a Boolean with value representing whether the
+// two provided slices are equal in terms of length and values.
+func StringSlicesEqual(a []string, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// AppendStringIfNotInSlice appends a string to a slice if the slice
+// does not already contain the string.
+func AppendStringIfNotInSlice(slice []string, s string) []string {
+	inSlice := false
+	for i := range slice {
+		if slice[i] == s {
+			inSlice = true
+			break
+		}
+	}
+
+	if !inSlice {
+		return append(slice, s)
+	}
+	return slice
 }
