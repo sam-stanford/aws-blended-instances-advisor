@@ -99,6 +99,11 @@ type spotInstanceSpecs struct {
 }
 
 type regionSpotInstanceRevocationInfo struct {
+	LinuxInstances   map[string]spotInstanceRevocationInfo `json:"Linux"`
+	WindowsInstances map[string]spotInstanceRevocationInfo `json:"Windows"`
+}
+
+type spotInstanceRevocationInfo struct {
 	RevocationProbabilityTier     int `json:"r"` // 0 => <5%, 1 => 5-10%, 2 => 10-15%, 3 => 15-20%, 4 => >20%
 	PercentageSavingsOverOnDemand int `json:"s"`
 }
@@ -206,7 +211,7 @@ func parseOnDemandPrice(info *onDemandInstanceInfo) (float64, error) {
 	return -1, nil
 }
 
-func (info *regionSpotInstanceRevocationInfo) getRevocationProbability() (float64, error) {
+func (info *spotInstanceRevocationInfo) getRevocationProbability() (float64, error) {
 	switch info.RevocationProbabilityTier {
 	case 0:
 		return 0.05, nil

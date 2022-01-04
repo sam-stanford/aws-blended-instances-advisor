@@ -39,17 +39,6 @@ func SortInstancesByRevocationProbability(instances []*Instance, startIndex, end
 }
 
 // Sorts a given slice of Instances in place from startIndex (inclusive) to endIndex (exclusive)
-// in increasing lexographcial order of their operating system.
-func SortInstancesByOperatingSystem(instances []*Instance, startIndex, endIndex int) {
-	sort.Slice(instances[startIndex:endIndex], func(i, j int) bool {
-		return strings.Compare(
-			instances[startIndex+i].OperatingSystem.ToString(),
-			instances[startIndex+j].OperatingSystem.ToString(),
-		) == -1
-	})
-}
-
-// Sorts a given slice of Instances in place from startIndex (inclusive) to endIndex (exclusive)
 // in increasing lexographcial order of their Region code name.
 func SortInstancesByRegion(instances []*Instance, startIndex, endIndex int) {
 	sort.Slice(instances[startIndex:endIndex], func(i, j int) bool {
@@ -129,7 +118,6 @@ func CalculateInstanceScoreFromWeights(
 }
 
 // TODO: Doc & test
-// TODO: Pointer to instance
 func CalculateInstanceScoreFromWeightsWithVcpuLimiter(
 	instance *Instance,
 	aggregates Aggregates,
