@@ -22,14 +22,15 @@ const (
 // TODO: Remove servicess
 
 type Config struct {
-	ApiConfig    ApiConfig       `json:"api"`
-	AwsApiConfig AwsApiConfig    `json:"awsApi"`
-	CacheConfig  CacheConfig     `json:"cache"`
-	Credentials  CredentialsList `json:"credentials"`
+	ApiConfig    ApiConfig    `json:"api"`
+	AwsApiConfig AwsApiConfig `json:"awsApi"`
+	CacheConfig  CacheConfig  `json:"cache"`
+	Credentials  Credentials  `json:"credentials"`
 }
 
 type ApiConfig struct {
-	Port int `json:"port"`
+	Port           int      `json:"port"`
+	AllowedDomains []string `json:"allowedDomains"`
 }
 
 type AwsApiConfig struct { // TODO: Potentially rename to generic config
@@ -39,39 +40,18 @@ type AwsApiConfig struct { // TODO: Potentially rename to generic config
 }
 
 type Endpoints struct {
-	AwsSpotInstanceInfoUrl string `json:"awsSpotInstanceInfoUrl"`
+	AwsSpotInstanceInfoUrl string `json:"awsSpotInstanceInfoUrl"` // TODO: Remove indirection layer
 }
 
 type CacheConfig struct {
-	Dirpath string `json:"dirpath"`
-}
-
-type CredentialsList struct {
-	Production  Credentials `json:"production"`
-	Development Credentials `json:"development"`
-	Test        Credentials `json:"test"`
+	Dirpath         string `json:"dirpath"`
+	DefaultLifetime int32  `json:"defaultLifetime"` // TODO: Use
 }
 
 type Credentials struct {
 	AwsKeyId     string `json:"awsKeyId"`
 	AwsSecretKey string `json:"awsSecretKey"`
 }
-
-type ServiceDescription struct {
-	Name        string                      `json:"name"`
-	MinMemory   float64                     `json:"minMemory"`
-	MaxVcpu     int                         `json:"maxVcpu"`
-	Instances   ServiceDescriptionInstances `json:"instances"`
-	Focus       string                      `json:"focus"`
-	FocusWeight float64                     `json:"focusWeight"`
-}
-
-type ServiceDescriptionInstances struct {
-	MinimumCount int `json:"minimum"`
-	TotalCount   int `json:"total"`
-}
-
-// TODO: Doc & test (? maybe test)
 
 func (c *Config) String() string { // TODO: Use in main logging
 	noCredsConfig := &Config{
@@ -101,7 +81,8 @@ func ParseConfig(filepath string) (*Config, error) {
 			MaxInstancesToFetch: DEFAULT_AWS_API_MAX_INSTANCES_TO_FETCH,
 		},
 		CacheConfig: CacheConfig{
-			Dirpath: DEFAULT_CACHE_DIR,
+			Dirpath:         DEFAULT_CACHE_DIR,
+			DefaultLifetime: DEFAULT_CACHE_DEFAULT_LIFETIME,
 		},
 	}
 

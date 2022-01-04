@@ -30,8 +30,8 @@ func StartService(
 	logger *zap.Logger,
 	advise func(advisor schema.Advisor, services []schema.Service, options schema.Options) (*schema.Advice, error),
 ) {
-	http.HandleFunc("/regions", getRegionsEndpointHandler(logger))
-	http.HandleFunc("/advise", getAdviseEndpointHandler(advise, logger))
+	http.HandleFunc("/regions", getRegionsEndpointHandler(cfg, logger))
+	http.HandleFunc("/advise", getAdviseEndpointHandler(advise, cfg, logger))
 	logger.Info("registered API endpoint", zap.String("path", "/advise"))
 
 	logger.Info("starting API for advice service", zap.Int("port", cfg.Port))

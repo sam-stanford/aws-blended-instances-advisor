@@ -1,32 +1,14 @@
 package utils
 
 import (
+	"errors"
 	"io"
 	"net/http"
 	"os"
 	"time"
-
-	"go.uber.org/zap"
 )
 
 // TODO: Doc & test
-
-func WriteHttpErrorResponse(
-	w http.ResponseWriter,
-	requestId string,
-	err error,
-	errCode int,
-	logger *zap.Logger,
-) {
-	http.Error(w, err.Error(), errCode)
-
-	logger.Error(
-		"responded to request with error",
-		zap.String("reqId", requestId),
-		zap.Int("responseCode", errCode),
-		zap.Error(err),
-	)
-}
 
 func DownloadFile(url string, filepath string) error {
 	// TODO: Check if file has changed using HEAD & checking for Last-Modified field
@@ -62,4 +44,24 @@ func GetHttpHeader(url string) (http.Header, error) {
 		return nil, err
 	}
 	return head.Header, nil
+}
+
+// Adds the appropriate header to set the response content type to JSON
+func AddJsonContentTypeHeader(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json")
+}
+
+// Adds the appropriate header(s) to allow cross-origin access for the given
+// domains if they are allowed, returning an error otherwise.
+func AddCorsHeader(w http.ResponseWriter, r *http.Request, allowedDomains []string) error {
+	if r.Header == nil || r.Header["Origin"] == nil || len(r.Header["Origin"]) == 0 {
+		return errors.New("origin header not provided on request")
+	}
+	origin := r.Header["Origin"][0]
+
+	if !StringSliceContains(allowedDomains, origin) {
+		return errors.New("origin is not allowed")
+	}
+	w.Header().Set("Access-Control-Allow-Origin", origin)
+	return nil
 }

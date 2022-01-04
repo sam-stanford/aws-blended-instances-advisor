@@ -2,6 +2,7 @@ package service
 
 import (
 	"aws-blended-instances-advisor/api/schema"
+	"aws-blended-instances-advisor/config"
 	"aws-blended-instances-advisor/utils"
 	"encoding/json"
 	"io"
@@ -12,7 +13,12 @@ import (
 )
 
 func getAdviseEndpointHandler(
-	advise func(advisor schema.Advisor, services []schema.Service, options schema.Options) (*schema.Advice, error),
+	advise func(
+		advisor schema.Advisor,
+		services []schema.Service,
+		options schema.Options,
+	) (*schema.Advice, error),
+	cfg *config.ApiConfig,
 	logger *zap.Logger,
 ) func(http.ResponseWriter, *http.Request) {
 
@@ -21,43 +27,90 @@ func getAdviseEndpointHandler(
 		logger.Info(
 			"request received",
 			zap.String("url", r.Host),
+			zap.String("method", r.Method),
 			zap.String("requestId", reqId),
 		)
 
-		req, err := parseRequest(r, reqId, logger)
+		err := utils.AddCorsHeader(w, r, cfg.AllowedDomains)
 		if err != nil {
-			utils.WriteHttpErrorResponse(w, reqId, err, http.StatusBadRequest, logger)
+			writeErrorResponse(w, reqId, err, http.StatusForbidden, logger)
 			return
 		}
-		logger.Info(
-			"services parsed from request",
-			zap.String("requestId", reqId),
-			zap.Any("parsedServices", req.Services),
-		)
+		logger.Info("added CORS header", zap.String("requestId", reqId))
 
-		orderServicesByDecreasingMemory(req.Services)
-		logger.Info(
-			"services sorted",
-			zap.String("requestId", reqId),
-			zap.Any("sortedServices", req.Services),
-		)
+		switch r.Method {
+		case "OPTIONS":
+			allowedMethods := "OPTIONS, POST"
+			allowedHeaders := getAllowedHeaders()
+			w.Header().Set("Access-Control-Allow-Methods", allowedMethods)
+			w.Header().Set("Access-Control-Allow-Headers", allowedHeaders)
 
-		advice, err := advise(req.Advisor, req.Services, req.Options)
-		if err != nil {
-			utils.WriteHttpErrorResponse(w, reqId, err, http.StatusInternalServerError, logger)
+			logger.Info(
+				"added headers to response",
+				zap.String("requestId", reqId),
+				zap.String("Access-Control-Allow-Methods", allowedMethods),
+				zap.String("Access-Control-Allow-Headers", allowedHeaders),
+			)
+
+			w.WriteHeader(http.StatusOK)
+			logger.Info("responded to request", zap.String("requestId", reqId))
+			return
+
+		case "POST":
+			adviseEndpointPostHandler(w, r, reqId, advise, logger)
+			return
+
+		default:
+			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-		logger.Info(
-			"advice generated for request",
-			zap.String("requestId", reqId),
-			zap.Any("advice", advice),
-		)
+	}
+}
 
-		err = writeAdviceResponse(w, reqId, advice, logger)
-		if err != nil {
-			utils.WriteHttpErrorResponse(w, reqId, err, http.StatusInternalServerError, logger)
-			return
-		}
+func adviseEndpointPostHandler(
+	w http.ResponseWriter,
+	r *http.Request,
+	reqId string,
+	advise func(
+		advisor schema.Advisor,
+		services []schema.Service,
+		options schema.Options,
+	) (*schema.Advice, error),
+	logger *zap.Logger,
+) {
+	req, err := parseRequest(r, reqId, logger)
+	if err != nil {
+		writeErrorResponse(w, reqId, err, http.StatusBadRequest, logger)
+		return
+	}
+	logger.Info(
+		"services parsed from request",
+		zap.String("requestId", reqId),
+		zap.Any("parsedServices", req.Services),
+	)
+
+	orderServicesByDecreasingMemory(req.Services)
+	logger.Info(
+		"services sorted",
+		zap.String("requestId", reqId),
+		zap.Any("sortedServices", req.Services),
+	)
+
+	advice, err := advise(req.Advisor, req.Services, req.Options)
+	if err != nil {
+		writeErrorResponse(w, reqId, err, http.StatusInternalServerError, logger)
+		return
+	}
+	logger.Info(
+		"advice generated for request",
+		zap.String("requestId", reqId),
+		zap.Any("advice", advice),
+	)
+
+	err = writeAdviceResponse(w, reqId, advice, logger)
+	if err != nil {
+		writeErrorResponse(w, reqId, err, http.StatusInternalServerError, logger)
+		return
 	}
 }
 
@@ -79,7 +132,7 @@ func parseRequest(r *http.Request, reqId string, logger *zap.Logger) (*schema.Ad
 		return nil, utils.PrependToError(err, "could not parse body JSON") // TODO: GOod for log, Unhelpful to client
 	}
 
-	err = req.Validate()
+	err = req.Validate() // TODO
 
 	return &req, nil
 }
@@ -100,6 +153,8 @@ func writeAdviceResponse(
 	if err != nil {
 		return utils.PrependToError(err, "could not marshal advice into JSON")
 	}
+
+	utils.AddJsonContentTypeHeader(w)
 
 	_, err = w.Write(respBody)
 	if err != nil {

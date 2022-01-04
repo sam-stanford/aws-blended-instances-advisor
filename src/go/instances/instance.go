@@ -5,35 +5,36 @@ import (
 	awsTypes "aws-blended-instances-advisor/aws/types"
 )
 
-// TODO: Doc
+// An Instance represents a single AWS EC2 instance offering.
 type Instance struct {
-	Id                    string                   `json:"id"`
-	Name                  string                   `json:"name"`
-	MemoryGb              float64                  `json:"memory"`
-	Vcpu                  int                      `json:"vcpu"`
-	Region                awsTypes.Region          `json:"region"`
-	AvailabilityZone      string                   `json:"az"`
-	OperatingSystem       awsTypes.OperatingSystem `json:"os"` // TODO: Change to string or provide search option
-	PricePerHour          float64                  `json:"price"`
-	RevocationProbability float64                  `json:"revocProb"`
+	Id                    string          `json:"id"`
+	Name                  string          `json:"name"`
+	MemoryGb              float64         `json:"memory"`
+	Vcpu                  int             `json:"vcpu"`
+	Region                awsTypes.Region `json:"region"`
+	AvailabilityZone      string          `json:"az"`
+	OperatingSystem       string          `json:"os"`
+	PricePerHour          float64         `json:"price"`
+	RevocationProbability float64         `json:"revocProb"`
 }
 
-// TODO: Doc
+// ToApiSchemaInstance converts an Instance to an Instance suitable
+// for the defined API specification.
 func (inst *Instance) ToApiSchemaInstance() *schema.Instance {
 	return &schema.Instance{
 		Id:                    inst.Id,
 		Name:                  inst.Name,
 		MemoryGb:              inst.MemoryGb,
 		Vcpu:                  inst.Vcpu,
-		Region:                inst.Region.CodeString(), // TODO: Rename to CodeString
+		Region:                inst.Region.CodeString(),
 		AvailabilityZone:      inst.AvailabilityZone,
-		OperatingSystem:       inst.OperatingSystem.ToString(), // TODO: Rename to String
+		OperatingSystem:       inst.OperatingSystem,
 		PricePerHour:          inst.PricePerHour,
 		RevocationProbability: inst.RevocationProbability,
 	}
 }
 
-// TODO: Doc
+// MakeCopy returns a copy of the Instance.
 func (inst *Instance) MakeCopy() *Instance {
 	return &Instance{
 		Id:                    inst.Id,
@@ -44,6 +45,6 @@ func (inst *Instance) MakeCopy() *Instance {
 		AvailabilityZone:      inst.AvailabilityZone,
 		OperatingSystem:       inst.OperatingSystem,
 		PricePerHour:          inst.PricePerHour,
-		RevocationProbability: inst.PricePerHour,
+		RevocationProbability: inst.RevocationProbability,
 	}
 }
