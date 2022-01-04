@@ -5,8 +5,7 @@ import (
 	"fmt"
 )
 
-// TODO: Docs & testing
-
+// LinearSearchInt searches for a given int value in a slice using a linear search.
 func LinearSearchInt(slice []int, value int) (int, error) {
 	if len(slice) == 0 {
 		return -1, errors.New("cannot search empty slice")
@@ -27,6 +26,7 @@ func LinearSearchInt(slice []int, value int) (int, error) {
 	return answer, nil
 }
 
+// LinearSearchFloat searches for a given float value in a slice using a linear search.
 func LinearSearchFloat(slice []float64, value float64) (int, error) {
 	if len(slice) == 0 {
 		return -1, errors.New("cannot search empty slice")
@@ -47,6 +47,7 @@ func LinearSearchFloat(slice []float64, value float64) (int, error) {
 	return answer, nil
 }
 
+// LinearSearchString searches for a given string value in a slice using a linear search.
 func LinearSearchString(slice []string, value string) (int, error) {
 	if len(slice) == 0 {
 		return -1, errors.New("cannot search empty slice")
@@ -67,6 +68,9 @@ func LinearSearchString(slice []string, value string) (int, error) {
 	return answer, nil
 }
 
+// BinarySearchInt searches for a given int value in a slice using binary search.
+//
+// The behvious of BinarySearchInt is undefined if the provided slice is not sorted.
 func BinarySearchInt(sortedSlice []int, value int) (int, error) {
 	if len(sortedSlice) == 0 {
 		return -1, errors.New("cannot search empty slice")
@@ -125,6 +129,9 @@ func BinarySearchInt(sortedSlice []int, value int) (int, error) {
 	return -1, errors.New("failed to find wanted index")
 }
 
+// BinarySearchFloat searches for a given float value in a slice using binary search.
+//
+// The behvious of BinarySearchFloat is undefined if the provided slice is not sorted.
 func BinarySearchFloat(sortedSlice []float64, value float64) (int, error) {
 	if len(sortedSlice) == 0 {
 		return -1, errors.New("cannot search empty slice")
@@ -183,6 +190,9 @@ func BinarySearchFloat(sortedSlice []float64, value float64) (int, error) {
 	return -1, errors.New("failed to find wanted index")
 }
 
+// BinarySearchString searches for a given string value in a slice using binary search.
+//
+// The behvious of BinarySearchString is undefined if the provided slice is not sorted.
 func BinarySearchString(sortedSlice []string, value string) (int, error) {
 	if len(sortedSlice) == 0 {
 		return -1, errors.New("cannot search empty slice")

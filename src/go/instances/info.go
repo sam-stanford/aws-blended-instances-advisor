@@ -1,7 +1,6 @@
 package instances
 
 import (
-	"aws-blended-instances-advisor/aws/types"
 	awsTypes "aws-blended-instances-advisor/aws/types"
 	"aws-blended-instances-advisor/utils"
 	"fmt"
@@ -30,9 +29,9 @@ type RegionInfo struct {
 
 // CreateGlobalInfo creates a new GlobalInfo.
 func CreateGlobalInfo(
-	regionToPersistentInstancesMap map[types.Region][]*Instance,
-	regionToTransientInstancesMap map[types.Region][]*Instance,
-	regions []types.Region,
+	regionToPersistentInstancesMap map[awsTypes.Region][]*Instance,
+	regionToTransientInstancesMap map[awsTypes.Region][]*Instance,
+	regions []awsTypes.Region,
 ) GlobalInfo {
 
 	regionInfoMap := CreateRegionInfoMap(
@@ -50,9 +49,9 @@ func CreateGlobalInfo(
 // CreateRegionInfoMap creates a new RegionInfoMap from
 // Region-to-Instance maps for on-demand and spot instances.
 func CreateRegionInfoMap(
-	regionToPersistentInstancesMap map[types.Region][]*Instance,
-	regionToTransientInstancesMap map[types.Region][]*Instance,
-	regions []types.Region,
+	regionToPersistentInstancesMap map[awsTypes.Region][]*Instance,
+	regionToTransientInstancesMap map[awsTypes.Region][]*Instance,
+	regions []awsTypes.Region,
 ) RegionInfoMap {
 
 	regionInfoMap := make(RegionInfoMap)
@@ -111,7 +110,6 @@ func (info *GlobalInfo) Log(message string, logger *zap.Logger) {
 	}
 }
 
-// TODO: Test
 // Validate checks the GlobalInfo, ensuring the described aggregates
 // correctly reflect the described instances.
 //
@@ -141,7 +139,6 @@ func (info *GlobalInfo) Validate() error {
 	return nil
 }
 
-// TODO: Test
 // Validate checks the RegionInfo, ensuring the aggregates correctly
 // describe the listed instances.
 //

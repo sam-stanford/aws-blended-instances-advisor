@@ -1,4 +1,4 @@
-package schema
+package api
 
 import (
 	types "aws-blended-instances-advisor/aws/types"
@@ -17,6 +17,12 @@ import (
 
 // TODO: Add log of how many not parsed (like on-demand.go line 66)
 
+// GetSpotInstances fetches spot instance offerings from the
+// AWS API, returning them as a list of Instances.
+//
+// An error is returned if a critical failure is encountered during
+// the processes execution, with handleable failures being logged and
+// handled appropriately.
 func GetSpotInstances(
 	config *config.AwsApiConfig,
 	regions []types.Region,
@@ -37,7 +43,6 @@ func GetSpotInstances(
 
 		regionRevocationInfo, ok := regionRevocationInfoMap[region.CodeString()]
 		if !ok {
-			// TODO: Handle more gracefully
 			logger.Error("could not find region revocation info", zap.String("region", region.CodeString()))
 			continue
 		}
@@ -45,7 +50,6 @@ func GetSpotInstances(
 
 		regionSpotPrices, err := getSpotInstancePricesForRegion(config, region, creds, logger)
 		if err != nil {
-			// TODO: Handle more gracefully
 			logger.Error(
 				"could not fetch region spot prices",
 				zap.String("region", region.CodeString()),
@@ -61,8 +65,11 @@ func GetSpotInstances(
 			return nil, err
 		}
 		regionToInstanceMap[region] = instances
-		logger.Debug("Finished creating instances")
-		logger.Info("TODO") // TODO: Log & count
+		logger.Info(
+			"Finished creating spot instances for region",
+			zap.String("region", region.CodeString()),
+			zap.Int("instanceCount", len(instances)),
+		)
 	}
 
 	return regionToInstanceMap, nil
@@ -164,7 +171,7 @@ func fetchSpotInstanceRevocationInfoAndSpecsMap(
 		return nil, nil, err
 	}
 
-	err = utils.DownloadFile(config.Endpoints.AwsSpotInstanceInfoUrl, filepath) // TODO: Return boolean on whether cache was used
+	err = utils.DownloadFile(config.Endpoints.AwsSpotInstanceInfoUrl, filepath)
 	if err != nil {
 		logger.Error("failed to download file", zap.String("getUrl", config.Endpoints.AwsSpotInstanceInfoUrl), zap.Error(err))
 		return nil, nil, err
@@ -174,7 +181,6 @@ func fetchSpotInstanceRevocationInfoAndSpecsMap(
 		zap.String("downloadFilepath", filepath),
 	)
 
-	// TODO - Separate this out so we can test this with test file
 	infoFile, err := utils.FileToBytes(filepath)
 	if err != nil {
 		logger.Error("failed to parse file to bytes", zap.String("file", filepath), zap.Error(err))

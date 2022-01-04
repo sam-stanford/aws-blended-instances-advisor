@@ -1,4 +1,4 @@
-package schema
+package api
 
 import (
 	types "aws-blended-instances-advisor/aws/types"

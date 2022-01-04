@@ -268,3 +268,163 @@ func TestNormalisePricePerHour(t *testing.T) {
 		}
 	}
 }
+
+type combineAggregatesTest struct {
+	aggregates []Aggregates
+	expected   Aggregates
+}
+
+func TestCombineAggregates(t *testing.T) {
+
+	agg1 := Aggregates{
+		Count: 10,
+
+		MinVcpu:  3,
+		MaxVcpu:  5,
+		MeanVcpu: 4,
+
+		MinRevocationProbability:  0,
+		MaxRevocationProbability:  0,
+		MeanRevocationProbability: 0,
+
+		MinPricePerHour:  0.001,
+		MaxPricePerHour:  0.001,
+		MeanPricePerHour: 0.001,
+	}
+
+	agg2 := Aggregates{
+		Count: 5,
+
+		MinVcpu:  6,
+		MaxVcpu:  6,
+		MeanVcpu: 6,
+
+		MinRevocationProbability:  0.1,
+		MaxRevocationProbability:  0.1,
+		MeanRevocationProbability: 0.1,
+
+		MinPricePerHour:  0.001,
+		MaxPricePerHour:  0.05,
+		MeanPricePerHour: 0.005,
+	}
+
+	tests := map[string]combineAggregatesTest{
+		"one aggregates": {
+			aggregates: []Aggregates{agg1},
+			expected:   agg1,
+		},
+		"two aggregates": {
+			aggregates: []Aggregates{agg1, agg2},
+			expected: Aggregates{
+				Count: 15,
+
+				MinVcpu:  3,
+				MaxVcpu:  6,
+				MeanVcpu: 14.0 / 3.0, // (2*4 + 6) / 3
+
+				MinRevocationProbability:  0.1,
+				MaxRevocationProbability:  0.1,
+				MeanRevocationProbability: 0.1 / 3.0, // (2*0 + 0.1) / 3
+
+				MinPricePerHour:  0.001,
+				MaxPricePerHour:  0.05,
+				MeanPricePerHour: 0.007 / 3.0, // (2*0.001 + 0.005) / 3
+			},
+		},
+	}
+
+	for name, test := range tests {
+		got := CombineAggregates(test.aggregates)
+
+		if got.Count != test.expected.Count {
+			t.Fatalf(
+				"Aggregate count not equal for test \"%s\".Wanted: %d, got: %d",
+				name,
+				test.expected.Count,
+				got.Count,
+			)
+		}
+
+		if got.MinVcpu != test.expected.MinVcpu {
+			t.Fatalf(
+				"Aggregate min VCPU value not equal for test \"%s\".Wanted: %d, got: %d",
+				name,
+				test.expected.MinVcpu,
+				got.MinVcpu,
+			)
+		}
+
+		if got.MaxVcpu != test.expected.MaxVcpu {
+			t.Fatalf(
+				"Aggregate max VCPU value not equal for test \"%s\".Wanted: %d, got: %d",
+				name,
+				test.expected.MaxVcpu,
+				got.MaxVcpu,
+			)
+		}
+
+		if !utils.FloatsEqual(got.MeanVcpu, test.expected.MeanVcpu) {
+			t.Fatalf(
+				"Aggregate mean VCPU value not equal for test \"%s\".Wanted: %f, got: %f",
+				name,
+				test.expected.MeanVcpu,
+				got.MeanVcpu,
+			)
+		}
+
+		if !utils.FloatsEqual(got.MinRevocationProbability, test.expected.MinRevocationProbability) {
+			t.Fatalf(
+				"Aggregate min revocation probability not equal for test \"%s\".Wanted: %f, got: %f",
+				name,
+				test.expected.MinRevocationProbability,
+				got.MinRevocationProbability,
+			)
+		}
+
+		if !utils.FloatsEqual(got.MaxRevocationProbability, test.expected.MaxRevocationProbability) {
+			t.Fatalf(
+				"Aggregate max revocation probability not equal for test \"%s\".Wanted: %f, got: %f",
+				name,
+				test.expected.MaxRevocationProbability,
+				got.MaxRevocationProbability,
+			)
+		}
+
+		if !utils.FloatsEqual(got.MeanRevocationProbability, test.expected.MeanRevocationProbability) {
+			t.Fatalf(
+				"Aggregate mean revocation probability not equal for test \"%s\".Wanted: %f, got: %f",
+				name,
+				test.expected.MeanRevocationProbability,
+				got.MeanRevocationProbability,
+			)
+		}
+
+		if !utils.FloatsEqual(got.MinPricePerHour, test.expected.MinPricePerHour) {
+			t.Fatalf(
+				"Aggregate min price per hour not equal for test \"%s\".Wanted: %f, got: %f",
+				name,
+				test.expected.MinPricePerHour,
+				got.MinPricePerHour,
+			)
+		}
+
+		if !utils.FloatsEqual(got.MaxPricePerHour, test.expected.MaxPricePerHour) {
+			t.Fatalf(
+				"Aggregate max price per hour not equal for test \"%s\".Wanted: %f, got: %f",
+				name,
+				test.expected.MaxPricePerHour,
+				got.MaxPricePerHour,
+			)
+		}
+
+		if !utils.FloatsEqual(got.MeanPricePerHour, test.expected.MeanPricePerHour) {
+			t.Fatalf(
+				"Aggregate mean price per hour not equal for test \"%s\".Wanted: %f, got: %f",
+				name,
+				test.expected.MeanPricePerHour,
+				got.MeanPricePerHour,
+			)
+		}
+
+	}
+}

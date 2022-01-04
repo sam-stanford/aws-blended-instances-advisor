@@ -1,4 +1,4 @@
-package schema
+package api
 
 import (
 	types "aws-blended-instances-advisor/aws/types"
@@ -16,13 +16,18 @@ import (
 )
 
 const (
-	AWS_PRICING_API_REGION   = "us-east-1"      // Only us-east-1 works currently (2021-11-11)
-	INSTANCES_CACHE_FILENAME = "instances.json" // TODO: Inject
-	INSTANCES_CACHE_DURATION = 672              // TODO: Inject
+	AWS_PRICING_API_REGION   = "us-east-1" // Only us-east-1 works currently (2021-11-11)
+	INSTANCES_CACHE_FILENAME = "instances.json"
+	INSTANCES_CACHE_DURATION = 672
 )
 
-// TODO: Doc comment & use go routines to parallelise fetches
-
+// GetInstancesAndInfo fetches spot and on-demandinstance offerings from the
+// AWS API, returning them as a list of Instances and InstanceInfo (wrapped in
+// a GlobalInfo).
+//
+// An error is returned if a critical failure is encountered during
+// the processes execution, with handleable failures being logged and
+// handled appropriately.
 func GetInstancesAndInfo(
 	apiConfig *config.AwsApiConfig,
 	creds *config.Credentials,

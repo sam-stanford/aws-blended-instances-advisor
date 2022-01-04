@@ -11,23 +11,6 @@ const (
 	TEST_TEMP_FILEPATH    = "../../../assets/test/temp.txt"
 )
 
-func TestFileToBytes(t *testing.T) {
-	bytes, err := FileToBytes(TEST_TXT_FILEPATH)
-	if err != nil {
-		t.Fatalf("Error thrown when reading file: %s", err.Error())
-	}
-	if string(bytes) != TEST_TXT_FILE_CONTENT {
-		t.Fatalf("Read bytes do not match file content. Wanted: %s, got: %s", TEST_TXT_FILE_CONTENT, string(bytes))
-	}
-}
-
-func TestFileToBytesThrowsErrorForInvalidFilepath(t *testing.T) {
-	_, err := FileToBytes("NOT A FILEPATH")
-	if err == nil {
-		t.Fatalf("Error was not thrown for an invalid filepath")
-	}
-}
-
 func TestFileToString(t *testing.T) {
 	content, err := FileToString(TEST_TXT_FILEPATH)
 	if err != nil {
@@ -40,6 +23,23 @@ func TestFileToString(t *testing.T) {
 
 func TestFileToStringThrowsErrorForInvalidFilepath(t *testing.T) {
 	_, err := FileToString("NOT A FILEPATH")
+	if err == nil {
+		t.Fatalf("Error was not thrown for an invalid filepath")
+	}
+}
+
+func TestFileToBytes(t *testing.T) {
+	bytes, err := FileToBytes(TEST_TXT_FILEPATH)
+	if err != nil {
+		t.Fatalf("Error thrown when reading file: %s", err.Error())
+	}
+	if string(bytes) != TEST_TXT_FILE_CONTENT {
+		t.Fatalf("Read bytes do not match file content. Wanted: %s, got: %s", TEST_TXT_FILE_CONTENT, string(bytes))
+	}
+}
+
+func TestFileToBytesThrowsErrorForInvalidFilepath(t *testing.T) {
+	_, err := FileToBytes("NOT A FILEPATH")
 	if err == nil {
 		t.Fatalf("Error was not thrown for an invalid filepath")
 	}
@@ -102,8 +102,61 @@ func TestWriteBytesToFileForExistingFile(t *testing.T) {
 	}
 }
 
-func TestCreateFilepath(t *testing.T) {
-	// TODO
+func TestWriteStringToFileForNewFile(t *testing.T) {
+	_, err := os.Stat(TEST_TEMP_FILEPATH)
+	if err == nil {
+		t.Fatalf("Cannot test for new file as file already exists. Filepath: %s", TEST_TEMP_FILEPATH)
+	}
+
+	s := "TESTING123"
+	err = WriteStringToFile(s, TEST_TEMP_FILEPATH)
+	if err != nil {
+		t.Fatalf("Failed to write bytes to file: %s", err.Error())
+	}
+
+	err = DeleteFile(TEST_TEMP_FILEPATH)
+	if err != nil {
+		t.Fatalf(
+			"Failed to delete file. Manual deletion likely required. Filepath: %s, Error: %s",
+			TEST_TEMP_FILEPATH,
+			err.Error(),
+		)
+	}
+}
+
+func TestWriteStringToFileForExistingFile(t *testing.T) {
+	file, err := os.Create(TEST_TEMP_FILEPATH)
+	if err != nil {
+		t.Fatalf("Failed to create file in test setup: %s", err.Error())
+	}
+	err = file.Close()
+	if err != nil {
+		t.Fatalf("Failed to close file in test setup: %s", err.Error())
+	}
+
+	_, err = os.Stat(TEST_TEMP_FILEPATH)
+	if err != nil {
+		t.Fatalf(
+			"Cannot test for existing file as file does not exist. Filepath: %s, Error: %s",
+			TEST_TEMP_FILEPATH,
+			err.Error(),
+		)
+	}
+
+	s := "TESTING123"
+	err = WriteStringToFile(s, TEST_TEMP_FILEPATH)
+	if err != nil {
+		t.Fatalf("Failed to write bytes to file: %s", err.Error())
+	}
+
+	err = DeleteFile(TEST_TEMP_FILEPATH)
+	if err != nil {
+		t.Fatalf(
+			"Failed to delete file. Manual deletion likely required. Filepath: %s, Error: %s",
+			TEST_TEMP_FILEPATH,
+			err.Error(),
+		)
+	}
 }
 
 func TestFileExists(t *testing.T) {
@@ -121,5 +174,20 @@ func TestFileExists(t *testing.T) {
 	}
 	if exists {
 		t.Fatalf("FileExists returned true for non-existent file. Wanted: %t, got: %t", true, exists)
+	}
+}
+
+func TestCreateFilepath(t *testing.T) {
+	pathComponents := []string{".", "test1", "test2"}
+	separator := string(os.PathListSeparator)
+	wantedPath := string('.') + separator + "test1" + separator + "test2"
+
+	filepath, err := CreateFilepath(pathComponents...)
+	if err != nil {
+		t.Fatalf("Error when creating filepath: %s", err.Error())
+	}
+
+	if filepath != wantedPath {
+		t.Fatalf("Created path is incorrect. Wanted: %s, got: %s", wantedPath, filepath)
 	}
 }

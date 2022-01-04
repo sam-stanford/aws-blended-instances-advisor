@@ -9,19 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// TODO: Add multiple end points  - one for each advisor
-// TODO: 		- Allows for advisor-specific info to be passed
-// TODO:		- Check provided advisor type against used path
-
-// TODO: Test
-
-// TODO: Calc response time & log
-
-// TODO: Sort services
-
-// TODO: Edit
-// StartAdviseService initialises HTTP endpoints to provide an API for
-// advice.
+// StartAdviseService initialises HTTP endpoints for the API.
 //
 // Blocks the current thread, until failure, at which point the error is logged
 // and the service is stopped.

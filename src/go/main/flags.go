@@ -7,10 +7,10 @@ import (
 const DEFAULT_CONFIG_FILEPATH = "../../config.json"
 
 type commandLineFlags struct {
-	configFilepath string
-	debugMode      bool
-	productionMode bool
-	clearCache     bool
+	ConfigFilepath string `json:"configFilepath"`
+	DebugMode      bool   `json:"debugMode"`
+	ProductionMode bool   `json:"productionMode"`
+	ClearCache     bool   `json:"clearCache"`
 }
 
 func parseCommandLineFlags() commandLineFlags {
@@ -21,12 +21,10 @@ func parseCommandLineFlags() commandLineFlags {
 
 	flag.Parse()
 
-	clf := commandLineFlags{
-		configFilepath: *configFilepath,
-		debugMode:      *debugMode,
-		productionMode: *prodMode,
-		clearCache:     *clearCache,
+	return commandLineFlags{
+		ConfigFilepath: *configFilepath,
+		DebugMode:      *debugMode,
+		ProductionMode: *prodMode,
+		ClearCache:     *clearCache,
 	}
-
-	return clf
 }

@@ -4,8 +4,6 @@ import (
 	"aws-blended-instances-advisor/utils"
 )
 
-// TODO: Edit comments to contain name of func
-
 // Aggregates contains aggregate information for a given set of instances,
 // providing the ability to normalise/standardise properties of an instance.
 type Aggregates struct {
@@ -24,8 +22,8 @@ type Aggregates struct {
 	MeanPricePerHour float64
 }
 
-// Calculates aggregates for a slice of instances, returning information in
-// an Aggregate struct.
+// CalculateAggregates calculates aggregates for a slice of instances,
+// returning information in an Aggregate struct.
 func CalculateAggregates(instances []*Instance) Aggregates {
 	totalVcpu, minVcpu, maxVcpu := 0, instances[0].Vcpu, instances[0].Vcpu
 
@@ -68,7 +66,9 @@ func CalculateAggregates(instances []*Instance) Aggregates {
 	}
 }
 
-// Normalises a given VCPU value with respect to aggregate values using min-max scaling.
+// NormaliseVcpu normalises a given VCPU value with respect to aggregate values
+// using min-max scaling.
+//
 // Returns 1/count if aggregates are formed from all equal values.
 func (agg Aggregates) NormaliseVcpu(vcpu int) float64 {
 	if agg.MaxVcpu == agg.MinVcpu {
@@ -77,7 +77,9 @@ func (agg Aggregates) NormaliseVcpu(vcpu int) float64 {
 	return float64(vcpu-agg.MinVcpu) / float64(agg.MaxVcpu-agg.MinVcpu)
 }
 
-// Normalises a given RevocationProbablity with respect to aggregate values using min-max scaling.
+// NoramliseRevocationProbability normalises a given RevocationProbablity
+// with respect to aggregate values using min-max scaling.
+//
 // Returns 1/count if aggregates are formed from all equal values.
 func (agg Aggregates) NormaliseRevocationProbability(prob float64) float64 {
 	if utils.FloatsEqual(agg.MaxRevocationProbability, agg.MinRevocationProbability) {
@@ -86,7 +88,9 @@ func (agg Aggregates) NormaliseRevocationProbability(prob float64) float64 {
 	return (prob - agg.MinRevocationProbability) / (agg.MaxRevocationProbability - agg.MinRevocationProbability)
 }
 
-// Normalises a given PricePerHour value with respect to aggregate values using min-max scaling.
+// NoramlisePricePerHour normalises a given PricePerHour value with respect to
+// aggregate values using min-max scaling.
+//
 // Returns 1/count if aggregates are formed from all equal values.
 func (agg Aggregates) NormalisePricePerHour(price float64) float64 {
 	if utils.FloatsEqual(agg.MaxPricePerHour, agg.MinPricePerHour) {
@@ -95,7 +99,6 @@ func (agg Aggregates) NormalisePricePerHour(price float64) float64 {
 	return (price - agg.MinPricePerHour) / (agg.MaxPricePerHour - agg.MinPricePerHour)
 }
 
-// TODO: Test
 // CombineAggregates combines mutliple Aggregate structs into a single Aggregate struct.
 func CombineAggregates(aggs []Aggregates) Aggregates {
 	if len(aggs) == 0 {

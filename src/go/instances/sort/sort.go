@@ -1,46 +1,46 @@
 package sort
 
 import (
-	. "aws-blended-instances-advisor/instances"
+	instPkg "aws-blended-instances-advisor/instances"
 	"sort"
 	"strings"
 )
 
-// Sorts a given slice of Instances in place from startIndex (inclusive) to endIndex (exclusive)
-// in increasing order of price.
-func SortInstancesByPrice(instances []*Instance, startIndex, endIndex int) {
+// SortInstancesByPrice sorts a given slice of Instances in place from startIndex
+// (inclusive) to endIndex (exclusive) in increasing order of price.
+func SortInstancesByPrice(instances []*instPkg.Instance, startIndex, endIndex int) {
 	sort.Slice(instances[startIndex:endIndex], func(i, j int) bool {
 		return instances[startIndex+i].PricePerHour < instances[startIndex+j].PricePerHour
 	})
 }
 
-// Sorts a given slice of Instances in place from startIndex (inclusive) to endIndex (exclusive)
-// in increasing order of memory.
-func SortInstancesByMemory(instances []*Instance, startIndex, endIndex int) {
+// SortInstancesByMemory sorts a given slice of Instances in place from startIndex
+// (inclusive) to endIndex (exclusive) in increasing order of memory.
+func SortInstancesByMemory(instances []*instPkg.Instance, startIndex, endIndex int) {
 	sort.Slice(instances[startIndex:endIndex], func(i, j int) bool {
 		return instances[startIndex+i].MemoryGb < instances[startIndex+j].MemoryGb
 	})
 }
 
-// Sorts a given slice of Instances in place from startIndex (inclusive) to endIndex (exclusive)
-// in increasing order of their VCPU.
-func SortInstancesByVcpu(instances []*Instance, startIndex, endIndex int) {
+// SortInstancesByVcpu sorts a given slice of Instances in place from startIndex (inclusive)
+// to endIndex (exclusive) in increasing order of their VCPU.
+func SortInstancesByVcpu(instances []*instPkg.Instance, startIndex, endIndex int) {
 	sort.Slice(instances[startIndex:endIndex], func(i, j int) bool {
 		return instances[startIndex+i].Vcpu < instances[startIndex+j].Vcpu
 	})
 }
 
-// Sorts a given slice of Instances in place from startIndex (inclusive) to endIndex (exclusive)
-// in increasing order of their revocation probabilities.
-func SortInstancesByRevocationProbability(instances []*Instance, startIndex, endIndex int) {
+// SortInstancesByRevocationProbability sorts a given slice of Instances in place from startIndex
+// (inclusive) to endIndex (exclusive) in increasing order of their revocation probabilities.
+func SortInstancesByRevocationProbability(instances []*instPkg.Instance, startIndex, endIndex int) {
 	sort.Slice(instances[startIndex:endIndex], func(i, j int) bool {
 		return instances[startIndex+i].RevocationProbability < instances[startIndex+j].RevocationProbability
 	})
 }
 
-// Sorts a given slice of Instances in place from startIndex (inclusive) to endIndex (exclusive)
-// in increasing lexographcial order of their Region code name.
-func SortInstancesByRegion(instances []*Instance, startIndex, endIndex int) {
+// SortInstancesByRegion sorts a given slice of Instances in place from startIndex (inclusive)
+// to endIndex (exclusive) in increasing lexographcial order of their Region code name.
+func SortInstancesByRegion(instances []*instPkg.Instance, startIndex, endIndex int) {
 	sort.Slice(instances[startIndex:endIndex], func(i, j int) bool {
 		return strings.Compare(
 			instances[startIndex+i].Region.CodeString(),
@@ -49,12 +49,12 @@ func SortInstancesByRegion(instances []*Instance, startIndex, endIndex int) {
 	})
 }
 
-// TODO: Test / remove ?
-// Sorts a given slice of Instances in place from startIndex (inclusive) to endIndex (exclusive)
-// in increasing order of their score calculated from the provided weights and aggregates.
+// SortInstancesWeighed sorts a given slice of Instances in place from startIndex
+// (inclusive) to endIndex (exclusive) in increasing order of their score
+// calculated from the provided weights and aggregates.
 func SortInstancesWeighted(
-	instances []*Instance,
-	aggregates Aggregates,
+	instances []*instPkg.Instance,
+	aggregates instPkg.Aggregates,
 	startIndex,
 	endIndex int,
 	weights SortWeights,
@@ -74,12 +74,13 @@ func SortInstancesWeighted(
 	})
 }
 
-// Sorts a given slice of Instances in place from startIndex (inclusive) to endIndex (exclusive)
-// in increasing order of their score calculated from the provided weights and aggregates, with
-// a limiter applied to instances' VCPUs after they exceed a maximum.
+// SortInstancesWeightedWithVcpuLimiter sorts a given slice of Instances in place from
+// startIndex (inclusive) to endIndex (exclusive) in increasing order of their score
+// calculated from the provided weights and aggregates, with a limiter applied to
+// instances' VCPUs after they exceed a maximum.
 func SortInstancesWeightedWithVcpuLimiter(
-	instances []*Instance,
-	aggregates Aggregates,
+	instances []*instPkg.Instance,
+	aggregates instPkg.Aggregates,
 	startIndex,
 	endIndex int,
 	weights SortWeights,
@@ -102,10 +103,15 @@ func SortInstancesWeightedWithVcpuLimiter(
 	})
 }
 
-// TODO: Doc & test / make private?
+// CalculateInstanceScoreFromWeights computes a score for an Instance relative
+// to other Instances by using a given set of SortWeights and Instance Aggregates.
+//
+// The score is an arbitary representation of how suitable the Instance is for the
+// given set of SortWeights, and is relative to other Instances represented by the
+// provided Instance Aggregates.
 func CalculateInstanceScoreFromWeights(
-	instance *Instance,
-	aggregates Aggregates,
+	instance *instPkg.Instance,
+	aggregates instPkg.Aggregates,
 	weights SortWeights,
 ) float64 {
 	normalisedVcpu := aggregates.NormaliseVcpu(instance.Vcpu)
@@ -117,14 +123,15 @@ func CalculateInstanceScoreFromWeights(
 		weights.PriceWeight*normalisedPrice
 }
 
-// TODO: Doc & test
+// CalculateInstanceScoreFromWeightsWithVcpuLimiter computes a score in the same way as
+// CalculateInstanceScoreFromWeights, except a limiter is used to limit the effect of
+// the Instance's Vcpu on the score.
 func CalculateInstanceScoreFromWeightsWithVcpuLimiter(
-	instance *Instance,
-	aggregates Aggregates,
+	instance *instPkg.Instance,
+	aggregates instPkg.Aggregates,
 	weights SortWeights,
 	maxVcpu int,
 ) float64 {
-	// TODO: Can we not just use modulo here?
 	if instance.Vcpu >= maxVcpu {
 		return calculatedInstanceScoreFromWeightsWithFixedVcpu(
 			instance,
@@ -141,8 +148,8 @@ func CalculateInstanceScoreFromWeightsWithVcpuLimiter(
 }
 
 func calculatedInstanceScoreFromWeightsWithFixedVcpu(
-	instance *Instance,
-	aggregates Aggregates,
+	instance *instPkg.Instance,
+	aggregates instPkg.Aggregates,
 	weights SortWeights,
 	fixedVcpu int,
 ) float64 {

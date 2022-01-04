@@ -18,13 +18,14 @@ import (
 func main() {
 	clf := parseCommandLineFlags()
 
-	logger, syncLogger := createLogger(clf.debugMode)
+	logger, syncLogger := createLogger(clf.DebugMode)
 	defer syncLogger()
 
+	fmt.Println(clf)
 	logCommandLineFlags(&clf, logger)
 
-	config := parseAndLogConfig(clf.configFilepath, logger)
-	cache := createCache(config.CacheConfig.Dirpath, clf.clearCache, logger)
+	config := parseAndLogConfig(clf.ConfigFilepath, logger)
+	cache := createCache(config.CacheConfig.Dirpath, clf.ClearCache, logger)
 
 	instancesInfo, err := awsApi.GetInstancesAndInfo(
 		&config.AwsApiConfig,
@@ -103,11 +104,9 @@ func logConfig(config *config.Config, configFilepath string, logger *zap.Logger)
 		zap.String("configFilepath", configFilepath),
 		zap.Any("config", config.String()),
 	)
-	// TODO: Stop escaping quotes
 }
 
 func logCommandLineFlags(clf *commandLineFlags, logger *zap.Logger) {
-	// TODO: Not printing parsed flags
 	logger.Info("command line flags parsed", zap.Any("flags", clf))
 }
 

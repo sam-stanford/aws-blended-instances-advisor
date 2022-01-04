@@ -2,6 +2,7 @@ package types
 
 import "fmt"
 
+// A Region represents one AWS region.
 type Region int
 
 const (
@@ -24,7 +25,7 @@ const (
 	SaEast1
 )
 
-// TODO: Test & Doc
+// GetAllRegions returns a slice containing all possible Regions.
 func GetAllRegions() []Region {
 	lastRegion := SaEast1
 
@@ -35,7 +36,10 @@ func GetAllRegions() []Region {
 	return r
 }
 
-// TODO: Test & doc
+// CodeString returns the string representation of a Region
+// in its code format.
+//
+// Example: eu-east-2
 func (region Region) CodeString() string {
 	switch region {
 	case UsEast1:
@@ -77,7 +81,10 @@ func (region Region) CodeString() string {
 	}
 }
 
-// TODO: Test & doc
+// CodeString returns the string representation of a Region
+// which is representative of the Region's name
+//
+// Example: US East (N. Virginia)
 func (region Region) NameString() string {
 	switch region {
 	case UsEast1:
@@ -119,7 +126,10 @@ func (region Region) NameString() string {
 	}
 }
 
-// TODO: Test & Doc
+// NewRegion creates a new region from a string representation
+// of the region, including name and code strings.
+//
+// An error is returned if the string does not match any region.
 func NewRegion(value string) (Region, error) {
 	switch value {
 	case "us-east-1", "US East (N. Virginia)":
@@ -161,7 +171,9 @@ func NewRegion(value string) (Region, error) {
 	return -1, fmt.Errorf("provided value of \"%s\" does not match any region", value)
 }
 
-// TODO: Doc & test
+// NewRegions creates multiple Regions from a slice of region string values.
+//
+// An error is returned if any value does not match a Region.
 func NewRegions(values []string) ([]Region, error) {
 	regions := []Region{}
 	for _, value := range values {

@@ -1,7 +1,7 @@
 //go:build integration
 // +build integration
 
-package schema
+package api
 
 import (
 	"aws-blended-instances-advisor/aws/types"

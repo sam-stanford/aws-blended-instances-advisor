@@ -1,4 +1,4 @@
-package schema
+package api
 
 import (
 	types "aws-blended-instances-advisor/aws/types"
@@ -12,14 +12,18 @@ import (
 	"go.uber.org/zap"
 )
 
-// TODO: Own sub package
-
 const (
 	EC2_SERVICE_CODE       = "AmazonEC2"
 	LOCATION_FILTER_KEY    = "location"
 	TERM_MATCH_FILTER_TYPE = "TERM_MATCH"
 )
 
+// GetOnDemandInstances fetches on-demand instance offerings from the
+// AWS API, returning them as a list of Instances.
+//
+// An error is returned if a critical failure is encountered during
+// the processes execution, with handleable failures being logged and
+// handled appropriately.
 func GetOnDemandInstances(
 	config *config.AwsApiConfig,
 	regions []types.Region,
