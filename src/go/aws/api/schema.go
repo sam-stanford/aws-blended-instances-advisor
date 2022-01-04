@@ -1,6 +1,5 @@
 package schema
 
-// TODO: Rename these
 import (
 	types "aws-blended-instances-advisor/aws/types"
 	"aws-blended-instances-advisor/config"
@@ -105,9 +104,8 @@ type regionSpotInstanceRevocationInfo struct {
 }
 
 type spotInstanceRevocationInfo struct {
-	// TODO: Move comments to doc
-	RevocationProbabilityTier int `json:"r"` // 0 => <5%, 1 => 5-10%, 2 => 10-15%, 3 => 15-20%, 4 => >20%
-	PercentageSavings         int `json:"s"` // Over on-demand
+	RevocationProbabilityTier     int `json:"r"` // 0 => <5%, 1 => 5-10%, 2 => 10-15%, 3 => 15-20%, 4 => >20%
+	PercentageSavingsOverOnDemand int `json:"s"`
 }
 
 func (info *onDemandInstanceInfo) toInstance() (*instPkg.Instance, error) {
@@ -123,10 +121,6 @@ func (info *onDemandInstanceInfo) toInstance() (*instPkg.Instance, error) {
 	if err != nil {
 		return nil, err
 	}
-	os, err := types.NewOperatingSystemFromString(info.Specs.Attributes.OperatingSystem)
-	if err != nil {
-		return nil, err
-	}
 	price, err := parseOnDemandPrice(info)
 	if err != nil {
 		return nil, err
@@ -138,10 +132,10 @@ func (info *onDemandInstanceInfo) toInstance() (*instPkg.Instance, error) {
 		MemoryGb:              mem,
 		Vcpu:                  vcpu,
 		Region:                region,
-		AvailabilityZone:      info.Specs.Attributes.AvailabilityZone, // TODO: "NA" for most fetched values
-		OperatingSystem:       os,
+		AvailabilityZone:      info.Specs.Attributes.AvailabilityZone,
+		OperatingSystem:       info.Specs.Attributes.OperatingSystem,
 		PricePerHour:          price,
-		RevocationProbability: 0, // On-demand instances will not be revoked
+		RevocationProbability: 0, // On-demand instances have 0% chance of being revoked
 	}, nil
 }
 
@@ -180,7 +174,6 @@ func parseOnDemandVcpu(info *onDemandInstanceInfo) (int, error) {
 }
 
 func parseOnDemandMemory(info *onDemandInstanceInfo) (float64, error) {
-	// TODO: Manage non-GB / non-GiB values
 	memStr := info.Specs.Attributes.Memory
 
 	index := 0
@@ -219,7 +212,6 @@ func parseOnDemandPrice(info *onDemandInstanceInfo) (float64, error) {
 }
 
 func (info *spotInstanceRevocationInfo) getRevocationProbability() (float64, error) {
-	// Return the upper bound of the tier
 	switch info.RevocationProbabilityTier {
 	case 0:
 		return 0.05, nil
@@ -230,7 +222,7 @@ func (info *spotInstanceRevocationInfo) getRevocationProbability() (float64, err
 	case 3:
 		return 0.2, nil
 	case 4:
-		return 0.3, nil // TODO: >20% => ?
+		return 0.3, nil // >20% => 30%
 	default:
 		return -1, fmt.Errorf(
 			"provided revocation probability tier does not exist: %d",

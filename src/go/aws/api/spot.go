@@ -132,14 +132,14 @@ func fetchSpotInstanceAvailabilityInfo(
 		zap.Int("maxInstanceCount", maxInstanceCount),
 	)
 
-	// TODO
-	// if len(spotPrices) > maxInstanceCount {
-	// 	logger.Info(
-	// 		"removed excess instances to keep to max instance count",
-	// 		zap.Int("removed", len(spotPrices)-maxInstanceCount),
-	// 	)
-	// 	spotPrices = spotPrices[:maxInstanceCount]
-	// }
+	// TODO: Ensure next block's working properly
+	if len(spotPrices) > maxInstanceCount {
+		logger.Info(
+			"removed excess instances to keep to max instance count",
+			zap.Int("removed", len(spotPrices)-maxInstanceCount),
+		)
+		spotPrices = spotPrices[:maxInstanceCount]
+	}
 
 	return spotPrices, nil
 }
@@ -199,8 +199,6 @@ func createRegionSpotInstances(
 ) {
 	instances := make([]*instPkg.Instance, 0)
 
-	// TODO: Wrap this in method to avoid repeated code for Windows
-
 	for instanceType, revocationInfo := range regionRevocationInfo.LinuxInstances {
 		spec, ok := instanceSpecMap[instanceType]
 		if !ok {
@@ -220,7 +218,7 @@ func createRegionSpotInstances(
 			continue
 		}
 
-		instance, err := createInstanceFromSpotInstanceInfo(&price, &revocationInfo, &spec, region, types.Linux)
+		instance, err := createInstanceFromSpotInstanceInfo(&price, &revocationInfo, &spec, region, "Linux")
 		if err != nil {
 			logger.Debug("failed to create instance from given spot instance info", zap.Error(err))
 			continue
@@ -244,7 +242,7 @@ func createRegionSpotInstances(
 			continue
 		}
 
-		instance, err := createInstanceFromSpotInstanceInfo(&price, &revocationInfo, &spec, region, types.Windows)
+		instance, err := createInstanceFromSpotInstanceInfo(&price, &revocationInfo, &spec, region, "Windows")
 		if err != nil {
 			logger.Debug("failed to create instance from given spot instance info", zap.Error(err))
 			continue
@@ -261,7 +259,7 @@ func createInstanceFromSpotInstanceInfo(
 	revocationInfo *spotInstanceRevocationInfo,
 	specs *spotInstanceSpecs,
 	region types.Region,
-	os types.OperatingSystem,
+	os string,
 ) (
 	*instPkg.Instance,
 	error,

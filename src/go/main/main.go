@@ -25,11 +25,10 @@ func main() {
 
 	config := parseAndLogConfig(clf.configFilepath, logger)
 	cache := createCache(config.CacheConfig.Dirpath, clf.clearCache, logger)
-	creds := getCredentialsForMode(clf.productionMode, config)
 
 	instancesInfo, err := awsApi.GetInstancesAndInfo(
 		&config.AwsApiConfig,
-		&creds,
+		&config.Credentials,
 		cache,
 		logger,
 	)
@@ -105,13 +104,6 @@ func logConfig(config *config.Config, configFilepath string, logger *zap.Logger)
 		zap.Any("config", config.String()),
 	)
 	// TODO: Stop escaping quotes
-}
-
-func getCredentialsForMode(isProductionMode bool, c *config.Config) config.Credentials {
-	if isProductionMode {
-		return c.Credentials.Production
-	}
-	return c.Credentials.Development
 }
 
 func logCommandLineFlags(clf *commandLineFlags, logger *zap.Logger) {

@@ -3,6 +3,7 @@ package service
 import (
 	"aws-blended-instances-advisor/api/schema"
 	awsTypes "aws-blended-instances-advisor/aws/types"
+	"aws-blended-instances-advisor/config"
 	"aws-blended-instances-advisor/utils"
 	"encoding/json"
 	"net/http"
@@ -10,7 +11,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func getRegionsEndpointHandler(logger *zap.Logger) func(http.ResponseWriter, *http.Request) {
+func getRegionsEndpointHandler(cfg *config.ApiConfig, logger *zap.Logger) func(http.ResponseWriter, *http.Request) {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		reqId := utils.GenerateUuid()
@@ -19,6 +20,8 @@ func getRegionsEndpointHandler(logger *zap.Logger) func(http.ResponseWriter, *ht
 			zap.String("url", r.Host),
 			zap.String("requestId", reqId),
 		)
+
+		utils.AddCorsHeader(w, r, cfg.AllowedDomains)
 
 		regions := []string{}
 		for _, r := range awsTypes.GetAllRegions() {
@@ -31,7 +34,7 @@ func getRegionsEndpointHandler(logger *zap.Logger) func(http.ResponseWriter, *ht
 
 		err := writeRegionsResponse(w, reqId, resp, logger)
 		if err != nil {
-			utils.WriteHttpErrorResponse(w, reqId, err, http.StatusInternalServerError, logger)
+			writeErrorResponse(w, reqId, err, http.StatusInternalServerError, logger)
 			return
 		}
 	}
@@ -48,6 +51,8 @@ func writeRegionsResponse(
 	if err != nil {
 		return utils.PrependToError(err, "could not marshal advice into JSON")
 	}
+
+	utils.AddJsonContentTypeHeader(w)
 
 	_, err = w.Write(respBody)
 	if err != nil {
