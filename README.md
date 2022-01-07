@@ -1,6 +1,4 @@
-## API
-
-## Contents
+# API
 
 ### Requests
 
@@ -8,29 +6,58 @@ Requests should be formatted in the following way.
 
 ```TypeScript
 {
-	"name": string,
-	"minMemory": number,
-	"maxVcpu": number,
-	"minInstances": number,
-	"totalInstances": number
+  "services": {
+      "name": string; // The service's name. Must be unique
+      "minMemory": number; // The minimum amount on memory required
+      "maxVcpu": number; // The maximum of CPU cores which can be utilised
+      "minInstances": number; // The minimum number of instances of the service which should be running 
+      "maxInstances": number; // The maximumum number of isntances of the service which should be running
+    }[];
+  "advisor": {
+    "type": string; // Only accepts "weighted" for now
+    "weights": {
+      "availability": number; 
+      "performance": number;
+      "price": number;
+    };
+  };
+  "options": {
+    "avoidRepeatedInstanceTypes": boolean;
+    "shareInstancesBetweenServices": boolean;
+    "considerFreeInstances": boolean;
+    "regions": string[];
+  };
 }
 ```
 
-- `name` (string) : The name of the service.
-  - Names of services within the same request must be unique.
-- `minMemory` (float) : The minimum amount of memory required by the service.
-  - The advising service assumes that more memory than the given value will provide significantly diminishing returns to the performance of the specified service.
-- `maxVcpu` (int) : The maximum number of CPU cores that are useful to the service.
-  - The advising service assumes that more CPU cores than the given value will provide significantly dimishing returns to the performance of the specified service.
-- `minInstances` (int) : The minimum number of instances of the service that are required to be available at all times.
-  - The advising service will use non-transient resources for this number of instances.
-- `totalInstances` (int) : The total number of instances of the service that are desired to be available.
-  - The advising service will use transient or non-transient resources for the difference between `minInstances` and `totalInstances`.
-
 ---
+
+}
 
 ## Responses
 
-TODO
+Responses will be formatted in the following way.
 
-TODO: Update example config
+```TypeScript
+
+{
+  [region: string]: {
+    "score": number; 
+    "instances": [id: string]: {
+      "id": string; // UUID for the instance
+      "name": string; // The AWS name/type of the instance
+      "memory": number; // Memory in GB
+      "vcpu": number; // Number of CPU cores
+      "region": string; // AWS region
+      "az": string; // AWS availability zone
+      "os": string; // Operating system
+      "price" number; // Price per hour in USD
+      "revocProb": number; // The probability of revocation in the next month
+    };
+    "assignments": {
+      "servicesToInstances": {[serviceName: string]: string};
+      "instancesToServices": {[instanceId: string]: string};
+    }
+  };
+}
+```
