@@ -4,9 +4,9 @@ import "aws-blended-instances-advisor/api/schema"
 
 // A SortWeights contains the weights to be used when sorting instances.
 type SortWeights struct {
-	VcpuWeight                  float64
-	RevocationProbabilityWeight float64
-	PriceWeight                 float64
+	VcpuWeight                  float64 `json:"vcpuWeight"`
+	RevocationProbabilityWeight float64 `json:"revocationProbabilityWeight"`
+	PriceWeight                 float64 `json:"priceWeight"`
 }
 
 // NewSortWeightsFromApiWeights creates a SortWeights variable from the api/schema package's

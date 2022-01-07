@@ -68,7 +68,7 @@ func TestCalculateAggregates(t *testing.T) {
 
 		if agg.Count != test.expected.Count {
 			t.Fatalf(
-				"Aggregate count not equal for test \"%s\".Wanted: %d, got: %d",
+				"Aggregate count not equal for test \"%s\". Wanted: %d, got: %d",
 				name,
 				test.expected.Count,
 				agg.Count,
@@ -77,7 +77,7 @@ func TestCalculateAggregates(t *testing.T) {
 
 		if agg.MinVcpu != test.expected.MinVcpu {
 			t.Fatalf(
-				"Aggregate min VCPU value not equal for test \"%s\".Wanted: %d, got: %d",
+				"Aggregate min VCPU value not equal for test \"%s\". Wanted: %d, got: %d",
 				name,
 				test.expected.MinVcpu,
 				agg.MinVcpu,
@@ -86,7 +86,7 @@ func TestCalculateAggregates(t *testing.T) {
 
 		if agg.MaxVcpu != test.expected.MaxVcpu {
 			t.Fatalf(
-				"Aggregate max VCPU value not equal for test \"%s\".Wanted: %d, got: %d",
+				"Aggregate max VCPU value not equal for test \"%s\". Wanted: %d, got: %d",
 				name,
 				test.expected.MaxVcpu,
 				agg.MaxVcpu,
@@ -95,7 +95,7 @@ func TestCalculateAggregates(t *testing.T) {
 
 		if !utils.FloatsEqual(agg.MeanVcpu, test.expected.MeanVcpu) {
 			t.Fatalf(
-				"Aggregate mean VCPU value not equal for test \"%s\".Wanted: %f, got: %f",
+				"Aggregate mean VCPU value not equal for test \"%s\". Wanted: %f, got: %f",
 				name,
 				test.expected.MeanVcpu,
 				agg.MeanVcpu,
@@ -104,7 +104,7 @@ func TestCalculateAggregates(t *testing.T) {
 
 		if !utils.FloatsEqual(agg.MinRevocationProbability, test.expected.MinRevocationProbability) {
 			t.Fatalf(
-				"Aggregate min revocation probability not equal for test \"%s\".Wanted: %f, got: %f",
+				"Aggregate min revocation probability not equal for test \"%s\". Wanted: %f, got: %f",
 				name,
 				test.expected.MinRevocationProbability,
 				agg.MinRevocationProbability,
@@ -113,7 +113,7 @@ func TestCalculateAggregates(t *testing.T) {
 
 		if !utils.FloatsEqual(agg.MaxRevocationProbability, test.expected.MaxRevocationProbability) {
 			t.Fatalf(
-				"Aggregate max revocation probability not equal for test \"%s\".Wanted: %f, got: %f",
+				"Aggregate max revocation probability not equal for test \"%s\". Wanted: %f, got: %f",
 				name,
 				test.expected.MaxRevocationProbability,
 				agg.MaxRevocationProbability,
@@ -122,7 +122,7 @@ func TestCalculateAggregates(t *testing.T) {
 
 		if !utils.FloatsEqual(agg.MeanRevocationProbability, test.expected.MeanRevocationProbability) {
 			t.Fatalf(
-				"Aggregate mean revocation probability not equal for test \"%s\".Wanted: %f, got: %f",
+				"Aggregate mean revocation probability not equal for test \"%s\". Wanted: %f, got: %f",
 				name,
 				test.expected.MeanRevocationProbability,
 				agg.MeanRevocationProbability,
@@ -131,7 +131,7 @@ func TestCalculateAggregates(t *testing.T) {
 
 		if !utils.FloatsEqual(agg.MinPricePerHour, test.expected.MinPricePerHour) {
 			t.Fatalf(
-				"Aggregate min price per hour not equal for test \"%s\".Wanted: %f, got: %f",
+				"Aggregate min price per hour not equal for test \"%s\". Wanted: %f, got: %f",
 				name,
 				test.expected.MinPricePerHour,
 				agg.MinPricePerHour,
@@ -140,7 +140,7 @@ func TestCalculateAggregates(t *testing.T) {
 
 		if !utils.FloatsEqual(agg.MaxPricePerHour, test.expected.MaxPricePerHour) {
 			t.Fatalf(
-				"Aggregate max price per hour not equal for test \"%s\".Wanted: %f, got: %f",
+				"Aggregate max price per hour not equal for test \"%s\". Wanted: %f, got: %f",
 				name,
 				test.expected.MaxPricePerHour,
 				agg.MaxPricePerHour,
@@ -149,7 +149,7 @@ func TestCalculateAggregates(t *testing.T) {
 
 		if !utils.FloatsEqual(agg.MeanPricePerHour, test.expected.MeanPricePerHour) {
 			t.Fatalf(
-				"Aggregate mean price per hour not equal for test \"%s\".Wanted: %f, got: %f",
+				"Aggregate mean price per hour not equal for test \"%s\". Wanted: %f, got: %f",
 				name,
 				test.expected.MeanPricePerHour,
 				agg.MeanPricePerHour,
@@ -322,7 +322,7 @@ func TestCombineAggregates(t *testing.T) {
 				MaxVcpu:  6,
 				MeanVcpu: 14.0 / 3.0, // (2*4 + 6) / 3
 
-				MinRevocationProbability:  0.1,
+				MinRevocationProbability:  0,
 				MaxRevocationProbability:  0.1,
 				MeanRevocationProbability: 0.1 / 3.0, // (2*0 + 0.1) / 3
 
@@ -338,7 +338,7 @@ func TestCombineAggregates(t *testing.T) {
 
 		if got.Count != test.expected.Count {
 			t.Fatalf(
-				"Aggregate count not equal for test \"%s\".Wanted: %d, got: %d",
+				"Aggregate count not equal for test \"%s\". Wanted: %d, got: %d",
 				name,
 				test.expected.Count,
 				got.Count,
@@ -347,7 +347,7 @@ func TestCombineAggregates(t *testing.T) {
 
 		if got.MinVcpu != test.expected.MinVcpu {
 			t.Fatalf(
-				"Aggregate min VCPU value not equal for test \"%s\".Wanted: %d, got: %d",
+				"Aggregate min VCPU value not equal for test \"%s\". Wanted: %d, got: %d",
 				name,
 				test.expected.MinVcpu,
 				got.MinVcpu,
@@ -356,7 +356,7 @@ func TestCombineAggregates(t *testing.T) {
 
 		if got.MaxVcpu != test.expected.MaxVcpu {
 			t.Fatalf(
-				"Aggregate max VCPU value not equal for test \"%s\".Wanted: %d, got: %d",
+				"Aggregate max VCPU value not equal for test \"%s\". Wanted: %d, got: %d",
 				name,
 				test.expected.MaxVcpu,
 				got.MaxVcpu,
@@ -365,7 +365,7 @@ func TestCombineAggregates(t *testing.T) {
 
 		if !utils.FloatsEqual(got.MeanVcpu, test.expected.MeanVcpu) {
 			t.Fatalf(
-				"Aggregate mean VCPU value not equal for test \"%s\".Wanted: %f, got: %f",
+				"Aggregate mean VCPU value not equal for test \"%s\". Wanted: %f, got: %f",
 				name,
 				test.expected.MeanVcpu,
 				got.MeanVcpu,
@@ -374,7 +374,7 @@ func TestCombineAggregates(t *testing.T) {
 
 		if !utils.FloatsEqual(got.MinRevocationProbability, test.expected.MinRevocationProbability) {
 			t.Fatalf(
-				"Aggregate min revocation probability not equal for test \"%s\".Wanted: %f, got: %f",
+				"Aggregate min revocation probability not equal for test \"%s\". Wanted: %f, got: %f",
 				name,
 				test.expected.MinRevocationProbability,
 				got.MinRevocationProbability,
@@ -383,7 +383,7 @@ func TestCombineAggregates(t *testing.T) {
 
 		if !utils.FloatsEqual(got.MaxRevocationProbability, test.expected.MaxRevocationProbability) {
 			t.Fatalf(
-				"Aggregate max revocation probability not equal for test \"%s\".Wanted: %f, got: %f",
+				"Aggregate max revocation probability not equal for test \"%s\". Wanted: %f, got: %f",
 				name,
 				test.expected.MaxRevocationProbability,
 				got.MaxRevocationProbability,
@@ -392,7 +392,7 @@ func TestCombineAggregates(t *testing.T) {
 
 		if !utils.FloatsEqual(got.MeanRevocationProbability, test.expected.MeanRevocationProbability) {
 			t.Fatalf(
-				"Aggregate mean revocation probability not equal for test \"%s\".Wanted: %f, got: %f",
+				"Aggregate mean revocation probability not equal for test \"%s\". Wanted: %f, got: %f",
 				name,
 				test.expected.MeanRevocationProbability,
 				got.MeanRevocationProbability,
@@ -401,7 +401,7 @@ func TestCombineAggregates(t *testing.T) {
 
 		if !utils.FloatsEqual(got.MinPricePerHour, test.expected.MinPricePerHour) {
 			t.Fatalf(
-				"Aggregate min price per hour not equal for test \"%s\".Wanted: %f, got: %f",
+				"Aggregate min price per hour not equal for test \"%s\". Wanted: %f, got: %f",
 				name,
 				test.expected.MinPricePerHour,
 				got.MinPricePerHour,
@@ -410,7 +410,7 @@ func TestCombineAggregates(t *testing.T) {
 
 		if !utils.FloatsEqual(got.MaxPricePerHour, test.expected.MaxPricePerHour) {
 			t.Fatalf(
-				"Aggregate max price per hour not equal for test \"%s\".Wanted: %f, got: %f",
+				"Aggregate max price per hour not equal for test \"%s\". Wanted: %f, got: %f",
 				name,
 				test.expected.MaxPricePerHour,
 				got.MaxPricePerHour,
@@ -419,7 +419,7 @@ func TestCombineAggregates(t *testing.T) {
 
 		if !utils.FloatsEqual(got.MeanPricePerHour, test.expected.MeanPricePerHour) {
 			t.Fatalf(
-				"Aggregate mean price per hour not equal for test \"%s\".Wanted: %f, got: %f",
+				"Aggregate mean price per hour not equal for test \"%s\". Wanted: %f, got: %f",
 				name,
 				test.expected.MeanPricePerHour,
 				got.MeanPricePerHour,

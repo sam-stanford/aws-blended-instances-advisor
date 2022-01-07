@@ -14,15 +14,16 @@ type Service struct {
 	MaxInstances int     `json:"maxInstances"`
 }
 
-// TODO: Doc, test
+// Validate checks that a Service is well-formed
+// and is true to the API specification.
 func (s *Service) Validate() error {
-	if s.MinMemory <= 0 {
+	if s.MinMemory < 0 {
 		return errors.New("minMemory is not positive")
 	}
 	if s.MaxVcpu <= 0 {
 		return errors.New("maxVcpu is not postive")
 	}
-	if s.MinInstances <= 0 {
+	if s.MinInstances < 0 {
 		return errors.New("minInstances is not positive")
 	}
 	if s.MaxInstances <= 0 {
@@ -34,7 +35,8 @@ func (s *Service) Validate() error {
 	return nil
 }
 
-// TODO: Doc & test
+// ValidateServices validates multiple services, ensuring that
+// they are well-formed and true to the API specification.
 func ValidateServices(services []Service) error {
 	if !namesAreUnique(services) {
 		return errors.New("service names are not unique")

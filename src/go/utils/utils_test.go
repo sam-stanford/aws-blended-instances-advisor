@@ -71,83 +71,6 @@ func TestValidateIndexes(t *testing.T) {
 	}
 }
 
-type anyFieldsAreEmptyTestType struct {
-	testInt    int
-	testFloat  float64
-	testString string
-	testBytes  []byte
-}
-
-type anyFieldsAreEmptyTest struct {
-	value        anyFieldsAreEmptyTestType
-	wantedResult bool
-	wantedField  string
-}
-
-func TestAnyFieldsAreEmpty(t *testing.T) {
-	tests := map[string]anyFieldsAreEmptyTest{
-		"0 int not considered empty": {
-			value: anyFieldsAreEmptyTestType{
-				testInt:    0,
-				testFloat:  10,
-				testString: "test",
-				testBytes:  []byte("test"),
-			}, wantedResult: false,
-			wantedField: "",
-		},
-		"0 float not considered empty": {
-			value: anyFieldsAreEmptyTestType{
-				testInt:    10,
-				testFloat:  0,
-				testString: "test",
-				testBytes:  []byte("test"),
-			},
-			wantedResult: false,
-			wantedField:  "",
-		},
-		"empty string considered empty": {
-			value: anyFieldsAreEmptyTestType{
-				testInt:    10,
-				testFloat:  10,
-				testString: "",
-				testBytes:  []byte("test"),
-			},
-			wantedResult: true,
-			wantedField:  "testString",
-		},
-		"nil array considered empty": {
-			value: anyFieldsAreEmptyTestType{
-				testInt:    10,
-				testFloat:  10,
-				testString: "test",
-				testBytes:  nil,
-			},
-			wantedResult: true,
-			wantedField:  "testBytes",
-		},
-	}
-
-	for name, test := range tests {
-		gotResult, gotField := AnyFieldsAreEmpty(test.value)
-		if gotResult != test.wantedResult {
-			t.Fatalf(
-				"test \"%s\" gave wrong result. Wanted: %t, got: %t",
-				name,
-				test.wantedResult,
-				gotResult,
-			)
-		}
-		if test.wantedResult == true && gotField != test.wantedField {
-			t.Fatalf(
-				"test \"%s\" gave wrong field name. Wanted: %s, got: %s",
-				name,
-				test.wantedField,
-				gotField,
-			)
-		}
-	}
-}
-
 type stringSliceContainsTest struct {
 	slice  []string
 	value  string
@@ -222,7 +145,7 @@ func TestStringSlicesEqual(t *testing.T) {
 		"same length, different values": {
 			slice1:   []string{"hello", "sir"},
 			slice2:   []string{"hello", "world"},
-			expected: true,
+			expected: false,
 		},
 	}
 
@@ -259,7 +182,7 @@ func TestAppendStringIfNotInSlice(t *testing.T) {
 			wanted: []string{"hello", "world"},
 		},
 		"adding to empty slice": {
-			slice:  []string{""},
+			slice:  []string{},
 			s:      "hello",
 			wanted: []string{"hello"},
 		},
@@ -268,7 +191,7 @@ func TestAppendStringIfNotInSlice(t *testing.T) {
 	for name, test := range tests {
 		got := AppendStringIfNotInSlice(test.slice, test.s)
 
-		if StringSlicesEqual(got, test.wanted) {
+		if !StringSlicesEqual(got, test.wanted) {
 			t.Fatalf("Test \"%s\" failed. Wanted: %v, got: %v", name, test.wanted, got)
 		}
 	}

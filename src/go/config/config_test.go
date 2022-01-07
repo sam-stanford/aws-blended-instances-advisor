@@ -78,13 +78,11 @@ func TestParseConfigValid(t *testing.T) {
 
 func TestParseConfigInvalid(t *testing.T) {
 
-	// TODO: Update tests
-
 	errorTests := map[string]invalidConfigTest{
-		"no AWS API config": {filepath: "testdata/invalid/no-aws-api-config.json"},
-		"no credentials":    {filepath: "testdata/invalid/no-credentials.json"},
-		"no API config":     {filepath: "testdata/invalid/no-api-config.json"},
-		"no cache config":   {filepath: "testdata/invalid/no-cache-config.json"},
+		"no AWS API config":       {filepath: "testdata/invalid/no-aws-api-config.json"},
+		"no credentials":          {filepath: "testdata/invalid/no-credentials.json"},
+		"no API config":           {filepath: "testdata/invalid/no-api-config.json"},
+		"invalid port API config": {filepath: "testdata/invalid/invalid-port-config.json"},
 	}
 
 	for name, test := range errorTests {

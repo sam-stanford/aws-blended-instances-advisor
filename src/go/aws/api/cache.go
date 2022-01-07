@@ -8,8 +8,6 @@ import (
 	"time"
 )
 
-// TODO: test
-
 func getGlobalInstanceInfoFromCache(instancesCacheFilename string, c *cache.Cache) (*instPkg.GlobalInfo, error) {
 	isValid := c.IsValid(instancesCacheFilename)
 	if isValid {

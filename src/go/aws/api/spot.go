@@ -15,8 +15,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// TODO: Add log of how many not parsed (like on-demand.go line 66)
-
 // GetSpotInstances fetches spot instance offerings from the
 // AWS API, returning them as a list of Instances.
 //
@@ -139,8 +137,7 @@ func fetchSpotInstanceAvailabilityInfo(
 		zap.Int("maxInstanceCount", maxInstanceCount),
 	)
 
-	// TODO: Ensure next block's working properly
-	if len(spotPrices) > maxInstanceCount {
+	if len(spotPrices) > maxInstanceCount && maxInstanceCount > 0 {
 		logger.Info(
 			"removed excess instances to keep to max instance count",
 			zap.Int("removed", len(spotPrices)-maxInstanceCount),

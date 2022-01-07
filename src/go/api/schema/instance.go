@@ -1,7 +1,7 @@
 package schema
 
 type Instance struct {
-	Id                    string  `json:"id"` // TODO: Add to instances pkg & generate on creation
+	Id                    string  `json:"id"`
 	Name                  string  `json:"name"`
 	MemoryGb              float64 `json:"memory"`
 	Vcpu                  int     `json:"vcpu"`

@@ -1,28 +1,21 @@
 {
-  "credentials": {
-    "production": {
-      "awsKeyId": "YOUR KEY ID HERE",
-      "awsSecretKey": "YOUR SECRET KEY HERE"
-    },
-    "development": {
-      "awsKeyId": "YOUR KEY ID HERE",
-      "awsSecretKey": "YOUR SECRET KEY HERE"
-    },
-    "test": {
-      "awsKeyId": "YOUR KEY ID HERE",
-      "awsSecretKey": "YOUR SECRET KEY HERE"
-    }
+  "api": {
+    "port": 12021,
+    "allowedDomains": ["http://127.0.0.1:3000", "http://localhost:3000"]
   },
   "awsApi": {
     "endpoints": {
       "awsSpotInstanceInfoUrl": "https://spot-bid-advisor.s3.amazonaws.com/spot-advisor-data.json"
     },
     "maxInstancesToFetch": 1000,
-    "downloadsDir": "../../temp/downloads",
-    "freeInstances": false
+    "downloadsDir": "../../temp/downloads"
   },
   "cache": {
     "dirpath": "../../temp/cache",
     "defaultLifetime": 168
+  },
+  "credentials": {
+    "awsKeyId": "",
+    "awsSecretKey": ""
   }
 }

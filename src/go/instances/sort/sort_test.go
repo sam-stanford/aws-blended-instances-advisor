@@ -13,7 +13,6 @@ type instanceSortTest struct {
 	expected   []*Instance
 }
 
-// TODO: Check for errors (e.g. end before start)
 func TestSortInstancesByPrice(t *testing.T) {
 	i0 := &Instance{Name: "0", PricePerHour: 0.00001}
 	i1 := &Instance{Name: "1", PricePerHour: 0.00002}

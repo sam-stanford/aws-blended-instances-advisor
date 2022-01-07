@@ -9,6 +9,7 @@ import (
 	"aws-blended-instances-advisor/config"
 	instPkg "aws-blended-instances-advisor/instances"
 	"aws-blended-instances-advisor/utils"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -18,21 +19,8 @@ const (
 	CONFIG_FILEPATH          = "../../../../config.json"
 	CONFIG_API_DOWNLOADS_DIR = "testdata/downloads"
 	CACHE_FILEPATH           = "testdata/cache"
-	REGION1                  = "us-west-1"
-	REGION2                  = "ca-central-1"
+	MAX_INSTANCES            = 100
 )
-
-func getTestRegions() (*types.Region, *types.Region, error) {
-	r1, err := types.NewRegion(REGION1)
-	if err != nil {
-		return nil, nil, err
-	}
-	r2, err := types.NewRegion(REGION2)
-	if err != nil {
-		return nil, nil, err
-	}
-	return &r1, &r2, nil
-}
 
 func TestGetInstances(t *testing.T) {
 	cfg, err := config.ParseConfig(CONFIG_FILEPATH)
@@ -52,17 +40,10 @@ func TestGetInstances(t *testing.T) {
 		t.Fatalf("Failed to create cache: %s", err.Error())
 	}
 
-	region1, region2, err := getTestRegions()
-	if err != nil {
-		t.Fatalf("Error occured when parsing test regions: %s", err.Error())
-	}
-	regions := []types.Region{*region1, *region2}
-
 	noCacheStartTime := time.Now()
-	regionInfoMap, err := GetInstancesRegionInfoMap(
+	globalInfo, err := GetInstancesAndInfo(
 		&cfg.AwsApiConfig,
-		regions,
-		&cfg.Credentials.Test,
+		&cfg.Credentials,
 		cache,
 		logger,
 	)
@@ -71,16 +52,15 @@ func TestGetInstances(t *testing.T) {
 	}
 	noCacheEndTime := time.Now()
 
-	err = validateRegionInfoMap(regionInfoMap, regions, 2*cfg.AwsApiConfig.MaxInstancesToFetch)
+	err = validateGlobalInfo(globalInfo, 2*cfg.AwsApiConfig.MaxInstancesToFetch)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
 	cachedStartTime := time.Now()
-	cachedRegionInstanceMap, err := GetInstancesRegionInfoMap(
+	cachedGlobalInfo, err := GetInstancesAndInfo(
 		&cfg.AwsApiConfig,
-		regions,
-		&cfg.Credentials.Test,
+		&cfg.Credentials,
 		cache,
 		logger,
 	)
@@ -89,10 +69,9 @@ func TestGetInstances(t *testing.T) {
 	}
 	cachedEndTime := time.Now()
 
-	validateCachedRegionInfoMap(
-		regionInfoMap,
-		cachedRegionInstanceMap,
-		regions,
+	validateCachedGlobalInfo(
+		globalInfo,
+		cachedGlobalInfo,
 		2*cfg.AwsApiConfig.MaxInstancesToFetch,
 	)
 
@@ -112,52 +91,36 @@ func TestGetInstances(t *testing.T) {
 	}
 }
 
-func validateRegionInfoMap(
-	regionInfoMap instPkg.RegionInfoMap,
-	regions []types.Region,
+func validateGlobalInfo(
+	globalInfo *instPkg.GlobalInfo,
 	maxTotalInstances int,
 ) error {
 
-	for _, region := range regions {
+	if globalInfo.GlobalAggregates.Count == 0 {
+		return errors.New("global aggregates not calculated correctly")
+	}
 
-		info, ok := regionInfoMap[region]
+	for _, region := range []types.Region{types.UsEast1, types.EuWest2} {
 
-		if !ok || len(info.AllInstances.Instances) == 0 {
-			return fmt.Errorf("Zero instances returned for region %s", REGION1)
+		info, ok := globalInfo.RegionInfoMap[region]
+
+		if !ok || len(info.PermanentInstances) == 0 || len(info.TransientInstances) == 0 {
+			return fmt.Errorf("zero instances returned for region %s", region.CodeString())
 		}
 
-		if len(info.AllInstances.Instances) == 0 {
-			return fmt.Errorf("Zero length slice for AllInstances.Instances in info for region %s", REGION1)
-		}
-		if len(info.PermanentInstances.Instances) == 0 {
-			return fmt.Errorf("Zero length slice for PermanentInstances.Instances in info for region %s", REGION1)
-		}
-
-		if len(info.AllInstances.Instances) != info.AllInstances.Aggregates.Count {
+		if len(info.PermanentInstances) > maxTotalInstances {
 			return fmt.Errorf(
-				"Aggregates count does not match number of instances for AllInstances in region %s. "+
-					"Number of instances: %d, Aggregates count: %d",
-				region.CodeString(),
-				len(info.AllInstances.Instances),
-				info.AllInstances.Aggregates.Count,
-			)
-		}
-		if len(info.PermanentInstances.Instances) != info.PermanentInstances.Aggregates.Count {
-			return fmt.Errorf(
-				"Aggregates count does not match number of instances for PermanentInstances in region %s. "+
-					"Number of instances: %d, Aggregates count: %d",
-				region.CodeString(),
-				len(info.PermanentInstances.Instances),
-				info.PermanentInstances.Aggregates.Count,
-			)
-		}
-
-		if len(info.AllInstances.Instances) > maxTotalInstances {
-			return fmt.Errorf(
-				"More instances returned than config max for region %s. Wanted: < %d, got: %d",
-				region.CodeString(),
+				"more permanent instances fetched than max wanted. Fetched: %d, max: %d",
+				len(info.PermanentInstances),
 				maxTotalInstances,
-				len(info.AllInstances.Instances),
+			)
+		}
+
+		if len(info.TransientInstances) > maxTotalInstances {
+			return fmt.Errorf(
+				"more transient instances fetched than max wanted. Fetched: %d, max: %d",
+				len(info.TransientInstances),
+				maxTotalInstances,
 			)
 		}
 	}
@@ -165,47 +128,38 @@ func validateRegionInfoMap(
 	return nil
 }
 
-func validateCachedRegionInfoMap(
-	fetchedRegionInfoMap instPkg.RegionInfoMap,
-	storedRegionInfoMap instPkg.RegionInfoMap,
-	regions []types.Region,
+func validateCachedGlobalInfo(
+	fetchedGlobalInfo *instPkg.GlobalInfo,
+	cachedGlobalInfo *instPkg.GlobalInfo,
 	maxTotalInstances int,
 ) error {
 
-	validateRegionInfoMap(fetchedRegionInfoMap, regions, maxTotalInstances)
+	validateGlobalInfo(fetchedGlobalInfo, maxTotalInstances)
 
-	for _, region := range regions {
-		storedInfo := storedRegionInfoMap[region]
-		fetchedInfo := fetchedRegionInfoMap[region]
+	for _, region := range []types.Region{types.UsEast1, types.EuWest2} {
+		storedInfo := cachedGlobalInfo.RegionInfoMap[region]
+		fetchedInfo := fetchedGlobalInfo.RegionInfoMap[region]
 
-		if len(storedInfo.AllInstances.Instances) != len(fetchedInfo.AllInstances.Instances) {
+		if len(storedInfo.PermanentInstances) != len(fetchedInfo.PermanentInstances) {
 			return fmt.Errorf(
-				"Different number of instances (AllInstances) fetched from cache than stored. "+
+				"Different number of permanent instances fetched from cache than stored. "+
 					"Region: %s, stored: %d, fetched: %d",
 				region.CodeString(),
-				len(storedInfo.AllInstances.Instances),
-				len(fetchedInfo.AllInstances.Instances),
+				len(storedInfo.PermanentInstances),
+				len(fetchedInfo.PermanentInstances),
 			)
 		}
 
-		if len(storedInfo.PermanentInstances.Instances) != len(fetchedInfo.PermanentInstances.Instances) {
+		if len(storedInfo.TransientInstances) != len(fetchedInfo.TransientInstances) {
 			return fmt.Errorf(
-				"Different number of instances (PermanentInstances) fetched from cache than stored. "+
+				"Different number of transient instances fetched from cache than stored. "+
 					"Region: %s, stored: %d, fetched: %d",
 				region.CodeString(),
-				len(storedInfo.PermanentInstances.Instances),
-				len(fetchedInfo.PermanentInstances.Instances),
+				len(storedInfo.TransientInstances),
+				len(fetchedInfo.TransientInstances),
 			)
 		}
 
-		if storedInfo.AllInstances.Aggregates.Count != fetchedInfo.PermanentInstances.Aggregates.Count {
-			return fmt.Errorf(
-				"Different aggregate values fetched from cache than stored. Region: %s, stored: %+v, fetched:%+v",
-				region.CodeString(),
-				storedInfo.AllInstances.Aggregates.Count,
-				fetchedInfo.PermanentInstances.Aggregates.Count,
-			)
-		}
 	}
 
 	return nil
