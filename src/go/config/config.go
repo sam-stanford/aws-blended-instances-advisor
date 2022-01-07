@@ -128,10 +128,67 @@ func ParseConfig(filepath string) (*Config, error) {
 // the problem if the Config is considered invalid.
 func (c *Config) Validate() error {
 
-	empty, fieldName := utils.AnyFieldsAreEmpty(c)
-	if empty {
-		return fmt.Errorf("config field is empty: %s", fieldName)
+	err := c.ApiConfig.validate()
+	if err != nil {
+		return utils.PrependToError(err, "API config invalid")
 	}
 
+	err = c.AwsApiConfig.validate()
+	if err != nil {
+		return utils.PrependToError(err, "AWS API config invald")
+	}
+
+	err = c.CacheConfig.validate()
+	if err != nil {
+		return utils.PrependToError(err, "cache config is invalid")
+	}
+
+	err = c.Credentials.validate()
+	if err != nil {
+		return utils.PrependToError(err, "credentials are invalid")
+	}
+
+	return nil
+}
+
+func (c *ApiConfig) validate() error {
+	if c.Port <= 1023 {
+		return fmt.Errorf("port %d is within controller assignment range", c.Port)
+	}
+	if c.AllowedDomains == nil {
+		return fmt.Errorf(
+			"allowedDomains is not specified. Use an empty array (\"[]\") for no allowed domains",
+		)
+	}
+	return nil
+}
+
+func (c *AwsApiConfig) validate() error {
+	if c.DownloadsDir == "" {
+		return fmt.Errorf("downloadsDir is empty")
+	}
+	if c.Endpoints.AwsSpotInstanceInfoUrl == "" {
+		return fmt.Errorf("awsSpotInstanceInfoUrl is empty")
+	}
+	return nil
+}
+
+func (c *CacheConfig) validate() error {
+	if c.DefaultLifetime < 0 {
+		return fmt.Errorf("defaultLifetime cannot be negative")
+	}
+	if c.Dirpath == "" {
+		return fmt.Errorf("dirpath is empty")
+	}
+	return nil
+}
+
+func (c *Credentials) validate() error {
+	if c.AwsKeyId == "" {
+		return fmt.Errorf("awsKeyId is empty")
+	}
+	if c.AwsSecretKey == "" {
+		return fmt.Errorf("awsSecretKey is empty")
+	}
 	return nil
 }

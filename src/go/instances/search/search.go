@@ -6,8 +6,6 @@ import (
 	"aws-blended-instances-advisor/utils"
 )
 
-// TODO: Own package
-
 // Returns the index of the element in instances from startIndex (inclusive) to endIndex (exclusive) that has the smallest memory value greater than wantedMemory.
 // Returns the index of the element with largest memory if no elements have a memory greater than wantedMemory.
 // Returns an error if there is a problem with the given indexes.
@@ -55,13 +53,11 @@ func FindMemorySorted(sortedInstances []*Instance, wantedMemory float64, startIn
 	return startIndex + index, nil
 }
 
-// TODO: Doc
 func SortAndFindMemory(instances []*Instance, wantedMemory float64, startIndex, endIndex int) (int, error) {
 	sort.SortInstancesByMemory(instances, startIndex, endIndex)
 	return FindMemorySorted(instances, wantedMemory, startIndex, endIndex)
 }
 
-// TODO: Doc
 func FindPrice(instances []*Instance, wantedPrice float64, startIndex int, endIndex int) (int, error) {
 	err := utils.ValidateIndexes(len(instances), startIndex, endIndex)
 	if err != nil {
@@ -81,7 +77,6 @@ func FindPrice(instances []*Instance, wantedPrice float64, startIndex int, endIn
 	return startIndex + index, nil
 }
 
-// TODO: Doc
 func FindPriceSorted(sortedInstances []*Instance, wantedPrice float64, startIndex int, endIndex int) (int, error) {
 	err := utils.ValidateIndexes(len(sortedInstances), startIndex, endIndex)
 	if err != nil {
@@ -101,13 +96,11 @@ func FindPriceSorted(sortedInstances []*Instance, wantedPrice float64, startInde
 	return startIndex + index, nil
 }
 
-// TODO: Doc & simple test
 func SortAndFindPrice(instances []*Instance, wantedPrice float64, startIndex, endIndex int) (int, error) {
 	sort.SortInstancesByPrice(instances, startIndex, endIndex)
 	return FindPriceSorted(instances, wantedPrice, startIndex, endIndex)
 }
 
-// TODO: Doc
 func FindVcpu(instances []*Instance, wantedVcpu int, startIndex int, endIndex int) (int, error) {
 	err := utils.ValidateIndexes(len(instances), startIndex, endIndex)
 	if err != nil {
@@ -127,7 +120,6 @@ func FindVcpu(instances []*Instance, wantedVcpu int, startIndex int, endIndex in
 	return startIndex + index, nil
 }
 
-// TODO: Doc
 func FindVcpuSorted(sortedInstances []*Instance, wantedVcpu int, startIndex int, endIndex int) (int, error) {
 	err := utils.ValidateIndexes(len(sortedInstances), startIndex, endIndex)
 	if err != nil {
@@ -147,13 +139,11 @@ func FindVcpuSorted(sortedInstances []*Instance, wantedVcpu int, startIndex int,
 	return startIndex + index, nil
 }
 
-// TODO: Doc
 func SortAndFindVcpu(instances []*Instance, wantedVcpu int, startIndex, endIndex int) (int, error) {
 	sort.SortInstancesByVcpu(instances, startIndex, endIndex)
 	return FindVcpuSorted(instances, wantedVcpu, startIndex, endIndex)
 }
 
-// TODO: Doc
 func FindRevocationProbability(instances []*Instance, wantedProbability float64, startIndex int, endIndex int) (int, error) {
 	err := utils.ValidateIndexes(len(instances), startIndex, endIndex)
 	if err != nil {
@@ -173,7 +163,6 @@ func FindRevocationProbability(instances []*Instance, wantedProbability float64,
 	return startIndex + index, nil
 }
 
-// TODO: Doc
 func FindRevocationProbabilitySorted(sortedInstances []*Instance, wantedProbability float64, startIndex int, endIndex int) (int, error) {
 	err := utils.ValidateIndexes(len(sortedInstances), startIndex, endIndex)
 	if err != nil {
@@ -193,7 +182,6 @@ func FindRevocationProbabilitySorted(sortedInstances []*Instance, wantedProbabil
 	return startIndex + index, nil
 }
 
-// TODO: Doc
 func SortAndFindRevocationProbability(instances []*Instance, wantedProbability float64, startIndex, endIndex int) (int, error) {
 	sort.SortInstancesByRevocationProbability(instances, startIndex, endIndex)
 	return FindRevocationProbabilitySorted(instances, wantedProbability, startIndex, endIndex)

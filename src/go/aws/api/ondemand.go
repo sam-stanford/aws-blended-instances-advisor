@@ -99,7 +99,7 @@ func getRegionToOnDemandInstancesMap(
 			zap.Int("maxInstanceCount", total),
 		)
 
-		if len(regionInstances) > maxInstanceCount {
+		if len(regionInstances) > maxInstanceCount && maxInstanceCount > 0 {
 			logger.Info(
 				"removed excess instances to keep to max instance count",
 				zap.String("region", region.CodeString()),

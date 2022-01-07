@@ -6,6 +6,8 @@ type AdviseRequest struct {
 	Options  Options   `json:"options"`
 }
 
+// Validate checks that an AdviseReques is well-formed
+// and is true to the API specification.
 func (r *AdviseRequest) Validate() error {
 	err := ValidateServices(r.Services)
 	if err != nil {

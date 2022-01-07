@@ -3,18 +3,21 @@ package advisor
 import (
 	"aws-blended-instances-advisor/api/schema"
 	instPkg "aws-blended-instances-advisor/instances"
+
+	"go.uber.org/zap"
 )
 
 // An Advisor is used to select one or more Instances from a group of Instances,
 // and can also be used to score selections.
 type Advisor interface {
-	// Advicse selects and scores Instances from a group of available
+	// Advise selects and scores Instances from a group of available
 	// Instances for all Regions, returning the selection and information as an
 	// Advice.
 	Advise(
 		instancesInfo instPkg.GlobalInfo,
 		services []schema.Service,
 		options schema.Options,
+		logger *zap.Logger,
 	) (
 		*schema.Advice,
 		error,
@@ -27,6 +30,7 @@ type Advisor interface {
 		info instPkg.RegionInfo,
 		services []schema.Service,
 		options schema.Options,
+		logger *zap.Logger,
 	) (
 		*schema.RegionAdvice,
 		error,
@@ -41,6 +45,7 @@ type Advisor interface {
 		advice *schema.RegionAdvice,
 		globalAgg instPkg.Aggregates,
 		services []schema.Service,
+		logger *zap.Logger,
 	) float64
 }
 
@@ -50,9 +55,6 @@ func New(info schema.Advisor) Advisor {
 	switch info.Type {
 	case schema.Weighted:
 		return NewWeightedAdvisor(info.Weights)
-
-	case schema.Random:
-		return NewRandomAdvisor()
 
 	default:
 		return NewWeightedAdvisor(info.Weights)

@@ -22,6 +22,25 @@ type Aggregates struct {
 	MeanPricePerHour float64
 }
 
+// Copy makes an exact copy of a given Aggregates struct.
+func (agg Aggregates) Copy() Aggregates {
+	return Aggregates{
+		Count: agg.Count,
+
+		MinVcpu:  agg.MinVcpu,
+		MaxVcpu:  agg.MaxVcpu,
+		MeanVcpu: agg.MeanVcpu,
+
+		MinRevocationProbability:  agg.MinRevocationProbability,
+		MaxRevocationProbability:  agg.MaxRevocationProbability,
+		MeanRevocationProbability: agg.MeanRevocationProbability,
+
+		MinPricePerHour:  agg.MinPricePerHour,
+		MaxPricePerHour:  agg.MaxPricePerHour,
+		MeanPricePerHour: agg.MeanPricePerHour,
+	}
+}
+
 // CalculateAggregates calculates aggregates for a slice of instances,
 // returning information in an Aggregate struct.
 func CalculateAggregates(instances []*Instance) Aggregates {
@@ -105,8 +124,13 @@ func CombineAggregates(aggs []Aggregates) Aggregates {
 		return Aggregates{}
 	}
 
-	combined := Aggregates{}
-	for _, agg := range aggs {
+	combined := aggs[0].Copy()
+	for i := range aggs {
+		if i == 0 {
+			continue
+		}
+
+		agg := aggs[i]
 		combinedCountRatio := float64(combined.Count) / (float64(combined.Count) + float64(agg.Count))
 		aggCountRatio := 1 - combinedCountRatio
 

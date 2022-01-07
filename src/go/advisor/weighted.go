@@ -8,6 +8,8 @@ import (
 	instSort "aws-blended-instances-advisor/instances/sort"
 	"aws-blended-instances-advisor/utils"
 	"fmt"
+
+	"go.uber.org/zap"
 )
 
 // WeightedAdvisor is an Advisor which uses a given set of SortWeights to
@@ -31,10 +33,16 @@ func (advisor WeightedAdvisor) Advise(
 	instancesInfo instPkg.GlobalInfo,
 	services []schema.Service,
 	options schema.Options,
+	logger *zap.Logger,
 ) (
 	*schema.Advice,
 	error,
 ) {
+	logger.Info(
+		"advising with weighted advisor",
+		zap.Any("weights", advisor.weights),
+	)
+
 	advice := make(schema.Advice)
 
 	awsRegions, err := awsTypes.NewRegions(options.Regions)
@@ -43,19 +51,27 @@ func (advisor WeightedAdvisor) Advise(
 	}
 
 	for _, region := range awsRegions {
+		logger.Info("advising for region", zap.String("region", region.CodeString()))
+
 		info, ok := instancesInfo.RegionInfoMap[region]
 		if !ok {
 			return nil, fmt.Errorf("region not in map: %s", region.CodeString())
 		}
 
-		regionAdvice, err := advisor.AdviseForRegion(info, services, options)
+		regionAdvice, err := advisor.AdviseForRegion(info, services, options, logger)
 		if err != nil {
 			return nil, err
 		}
 
-		regionAdvice.Score = advisor.ScoreRegionAdvice(regionAdvice, instancesInfo.GlobalAggregates, services)
+		regionAdvice.Score = advisor.ScoreRegionAdvice(regionAdvice, instancesInfo.GlobalAggregates, services, logger)
 
 		advice[region.CodeString()] = *regionAdvice
+
+		logger.Info(
+			"advice created for region",
+			zap.String("region", region.CodeString()),
+			zap.Any("advice", regionAdvice),
+		)
 	}
 
 	return &advice, nil
@@ -68,26 +84,59 @@ func (advisor WeightedAdvisor) AdviseForRegion(
 	info instPkg.RegionInfo,
 	services []schema.Service,
 	options schema.Options,
+	logger *zap.Logger,
 ) (
 	*schema.RegionAdvice,
 	error,
 ) {
+	logger.Info(
+		"advising for region with weighted advisor",
+		zap.Any("weights", advisor.weights),
+	)
 
 	permanentInstances := copyInstances(info.PermanentInstances)
 	transientInstances := copyInstances(info.TransientInstances)
+	logger.Info(
+		"copy of instances made",
+		zap.Int("permanentInstancesCount", len(permanentInstances)),
+		zap.Int("transientInstancesCount", len(transientInstances)),
+	)
 
 	if !options.ConsiderFreeInstances {
 		permanentInstances = removeFreeInstances(permanentInstances)
 		transientInstances = removeFreeInstances(transientInstances)
+		logger.Info(
+			"removed free instances",
+			zap.Int("remainingPermanentInstances", len(permanentInstances)),
+			zap.Int("remainingTransientInstances", len(transientInstances)),
+		)
 	}
 
 	allInstances := append(permanentInstances, transientInstances...)
+	logger.Debug(
+		"joined transient and permanent instances",
+		zap.Int("totalInstanceCount", len(allInstances)),
+	)
 
 	advice := &schema.RegionAdvice{}
 
 	for _, svc := range services {
+		permanentCount := svc.MinInstances
+		transientCount := svc.MaxInstances - svc.MinInstances
 
-		for i := 0; i < svc.MinInstances; i += 1 {
+		logger.Info(
+			"advising for service",
+			zap.Any("service", svc),
+			zap.Int("permanentInstanceCount", permanentCount),
+			zap.Int("transientInstanceCount", transientCount),
+		)
+
+		for i := 0; i < permanentCount; i += 1 {
+			logger.Info(
+				"selecting permanent instance for service",
+				zap.String("serviceName", svc.Name),
+			)
+
 			selectedInstance, err := advisor.selectInstanceForService(
 				permanentInstances,
 				info.PermanentAggregates,
@@ -99,18 +148,29 @@ func (advisor WeightedAdvisor) AdviseForRegion(
 			}
 
 			advice.AddAssignment(svc.Name, selectedInstance.ToApiSchemaInstance())
+			logger.Info(
+				"selected and assigned permanent instance for service",
+				zap.String("serviceName", svc.Name),
+				zap.Any("instance", selectedInstance),
+			)
 
-			// TODO: Don't seem to be sharing :(
-			if options.AvoidRepeatedInstanceTypes {
-				permanentInstances = removeInstanceFromSlice(permanentInstances, selectedInstance.Id)
-			}
 			if options.ShareInstancesBetweenServices {
-				permanentInstances = append(permanentInstances, createSharedInstance(selectedInstance, svc))
+				sharedInstance := createSharedInstance(selectedInstance, svc)
+				permanentInstances = append(permanentInstances, sharedInstance)
+				logger.Info(
+					"added shared instance to available instances",
+					zap.String("originalInstanceId", selectedInstance.Id),
+					zap.Any("newSharedInstance", sharedInstance),
+				)
 			}
 		}
 
-		remainingInstanceCount := svc.MaxInstances - svc.MinInstances
-		for i := 0; i < remainingInstanceCount; i += 1 {
+		for i := 0; i < transientCount; i += 1 {
+			logger.Info(
+				"selecting transient instance for service",
+				zap.String("serviceName", svc.Name),
+			)
+
 			selectedInstance, err := advisor.selectInstanceForService(
 				allInstances,
 				info.RegionAggregates,
@@ -122,18 +182,37 @@ func (advisor WeightedAdvisor) AdviseForRegion(
 			}
 
 			advice.AddAssignment(svc.Name, selectedInstance.ToApiSchemaInstance())
+			logger.Info(
+				"selected and assigned permanent instance for service",
+				zap.String("serviceName", svc.Name),
+				zap.Any("instance", selectedInstance),
+			)
 
 			if options.AvoidRepeatedInstanceTypes {
-				allInstances = removeInstanceFromSlice(allInstances, selectedInstance.Id)
-				if isPermanentInstance(selectedInstance) {
-					permanentInstances = removeInstanceFromSlice(permanentInstances, selectedInstance.Id)
-				}
+				allInstances = removeInstancesWithName(allInstances, selectedInstance.Name)
+				logger.Info(
+					"removed instances of same type from available transient instances",
+					zap.String("instanceId", selectedInstance.Id),
+					zap.String("nameRemoved", selectedInstance.Name),
+				)
 			}
+
 			if options.ShareInstancesBetweenServices {
-				allInstances = append(allInstances, createSharedInstance(selectedInstance, svc))
+				sharedInstance := createSharedInstance(selectedInstance, svc)
+
+				allInstances = append(allInstances, sharedInstance)
 				if isPermanentInstance(selectedInstance) {
-					permanentInstances = append(permanentInstances, createSharedInstance(selectedInstance, svc))
+					permanentInstances = append(
+						permanentInstances,
+						createSharedInstance(selectedInstance, svc),
+					)
 				}
+
+				logger.Info(
+					"added shared instance to available instances",
+					zap.String("originalInstanceId", selectedInstance.Id),
+					zap.Any("newSharedInstance", sharedInstance),
+				)
 			}
 		}
 	}
@@ -156,14 +235,17 @@ func removeFreeInstances(instances []*instPkg.Instance) []*instPkg.Instance {
 	return filtered
 }
 
-func removeInstanceFromSlice(slice []*instPkg.Instance, idToRemove string) []*instPkg.Instance {
-	new := []*instPkg.Instance{}
-	for _, inst := range slice {
-		if inst.Id != idToRemove {
-			new = append(new, inst)
+func removeInstancesWithName(
+	instances []*instPkg.Instance,
+	name string,
+) []*instPkg.Instance {
+	filtered := []*instPkg.Instance{}
+	for _, inst := range instances {
+		if inst.Name != name {
+			filtered = append(filtered, inst)
 		}
 	}
-	return new
+	return filtered
 }
 
 func isPermanentInstance(inst *instPkg.Instance) bool {
@@ -185,11 +267,6 @@ func (advisor WeightedAdvisor) selectInstanceForService(
 ) (*instPkg.Instance, error) {
 	searchStart, searchEnd := 0, len(instances)
 	var err error
-
-	// TODO: Different result when using --clear-cache as to when not
-
-	// TODO: Function appears non-deterministic
-	// TODO: Function sometimes returns instance with less mem than min mem
 
 	searchStart, err = instSearch.SortAndFindMemory(
 		instances,
@@ -222,6 +299,7 @@ func (advisor WeightedAdvisor) ScoreRegionAdvice(
 	advice *schema.RegionAdvice,
 	globalAgg instPkg.Aggregates,
 	services []schema.Service,
+	logger *zap.Logger,
 ) float64 {
 	vcpuScore, revocationProbScore, priceScore := 0.0, 0.0, 0.0
 	totalInstances := 0

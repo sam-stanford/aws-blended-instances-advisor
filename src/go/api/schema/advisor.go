@@ -14,11 +14,11 @@ type AdvisorWeights struct {
 type AdvisorType string
 
 const (
-	Random   AdvisorType = "random"
 	Weighted AdvisorType = "weighted"
 )
 
-// TODO: Doc & test
+// Validate checks that an Advisor is well-formed
+// and is true to the API specification.
 func (a *Advisor) Validate() error {
 	return nil // Nothing to validate
 }

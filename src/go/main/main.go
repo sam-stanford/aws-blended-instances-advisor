@@ -21,7 +21,6 @@ func main() {
 	logger, syncLogger := createLogger(clf.DebugMode)
 	defer syncLogger()
 
-	fmt.Println(clf)
 	logCommandLineFlags(&clf, logger)
 
 	config := parseAndLogConfig(clf.ConfigFilepath, logger)
@@ -41,7 +40,7 @@ func main() {
 		&config.ApiConfig,
 		logger,
 		func(advisorInfo schema.Advisor, services []schema.Service, options schema.Options) (*schema.Advice, error) {
-			return advisor.New(advisorInfo).Advise(*instancesInfo, services, options)
+			return advisor.New(advisorInfo).Advise(*instancesInfo, services, options, logger)
 		},
 	)
 }

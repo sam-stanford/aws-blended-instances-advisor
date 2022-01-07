@@ -6,9 +6,9 @@ import (
 )
 
 const (
-	TEST_TXT_FILEPATH     = "../../../assets/test/test.txt"
+	TEST_TXT_FILEPATH     = "testdata/test.txt"
 	TEST_TXT_FILE_CONTENT = "TEST TEXT"
-	TEST_TEMP_FILEPATH    = "../../../assets/test/temp.txt"
+	TEST_TEMP_FILEPATH    = "testdata/temp/temp.txt"
 )
 
 func TestFileToString(t *testing.T) {
@@ -174,20 +174,5 @@ func TestFileExists(t *testing.T) {
 	}
 	if exists {
 		t.Fatalf("FileExists returned true for non-existent file. Wanted: %t, got: %t", true, exists)
-	}
-}
-
-func TestCreateFilepath(t *testing.T) {
-	pathComponents := []string{".", "test1", "test2"}
-	separator := string(os.PathListSeparator)
-	wantedPath := string('.') + separator + "test1" + separator + "test2"
-
-	filepath, err := CreateFilepath(pathComponents...)
-	if err != nil {
-		t.Fatalf("Error when creating filepath: %s", err.Error())
-	}
-
-	if filepath != wantedPath {
-		t.Fatalf("Created path is incorrect. Wanted: %s, got: %s", wantedPath, filepath)
 	}
 }

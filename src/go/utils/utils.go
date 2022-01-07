@@ -3,7 +3,6 @@ package utils
 import (
 	"fmt"
 	"os"
-	"reflect"
 
 	"github.com/google/uuid"
 
@@ -53,52 +52,6 @@ func CreateMockLogger() (*zap.Logger, error) {
 	cfg := zap.NewProductionConfig()
 	cfg.OutputPaths = []string{}
 	return cfg.Build()
-}
-
-// AnyFieldsAreEmpty checks if any fields of a given interface are empty.
-//
-// If at least one field is considered empty, the first empty field is
-// also returned.
-func AnyFieldsAreEmpty(i interface{}) (bool, string) {
-	elem := reflect.ValueOf(i).Elem()
-	return anyFieldsAreEmptyHelper(elem)
-}
-
-func anyFieldsAreEmptyHelper(elem reflect.Value) (bool, string) {
-	for fieldIndex := 0; fieldIndex < elem.NumField(); fieldIndex += 1 {
-
-		field := elem.Field(fieldIndex)
-
-		if field.Kind() == reflect.Struct {
-			empty, field := anyFieldsAreEmptyHelper(field)
-			if empty {
-				return true, field
-			}
-		} else if !isNumericOrBoolType(field.Kind()) && field.IsZero() {
-			return true, elem.Type().Field(fieldIndex).Name
-		}
-	}
-
-	return false, ""
-}
-
-func isNumericOrBoolType(k reflect.Kind) bool {
-	types := []reflect.Kind{
-		reflect.Float32,
-		reflect.Float64,
-		reflect.Int8,
-		reflect.Int16,
-		reflect.Int32,
-		reflect.Int64,
-		reflect.Bool,
-	}
-
-	for _, t := range types {
-		if k == t {
-			return true
-		}
-	}
-	return false
 }
 
 // StringSliceContains returns true if the given slice contains the given
